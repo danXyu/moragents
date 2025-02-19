@@ -7,6 +7,7 @@ import {
   Text,
   Flex,
   Divider,
+  Tooltip,
 } from "@chakra-ui/react";
 import {
   IconDotsVertical,
@@ -100,7 +101,7 @@ export const ProfileMenu = () => {
                   >
                     {connected
                       ? "Active session logged in as " + account.displayName
-                      : "Connect Wallet"}
+                      : "Connect Wallet to Enable Full Functionality"}
                   </div>
                   <IconDotsVertical size={16} className={styles.menuIcon} />
                 </div>
@@ -112,26 +113,59 @@ export const ProfileMenu = () => {
 
       <MenuList className={styles.profileMenu}>
         <MenuSection title="Basic">
-          <MenuItem className={styles.menuItem}>
-            <SettingsButton />
-          </MenuItem>
+          <ConnectButton.Custom>
+            {({ account }) => (
+              <Tooltip
+                isDisabled={!!account}
+                label="Connect your wallet to access personalized settings and configurations. These settings are unique to each wallet address and help customize your experience."
+                placement="right"
+              >
+                <div className={styles.menuItem}>
+                  <Box
+                    pointerEvents={account ? "auto" : "none"}
+                    opacity={account ? 1 : 0.5}
+                  >
+                    <SettingsButton />
+                  </Box>
+                </div>
+              </Tooltip>
+            )}
+          </ConnectButton.Custom>
         </MenuSection>
 
         <Divider my={2} borderColor="whiteAlpha.200" />
 
         <MenuSection title="Advanced">
-          <MenuItem className={styles.menuItem}>
-            <Workflows />
-          </MenuItem>
-          <MenuItem className={styles.menuItem}>
-            <ApiCredentialsButton />
-          </MenuItem>
-          <MenuItem className={styles.menuItem}>
-            <SyncButton />
-          </MenuItem>
-          <MenuItem className={styles.menuItem}>
-            <CDPWalletsButton />
-          </MenuItem>
+          <ConnectButton.Custom>
+            {({ account }) => (
+              <Tooltip
+                isDisabled={!!account}
+                label="A wallet connection is required to access advanced features like workflows, API integrations, device sync, and CDP wallets."
+                placement="right"
+              >
+                <div>
+                  <Box
+                    pointerEvents={account ? "auto" : "none"}
+                    opacity={account ? 1 : 0.5}
+                    pl={1}
+                  >
+                    <div className={styles.menuItem}>
+                      <Workflows />
+                    </div>
+                    <div className={styles.menuItem}>
+                      <ApiCredentialsButton />
+                    </div>
+                    <div className={styles.menuItem}>
+                      <SyncButton />
+                    </div>
+                    <div className={styles.menuItem}>
+                      <CDPWalletsButton />
+                    </div>
+                  </Box>
+                </div>
+              </Tooltip>
+            )}
+          </ConnectButton.Custom>
         </MenuSection>
 
         <Divider my={2} borderColor="whiteAlpha.200" />

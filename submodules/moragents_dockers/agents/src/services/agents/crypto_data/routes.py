@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from src.stores import chat_manager_instance, agent_manager_instance
+from src.stores import agent_manager_instance
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +21,10 @@ async def process_data(data: dict) -> JSONResponse:
             )
 
         response = await crypto_agent.process_data(data)
-        chat_manager_instance.add_message(response)
-        return response
+        return JSONResponse(
+            status_code=200,
+            content={"status": "success", "message": "Data processed successfully", "response": response},
+        )
     except Exception as e:
         logger.error(f"Failed to process data: {str(e)}")
         return JSONResponse(

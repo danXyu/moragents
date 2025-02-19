@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import { Flex, Box, useBreakpointValue } from "@chakra-ui/react";
 import { MessageList } from "@/components/MessageList";
 import { ChatInput } from "@/components/ChatInput";
@@ -10,12 +10,29 @@ export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
 }) => {
   const { state, sendMessage } = useChatContext();
   const { messages, currentConversationId, isLoading } = state;
+  // Add local loading state to ensure loading indicator persists during transitions
+  const [localLoading, setLocalLoading] = useState(false);
 
   const currentMessages = messages[currentConversationId] || [];
   const isMobile = useBreakpointValue({ base: true, md: false });
 
+  // Combined loading state - show loading if either global or local loading is true
+  const showLoading = isLoading || localLoading;
+
   const handleSubmit = async (message: string, file: File | null) => {
-    await sendMessage(message, file);
+    try {
+      setLocalLoading(true);
+      await sendMessage(message, file);
+
+      // Add a small delay to ensure loading indicator stays visible
+      // until UI fully updates with the new messages
+      setTimeout(() => {
+        setLocalLoading(false);
+      }, 200);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setLocalLoading(false);
+    }
   };
 
   return (
@@ -32,11 +49,11 @@ export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
         mr="auto"
       >
         <MessageList messages={currentMessages} />
-        {isLoading && <LoadingIndicator />}
+        {showLoading && <LoadingIndicator />}
         <ChatInput
           onSubmit={handleSubmit}
           hasMessages={currentMessages.length > 1}
-          disabled={isLoading}
+          disabled={showLoading}
           isSidebarOpen={isSidebarOpen}
         />
       </Flex>

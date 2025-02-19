@@ -53,14 +53,14 @@ class ChatRequest(BaseModel):
         messages: List[BaseMessage] = []
 
         # Add chat history messages up to the past 10 messages
-        for msg in self.chat_history[:10]:
+        for i, msg in enumerate(reversed(self.chat_history[:10])):
             if msg.role == "user":
-                messages.append(HumanMessage(content=msg.content))
+                messages.append(HumanMessage(content=f"Chat History index {i}: {msg.content}"))
             elif msg.role == "assistant":
-                messages.append(AIMessage(content=msg.content))
+                messages.append(AIMessage(content=f"Chat History index {i}: {msg.content}"))
 
         # Add current prompt
-        messages.append(HumanMessage(content=self.prompt.content))
+        messages.append(HumanMessage(content=f"Current Prompt: {self.prompt.content}"))
 
         return messages
 

@@ -1,8 +1,7 @@
-// src/services/chat/storage.ts
 import { ChatMessage } from "@/services/types";
 import { getStorageData, saveStorageData } from "@/services/LocalStorage/core";
 import { DEFAULT_CONVERSATION_ID } from "@/services/LocalStorage/config";
-import { createNewConversation } from "./sessions";
+import { createNewConversation } from "@/services/ChatManagement/conversations";
 
 /**
  * Get messages history for a specific conversation

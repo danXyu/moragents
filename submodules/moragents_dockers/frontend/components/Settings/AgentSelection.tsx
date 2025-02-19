@@ -53,8 +53,6 @@ export const AgentSelection: React.FC<AgentSelectionProps> = ({ onSave }) => {
             isClosable: true,
             position: "top-right",
             variant: "subtle",
-            bg: "#080808",
-            color: "white",
           });
           return prev;
         }

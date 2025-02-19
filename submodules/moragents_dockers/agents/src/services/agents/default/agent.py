@@ -4,7 +4,7 @@ from typing import Dict, Any
 from src.models.service.chat_models import ChatRequest, AgentResponse
 from src.models.service.agent_core import AgentCore
 from src.stores import agent_manager_instance
-from langchain.schema import HumanMessage, SystemMessage
+from langchain.schema import SystemMessage
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class DefaultAgent(AgentCore):
 
             messages = [
                 SystemMessage(content=system_prompt),
-                HumanMessage(content=request.prompt.content),
+                *request.messages_for_llm,
             ]
 
             result = self.llm.invoke(messages)

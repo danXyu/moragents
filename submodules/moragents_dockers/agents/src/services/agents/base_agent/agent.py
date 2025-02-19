@@ -44,7 +44,7 @@ class BaseAgent(AgentCore):
                         "When you need to perform an action, use the appropriate function with the correct arguments."
                     )
                 ),
-                HumanMessage(content=request.prompt.content),
+                *request.messages_for_llm,
             ]
 
             result = self.tool_bound_llm.invoke(messages)

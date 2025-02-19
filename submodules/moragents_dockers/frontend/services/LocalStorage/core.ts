@@ -1,9 +1,9 @@
-// src/services/localStorage/core.ts
 import { LocalStorageData } from "@/services/types";
 import {
   STORAGE_KEY,
   DEFAULT_MESSAGE,
   DEFAULT_CONVERSATION_ID,
+  DEFAULT_CONVERSATION_NAME,
 } from "./config";
 
 // Initialize local storage with default data
@@ -12,6 +12,7 @@ export const initializeStorage = (): LocalStorageData => {
     conversations: {
       [DEFAULT_CONVERSATION_ID]: {
         id: DEFAULT_CONVERSATION_ID,
+        name: DEFAULT_CONVERSATION_NAME,
         messages: [DEFAULT_MESSAGE],
         createdAt: Date.now(),
         hasUploadedFile: false,

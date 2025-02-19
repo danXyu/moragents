@@ -3,6 +3,8 @@ import { DEFAULT_CONVERSATION_ID } from "@/services/LocalStorage/config";
 import { getMessagesHistory } from "@/services/ChatManagement/storage";
 import { addMessageToHistory } from "@/services/ChatManagement/messages";
 import { getOrCreateConversation } from "@/services/ChatManagement/storage";
+import { getStorageData } from "../LocalStorage/core";
+import { saveStorageData } from "../LocalStorage/core";
 
 /**
  * Send a message to the backend API and handle the response
@@ -33,7 +35,7 @@ export const writeMessage = async (
         role: "user",
         content: message,
       },
-      conversation_history: currentHistory,
+      chat_history: currentHistory,
       chain_id: String(chainId),
       wallet_address: address,
     });
@@ -100,6 +102,39 @@ export const uploadFile = async (
     return getMessagesHistory(convId);
   } catch (error) {
     console.error("Failed to upload file:", error);
+    throw error;
+  }
+};
+
+/**
+ * Generate a title for a conversation based on chat history
+ * @param messages Array of chat messages to generate title from
+ * @param backendClient Axios client instance
+ * @param conversationId Optional conversation ID
+ * @returns Generated title string
+ */
+export const generateConversationTitle = async (
+  messages: ChatMessage[],
+  backendClient: any,
+  conversationId: string = DEFAULT_CONVERSATION_ID
+): Promise<string> => {
+  try {
+    const response = await backendClient.post("/api/v1/generate-title", {
+      chat_history: messages,
+      conversation_id: conversationId,
+    });
+
+    if (response.data && response.data.title) {
+      const data = getStorageData();
+      data.conversations[conversationId].name = response.data.title;
+      saveStorageData(data);
+
+      return response.data.title;
+    }
+
+    throw new Error("No title returned from API");
+  } catch (error) {
+    console.error("Failed to generate conversation title:", error);
     throw error;
   }
 };

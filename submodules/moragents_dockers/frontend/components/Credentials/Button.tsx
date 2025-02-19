@@ -16,6 +16,7 @@ export const ApiCredentialsButton: React.FC = () => {
         width="100%"
         onClick={() => setIsOpen(true)}
         className={styles.menuButton}
+        cursor="pointer"
       >
         <Lock className={styles.icon} size={20} />
         <Text fontSize="14px" color="white">

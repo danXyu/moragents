@@ -3,7 +3,8 @@ from fastapi.responses import JSONResponse
 from src.models.service.chat_models import ChatRequest
 from src.services.delegator.delegator import Delegator
 from src.controllers.delegation_controller import DelegationController
-from src.config import LLM, EMBEDDINGS, setup_logging
+from src.config import LLM_LARGE, EMBEDDINGS, setup_logging
+from src.models.service.service_models import GenerateConversationTitleRequest
 
 logger = setup_logging()
 
@@ -16,7 +17,7 @@ async def chat(chat_request: ChatRequest) -> JSONResponse:
     logger.info(f"Received chat request for conversation {chat_request.conversation_id}")
 
     # Initialize new delegator and controller for each request
-    delegator = Delegator(LLM, EMBEDDINGS)
+    delegator = Delegator(LLM_LARGE, EMBEDDINGS)
     controller = DelegationController(delegator)
 
     try:
@@ -33,4 +34,29 @@ async def chat(chat_request: ChatRequest) -> JSONResponse:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         logger.error(f"Error in chat route: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate-title")
+async def generate_conversation_title(request: GenerateConversationTitleRequest) -> JSONResponse:
+    """Generate a title for a conversation based on chat history"""
+    logger.info(f"Received title generation request for conversation {request.conversation_id}")
+
+    # Initialize new delegator and controller for each request
+    controller = DelegationController()
+
+    try:
+        title = await controller.generate_conversation_title(request)
+        return JSONResponse(content={"title": title})
+
+    except HTTPException:
+        raise
+    except TimeoutError:
+        logger.error("Title generation request timed out")
+        raise HTTPException(status_code=504, detail="Request timed out")
+    except ValueError as ve:
+        logger.error(f"Input formatting error: {str(ve)}")
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        logger.error(f"Error in generate title route: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

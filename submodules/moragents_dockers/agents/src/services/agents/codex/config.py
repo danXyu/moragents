@@ -14,7 +14,7 @@ class Config:
     agent_config = AgentConfig(
         path="src.services.agents.codex.agent",
         class_name="CodexAgent",
-        description="Fetches and analyzes token and NFT data from Codex.io.",
+        description="Fetches and analyzes advanced token and NFT data from Codex.io such as trending tokens, top holders, and more",
         human_readable_name="Codex Market Analyst",
         command="codex",
         upload_required=False,

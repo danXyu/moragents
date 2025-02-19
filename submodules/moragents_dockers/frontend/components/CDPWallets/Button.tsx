@@ -10,12 +10,15 @@ export const CDPWalletsButton: React.FC = () => {
   return (
     <>
       <Flex
+        disabled
         as="button"
         align="center"
         gap={3}
         width="100%"
         onClick={() => setIsOpen(true)}
         className={styles.menuButton}
+        opacity={0.5}
+        pointerEvents="none"
       >
         <Wallet className={styles.icon} size={20} />
         <Text fontSize="14px" color="white">

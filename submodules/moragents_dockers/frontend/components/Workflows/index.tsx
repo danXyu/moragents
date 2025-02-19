@@ -29,6 +29,7 @@ import {
   TabPanels,
   Tab,
   TabPanel,
+  Tooltip,
 } from "@chakra-ui/react";
 import { Trash2 } from "lucide-react";
 import { Bot } from "lucide-react";
@@ -104,8 +105,6 @@ export const Workflows: React.FC = () => {
         title: "Error fetching workflows",
         status: "error",
         duration: 3000,
-        bg: "#080808",
-        color: "white",
       });
     }
   }, [toast]);
@@ -123,8 +122,6 @@ export const Workflows: React.FC = () => {
         description: "Origin and destination tokens must be different",
         status: "error",
         duration: 3000,
-        bg: "#080808",
-        color: "white",
       });
       return;
     }
@@ -160,8 +157,6 @@ export const Workflows: React.FC = () => {
           title: "Workflow created successfully",
           status: "success",
           duration: 3000,
-          bg: "#080808",
-          color: "white",
         });
         fetchWorkflows();
         setIsOpen(false);
@@ -174,8 +169,6 @@ export const Workflows: React.FC = () => {
         title: "Failed to create workflow",
         status: "error",
         duration: 3000,
-        bg: "#080808",
-        color: "white",
       });
     }
   };
@@ -191,8 +184,6 @@ export const Workflows: React.FC = () => {
           title: "Workflow deleted successfully",
           status: "success",
           duration: 3000,
-          bg: "#080808",
-          color: "white",
         });
         fetchWorkflows();
       } else {
@@ -204,8 +195,6 @@ export const Workflows: React.FC = () => {
         title: "Failed to delete workflow",
         status: "error",
         duration: 3000,
-        bg: "#080808",
-        color: "white",
       });
     }
   };
@@ -400,19 +389,21 @@ export const Workflows: React.FC = () => {
   return (
     <>
       <Flex
+        disabled
         as="button"
         align="center"
         gap={3}
         width="100%"
         onClick={() => setIsOpen(true)}
         className={styles.menuButton}
+        opacity={0.5}
+        pointerEvents="none"
       >
         <Bot size={20} className={styles.icon} />
         <Text fontSize="14px" color="white">
           Workflows
         </Text>
       </Flex>
-
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}

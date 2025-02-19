@@ -31,7 +31,7 @@ class NewsAgent(AgentCore):
                         "Ask for clarification if a request is ambiguous."
                     )
                 ),
-                HumanMessage(content=request.prompt.content),
+                *request.messages_for_llm,
             ]
 
             result = self.tool_bound_llm.invoke(messages)

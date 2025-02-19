@@ -5,14 +5,16 @@ import {
   DEFAULT_CONVERSATION_ID,
 } from "@/services/LocalStorage/config";
 import { getOrCreateConversation } from "@/services/ChatManagement/storage";
+import { getHttpClient } from "@/services/constants";
+import { generateConversationTitle } from "@/services/ChatManagement/api";
 
 /**
  * Add a message to a conversation history
  */
-export const addMessageToHistory = (
+export const addMessageToHistory = async (
   message: ChatMessage,
   conversationId: string = DEFAULT_CONVERSATION_ID
-): void => {
+): Promise<void> => {
   const data = getStorageData();
   const convId = getOrCreateConversation(conversationId);
 
@@ -22,6 +24,7 @@ export const addMessageToHistory = (
   }
 
   data.conversations[convId].messages.push(message);
+
   saveStorageData(data);
 };
 

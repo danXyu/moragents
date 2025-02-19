@@ -1,20 +1,26 @@
+from typing import Optional
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from src.models.service.chat_models import ChatRequest, AgentResponse
-from src.stores import agent_manager_instance, chat_manager_instance
+from src.stores import agent_manager_instance
 from src.services.delegator.delegator import Delegator
-from src.config import setup_logging
+from src.config import setup_logging, LLM_LARGE
+from src.models.service.service_models import GenerateConversationTitleRequest
+from langchain.schema import SystemMessage
 
 logger = setup_logging()
 
 
 class DelegationController:
-    def __init__(self, delegator: Delegator):
+    def __init__(self, delegator: Optional[Delegator] = None):
         self.delegator = delegator
 
     async def handle_chat(self, chat_request: ChatRequest) -> JSONResponse:
         """Handle chat requests and delegate to appropriate agent"""
         logger.info(f"Received chat request for conversation {chat_request.conversation_id}")
+
+        assert self.delegator is not None
+        logger.info(f"Delegator: {self.delegator}")
 
         try:
             # Parse command if present
@@ -25,9 +31,6 @@ class DelegationController:
                 chat_request.prompt.content = message
             else:
                 agent_manager_instance.clear_active_agent()
-
-            # Add user message to chat history
-            chat_manager_instance.add_message(chat_request.prompt.dict(), chat_request.conversation_id)
 
             # If command was parsed, use that agent directly
             if agent_name:
@@ -67,18 +70,41 @@ class DelegationController:
             logger.error(f"Error in chat route: {str(e)}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))
 
-    # async def get_active_agent_for_chat(self, prompt: dict) -> str:
-    #     """Get the active agent for handling the chat request."""
-    #     active_agent = agent_manager_instance.get_active_agent()
-    #     if active_agent:
-    #         return active_agent
+    async def generate_conversation_title(self, request: GenerateConversationTitleRequest) -> str:
+        """Generate a title for a conversation based on chat history"""
+        system_prompt = """You are a helpful assistant that generates concise, descriptive titles for conversations.
+        Generate a short title (3-6 words) that captures the main topic or theme of the conversation.
+        The title should be clear and informative but not too long. DO NOT SURROUND THE TITLE WITH QUOTES, spaces, 
+        or any other characters. Just return the title as a string."""
 
-    #     logger.info("No active agent, getting delegator response")
-    #     result = self.delegator.get_delegator_response(prompt)
-    #     logger.info(f"Delegator response: {result}")
+        messages = [
+            SystemMessage(content=system_prompt),
+            *request.messages_for_llm,
+        ]
 
-    #     if "agent" not in result:
-    #         logger.error(f"Missing 'agent' key in delegator response: {result}")
-    #         raise ValueError("Invalid delegator response: missing 'agent' key")
+        logger.info(f"Generating title with messages: {messages}")
 
-    #     return result["agent"]
+        try:
+            for attempt in range(3):
+                try:
+                    result = LLM_LARGE.invoke(messages)
+                    if not result:
+                        continue
+
+                    title = result.content.strip()
+                    if not title:
+                        continue
+
+                    logger.info(f"Generated title: {title}")
+                    return title
+
+                except Exception as e:
+                    logger.warning(f"Title generation attempt {attempt+1} failed: {str(e)}")
+                    if attempt == 2:
+                        raise
+
+            raise Exception("All title generation attempts failed")
+
+        except Exception as e:
+            logger.error(f"Error generating title: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to generate title: {str(e)}")

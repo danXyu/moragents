@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useState, useRef } from "react";
 import {
   Box,
   Input,
@@ -32,6 +32,15 @@ import {
   createNewConversation,
   clearMessagesHistory,
 } from "@/contexts/chat";
+import { Conversation } from "@/services/types";
+
+// Add keyframes for blink animation
+const blinkKeyframes = `
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+`;
 
 export type LeftSidebarProps = {
   isSidebarOpen: boolean;
@@ -42,24 +51,67 @@ export const LeftSidebar: FC<LeftSidebarProps> = ({
   isSidebarOpen,
   onToggleSidebar,
 }) => {
-  // Use our centralized chat context
-  const { state, setCurrentConversation, deleteChat } = useChatContext();
-  const { currentConversationId } = state;
+  // Add keyframes to document head once
+  useEffect(() => {
+    const styleElement = document.createElement("style");
+    styleElement.innerHTML = blinkKeyframes;
+    document.head.appendChild(styleElement);
 
-  const [conversations, setConversations] = useState<string[]>([]);
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
+
+  // Use our centralized chat context
+  const { state, setCurrentConversation, deleteChat, refreshMessages } =
+    useChatContext();
+  const { currentConversationId, conversationTitles } = state;
+
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("llama3.2:3b");
   const router = useRouter();
   const ToggleIcon = isSidebarOpen ? IconChevronLeft : IconChevronRight;
 
-  const modelOptions = [{ value: "llama3.2:3b", label: "Llama 3.2 (3B)" }];
+  // Animation state (moved outside of component to prevent nesting issues)
+  const [animatingConversations, setAnimatingConversations] = useState<{
+    [id: string]: { text: string; typing: boolean };
+  }>({});
+
+  const modelOptions = [{ value: "llama3.3:70b", label: "Llama 3.3 (70B)" }];
 
   const fetchConversations = () => {
     try {
-      // Get conversations from local storage
-      const conversationIds = getAllConversations();
-      setConversations(conversationIds);
+      const conversationsData = getAllConversations();
+
+      // Merge conversation data with titles from context
+      const updatedConversations = conversationsData.map((conv) => {
+        const newName = conversationTitles[conv.id] || conv.name;
+
+        // Set up animation if the name has changed
+        if (newName !== conv.name && conv.name !== "New Conversation") {
+          setAnimatingConversations((prev) => ({
+            ...prev,
+            [conv.id]: { text: newName, typing: true },
+          }));
+
+          // Auto-clear typing after animation completes
+          setTimeout(() => {
+            setAnimatingConversations((prev) => ({
+              ...prev,
+              [conv.id]: { text: newName, typing: false },
+            }));
+          }, newName.length * 30 + 100);
+        }
+
+        return {
+          ...conv,
+          name: newName,
+        };
+      });
+
+      setConversations(updatedConversations);
     } catch (error) {
       console.error("Failed to fetch conversations:", error);
     }
@@ -68,7 +120,6 @@ export const LeftSidebar: FC<LeftSidebarProps> = ({
   const handleCreateNewConversation = async () => {
     setIsLoading(true);
     try {
-      // Create new conversation in local storage
       const newConversationId = createNewConversation();
       fetchConversations();
       setCurrentConversation(newConversationId);
@@ -100,21 +151,25 @@ export const LeftSidebar: FC<LeftSidebarProps> = ({
     }
   };
 
+  // Watch for changes in conversation titles and current conversation
   useEffect(() => {
     fetchConversations();
-  }, [currentConversationId]);
+  }, [conversationTitles, currentConversationId]);
 
-  const formatConversationName = (id: string) => {
-    if (id === "default") return "Default Chat";
-    const parts = id.split("_");
-    const number = parts.length > 1 ? parts[1] : id;
-    return `Chat ${number}`;
-  };
+  // Poll for updates to ensure we catch title changes
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      refreshMessages();
+    }, 2000);
 
-  const filteredConversations = conversations.filter((conv) =>
-    formatConversationName(conv)
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase())
+    return () => clearInterval(intervalId);
+  }, [refreshMessages]);
+
+  const filteredConversations = conversations.filter(
+    (conv) =>
+      conv?.name
+        ?.toLowerCase?.()
+        ?.includes(searchQuery?.toLowerCase?.() ?? "") ?? false
   );
 
   return (
@@ -147,43 +202,68 @@ export const LeftSidebar: FC<LeftSidebarProps> = ({
           </div>
 
           <div className={styles.mainContent}>
-            {filteredConversations.map((conversationId) => (
-              <div
-                key={conversationId}
-                className={`${styles.conversationItem} ${
-                  currentConversationId === conversationId
-                    ? styles.conversationActive
-                    : ""
-                }`}
-                onClick={() => setCurrentConversation(conversationId)}
-              >
-                <span className={styles.conversationName}>
-                  {formatConversationName(conversationId)}
-                </span>
-                <div className={styles.buttonGroup}>
-                  <button
-                    className={styles.resetButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleClearChatHistory();
+            {filteredConversations.map((conversation) => {
+              // Get animation state for this conversation
+              const isTyping =
+                animatingConversations[conversation.id]?.typing || false;
+
+              return (
+                <div
+                  key={conversation.id}
+                  className={`${styles.conversationItem} ${
+                    currentConversationId === conversation.id
+                      ? styles.conversationActive
+                      : ""
+                  }`}
+                  onClick={() => setCurrentConversation(conversation.id)}
+                >
+                  {/* No component wrapper, just direct styling on the span */}
+                  <span
+                    className={styles.conversationName}
+                    style={{
+                      color: isTyping ? "#1ed760" : undefined,
                     }}
                   >
-                    <IconRefresh size={16} />
-                  </button>
-                  {conversationId !== "default" && (
-                    <button
-                      className={styles.deleteButton}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteConversation(conversationId);
-                      }}
-                    >
-                      <IconTrash size={16} />
-                    </button>
-                  )}
+                    {conversation.name}
+                    {isTyping && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          marginLeft: "1px",
+                          animation: "blink 0.7s infinite",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        |
+                      </span>
+                    )}
+                  </span>
+                  <div className={styles.buttonGroup}>
+                    {conversation.id === "default" ? (
+                      <button
+                        className={styles.resetButton}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClearChatHistory();
+                        }}
+                      >
+                        <IconRefresh size={16} />
+                      </button>
+                    ) : (
+                      <button
+                        className={styles.deleteButton}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteConversation(conversation.id);
+                        }}
+                      >
+                        <IconTrash size={16} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <Box width="100%" mb={1}>

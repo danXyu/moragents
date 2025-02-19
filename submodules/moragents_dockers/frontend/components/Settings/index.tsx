@@ -29,7 +29,7 @@ export const SettingsButton: React.FC = () => {
         gap={3}
         width="100%"
         onClick={() => setIsOpen(true)}
-        className={styles.button}
+        pl={1}
       >
         <Settings className={styles.icon} size={20} />
         <Text fontSize="14px" color="white">

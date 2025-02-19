@@ -23,6 +23,10 @@ import { ElfaTopMentionsMessage } from "@/components/Agents/Elfa/TopMentionsMess
 import { ElfaTrendingTokensMessage } from "@/components/Agents/Elfa/TrendingTokensMessage";
 import { RugcheckReportMessage } from "@/components/Agents/Rugcheck/RugcheckReportMessage";
 import { CodexTopTokensMessage } from "@/components/Agents/Codex/CodexTopTokensMessage";
+import { TopMentionsMetadata } from "@/components/Agents/Elfa/TopMentionsMessage.types";
+import { TrendingTokensMetadata } from "@/components/Agents/Elfa/TrendingTokensMessage.types";
+import { RugcheckMetadata } from "@/components/Agents/Rugcheck/RugcheckReportMessage.types";
+import { TopTokensMetadata } from "@/components/Agents/Codex/CodexTopTokensMessage.types";
 
 type MessageRenderer = {
   check: (message: ChatMessage) => boolean;
@@ -112,14 +116,20 @@ const messageRenderers: MessageRenderer[] = [
     check: (message) =>
       message.agentName === AgentType.ELFA &&
       message.action_type == "get_top_mentions",
-    render: (message) => <ElfaTopMentionsMessage metadata={message.metadata} />,
+    render: (message) => (
+      <ElfaTopMentionsMessage
+        metadata={message.metadata as TopMentionsMetadata}
+      />
+    ),
   },
   {
     check: (message) =>
       message.agentName === AgentType.ELFA &&
       message.action_type == "get_trending_tokens",
     render: (message) => (
-      <ElfaTrendingTokensMessage metadata={message.metadata} />
+      <ElfaTrendingTokensMessage
+        metadata={message.metadata as TrendingTokensMetadata}
+      />
     ),
   },
 
@@ -139,7 +149,7 @@ const messageRenderers: MessageRenderer[] = [
     check: (message) => message.agentName === AgentType.RUGCHECK,
     render: (message) => (
       <RugcheckReportMessage
-        metadata={(message as AssistantMessage).metadata}
+        metadata={(message as AssistantMessage).metadata as RugcheckMetadata}
       />
     ),
   },
@@ -149,7 +159,7 @@ const messageRenderers: MessageRenderer[] = [
     check: (message) => message.agentName === AgentType.CODEX,
     render: (message) => (
       <CodexTopTokensMessage
-        metadata={(message as AssistantMessage).metadata}
+        metadata={(message as AssistantMessage).metadata as TopTokensMetadata}
       />
     ),
   },

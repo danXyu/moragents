@@ -13,13 +13,8 @@ import {
   Text,
   Box,
 } from "@chakra-ui/react";
-import {
-  FaPaperPlane,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaSync,
-} from "react-icons/fa";
-import { postTweet, regenerateTweet } from "@/services/apiHooks";
+import { FaPaperPlane, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { postTweet, regenerateTweet } from "@/components/Agents/Tweet/hooks";
 import { getHttpClient } from "@/services/constants";
 import styles from "./TweetMessage.module.css";
 

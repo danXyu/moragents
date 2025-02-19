@@ -39,7 +39,7 @@ const PrefilledOptions = ({
   const containerStyle = isMobile
     ? {}
     : {
-        paddingLeft: isSidebarOpen ? "43%" : "20%",
+        paddingLeft: isSidebarOpen ? "40%" : "20%",
         paddingRight: "20%",
       };
 
@@ -54,7 +54,10 @@ const PrefilledOptions = ({
       >
         {OPTION_GROUPS[selectedGroup as keyof typeof OPTION_GROUPS].map(
           (agentType) => {
-            const option = prefilledOptionsMap[agentType];
+            const option =
+              prefilledOptionsMap[
+                agentType as keyof typeof prefilledOptionsMap
+              ];
             if (!option) return null;
 
             return (
@@ -64,15 +67,17 @@ const PrefilledOptions = ({
                   <span className={styles.exampleTitle}>{option.title}</span>
                 </div>
                 <div className={styles.exampleButtons}>
-                  {option.examples.map((example, index) => (
-                    <button
-                      key={index}
-                      onClick={() => onSelect(example.text)}
-                      className={styles.exampleButton}
-                    >
-                      {example.text}
-                    </button>
-                  ))}
+                  {option.examples.map(
+                    (example: { text: string }, index: number) => (
+                      <button
+                        key={index}
+                        onClick={() => onSelect(example.text)}
+                        className={styles.exampleButton}
+                      >
+                        {example.text}
+                      </button>
+                    )
+                  )}
                 </div>
               </div>
             );

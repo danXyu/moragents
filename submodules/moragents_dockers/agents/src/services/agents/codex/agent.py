@@ -6,7 +6,6 @@ from langchain.schema import HumanMessage, SystemMessage
 from .config import Config
 from . import tools
 from .models import TopTokensResponse, TopHoldersResponse, NftSearchResponse
-from src.stores import chat_manager_instance
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +29,8 @@ class CodexAgent(AgentCore):
                         "concentration, and search for NFT collections."
                     )
                 ),
-                HumanMessage(content=request.prompt.content),
+                *request.messages_for_llm,
             ]
-            chat_history = chat_manager_instance.get_chat_history(request.conversation_id)
-            if chat_history:
-                messages.append(HumanMessage(content=f"Here is the chat history: {chat_history}"))
 
             result = self.tool_bound_llm.invoke(messages)
             return await self._handle_llm_response(result)

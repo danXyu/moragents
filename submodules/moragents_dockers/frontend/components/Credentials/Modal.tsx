@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Image from "next/image";
 import {
   Modal,
   ModalOverlay,
@@ -12,6 +13,7 @@ import {
   VStack,
   Button,
   Flex,
+  Tooltip,
 } from "@chakra-ui/react";
 import { ArrowLeft } from "lucide-react";
 import { TwitterConfig } from "./Integrations/TwitterConfig";
@@ -21,12 +23,14 @@ import { ElfaConfig } from "./Integrations/ElfaConfig";
 import { CodexConfig } from "./Integrations/CodexConfig";
 import { SantimentConfig } from "./Integrations/SantimentConfig";
 import styles from "./Integrations/ApiCredentials.module.css";
+import { useAccount } from "wagmi";
 
 interface ApiOption {
   id: string;
   name: string;
   logo: string;
   component: React.FC<{ onSave: () => void }>;
+  proEnabled?: boolean;
 }
 
 const API_OPTIONS: ApiOption[] = [
@@ -53,18 +57,21 @@ const API_OPTIONS: ApiOption[] = [
     name: "Elfa API",
     logo: "/images/elfa-logo.jpg",
     component: ElfaConfig,
+    proEnabled: true,
   },
   {
     id: "codex",
     name: "Codex API",
     logo: "/images/codex-logo.png",
     component: CodexConfig,
+    proEnabled: true,
   },
   {
     id: "santiment",
     name: "Santiment API",
     logo: "/images/santiment-logo.jpeg",
     component: SantimentConfig,
+    proEnabled: true,
   },
 ];
 
@@ -78,6 +85,7 @@ export const ApiCredentialsModal: React.FC<ApiCredentialsModalProps> = ({
   onClose,
 }) => {
   const [selectedApi, setSelectedApi] = useState<string | null>(null);
+  const { address } = useAccount();
 
   const SelectedApiComponent = API_OPTIONS.find(
     (api) => api.id === selectedApi
@@ -162,41 +170,50 @@ export const ApiCredentialsModal: React.FC<ApiCredentialsModalProps> = ({
 
               <Grid templateColumns="repeat(2, 1fr)" gap={3}>
                 {API_OPTIONS.map((api) => (
-                  <Box
+                  <Tooltip
                     key={api.id}
-                    p={4}
-                    bg="rgba(255, 255, 255, 0.02)"
-                    border="1px solid rgba(255, 255, 255, 0.1)"
-                    borderRadius="8px"
-                    cursor="pointer"
-                    onClick={() => setSelectedApi(api.id)}
-                    _hover={{ bg: "rgba(255, 255, 255, 0.05)" }}
-                    transition="background-color 0.2s"
-                    className={styles.apiOption}
+                    isDisabled={!api.proEnabled || !address}
+                    label="Congratulations! As a pro user, you have access to these advanced agents."
                   >
-                    <VStack spacing={3}>
-                      <Box
-                        width="40px"
-                        height="40px"
-                        borderRadius="8px"
-                        overflow="hidden"
-                        bg="rgba(255, 255, 255, 0.1)"
-                      >
-                        <img
-                          src={api.logo}
-                          alt={`${api.name} logo`}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      </Box>
-                      <Text color="white" fontSize="14px" fontWeight="500">
-                        {api.name}
-                      </Text>
-                    </VStack>
-                  </Box>
+                    <Box
+                      p={4}
+                      bg="rgba(255, 255, 255, 0.02)"
+                      border="1px solid rgba(255, 255, 255, 0.1)"
+                      borderRadius="8px"
+                      cursor={api.proEnabled && address ? "default" : "pointer"}
+                      onClick={() => !api.proEnabled && setSelectedApi(api.id)}
+                      _hover={{
+                        bg:
+                          api.proEnabled && address
+                            ? "none"
+                            : "rgba(255, 255, 255, 0.05)",
+                      }}
+                      transition="background-color 0.2s"
+                      className={styles.apiOption}
+                      opacity={api.proEnabled && address ? 0.5 : 1}
+                    >
+                      <VStack spacing={3}>
+                        <Box
+                          width="40px"
+                          height="40px"
+                          borderRadius="8px"
+                          overflow="hidden"
+                          bg="rgba(255, 255, 255, 0.1)"
+                          position="relative"
+                        >
+                          <Image
+                            src={api.logo}
+                            alt={`${api.name} logo`}
+                            fill
+                            style={{ objectFit: "cover" }}
+                          />
+                        </Box>
+                        <Text color="white" fontSize="14px" fontWeight="500">
+                          {api.name}
+                        </Text>
+                      </VStack>
+                    </Box>
+                  </Tooltip>
                 ))}
               </Grid>
 
@@ -204,15 +221,12 @@ export const ApiCredentialsModal: React.FC<ApiCredentialsModalProps> = ({
                 <Text fontSize="12px" color="rgba(255, 255, 255, 0.6)">
                   Powered by Lit Protocol
                 </Text>
-                <Box width="48px" height="24px">
-                  <img
+                <Box width="48px" height="24px" position="relative">
+                  <Image
                     src="/images/lit-logo.png"
                     alt="Lit Protocol logo"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
-                    }}
+                    fill
+                    style={{ objectFit: "contain" }}
                   />
                 </Box>
               </VStack>

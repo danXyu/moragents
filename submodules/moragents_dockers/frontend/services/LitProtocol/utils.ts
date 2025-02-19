@@ -51,7 +51,6 @@ export const encryptSecret = async (
     {
       accessControlConditions: getAccessControlConditions(),
       dataToEncrypt: text,
-      chain: "ethereum",
     },
     litClient
   );

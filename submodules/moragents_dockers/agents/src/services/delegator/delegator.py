@@ -7,7 +7,7 @@ from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 from src.stores import agent_manager_instance
 from src.models.service.chat_models import ChatRequest, AgentResponse, ResponseType
-from src.config import load_agent_config, LLM, EMBEDDINGS
+from src.config import load_agent_config, LLM_SMALL, LLM_LARGE, EMBEDDINGS
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class RankAgentsOutput(BaseModel):
 
 class Delegator:
     def __init__(self, llm: Any, embeddings: Any):
-        self.llm = llm
+        self.llm = LLM_LARGE
         self.attempted_agents: set[str] = set()
         self.selected_agents_for_request: list[str] = []
         self.parser = PydanticOutputParser(pydantic_object=RankAgentsOutput)
@@ -38,10 +38,11 @@ Available agents:
 {agent_descriptions}
 
 Your job:
-1. Read the user's question or query
-2. Select up to 3 most relevant agents from the available agents
-3. Output a JSON object with an "agents" array containing the selected agent names in priority order
-4. Do not output anything besides the JSON object
+1. Read the user's question or query, which contains a chat history and a current prompt
+2. The current prompt is the last message from the user, which is the MOST IMPORTANT when deciding which agents to use
+3. Select up to 3 most relevant agents from the available agents
+4. Output a JSON object with an "agents" array containing the selected agent names in priority order
+5. Do not output anything besides the JSON object
 """
 
     async def _try_agent(self, agent_name: str, chat_request: ChatRequest) -> Optional[AgentResponse]:
@@ -54,7 +55,7 @@ Your job:
 
             module = importlib.import_module(agent_config["path"])
             agent_class = getattr(module, agent_config["class_name"])
-            agent = agent_class(agent_config, LLM, EMBEDDINGS)
+            agent = agent_class(agent_config, LLM_LARGE, EMBEDDINGS)
 
             result: AgentResponse = await agent.chat(chat_request)
             if result.response_type == ResponseType.ERROR:

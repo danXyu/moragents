@@ -28,6 +28,7 @@ export type AssistantMessage = ChatMessageBase & {
 
 export interface Conversation {
   id: string;
+  name: string;
   messages: ChatMessage[];
   createdAt: number;
   hasUploadedFile: boolean;

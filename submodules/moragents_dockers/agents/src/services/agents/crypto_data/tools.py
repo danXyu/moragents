@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import requests
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -6,7 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from src.services.agents.crypto_data.config import Config
 
 
-def get_most_similar(text, data):
+def get_most_similar(text: str, data: List[str]) -> List[str]:
     """Returns a list of most similar items based on cosine similarity."""
     vectorizer = TfidfVectorizer()
     sentence_vectors = vectorizer.fit_transform(data)
@@ -17,7 +18,7 @@ def get_most_similar(text, data):
     return top_matches
 
 
-def get_coingecko_id(text, type="coin"):
+def get_coingecko_id(text: str, type: str = "coin") -> Optional[str]:
     """Get the CoinGecko ID for a given coin or NFT."""
     url = f"{Config.COINGECKO_BASE_URL}/search"
     params = {"query": text}
@@ -36,8 +37,10 @@ def get_coingecko_id(text, type="coin"):
         raise
 
 
-def get_tradingview_symbol(coingecko_id):
+def get_tradingview_symbol(coingecko_id: Optional[str]) -> Optional[str]:
     """Convert a CoinGecko ID to a TradingView symbol."""
+    if not coingecko_id:
+        return None
     url = f"{Config.COINGECKO_BASE_URL}/coins/{coingecko_id}"
     try:
         response = requests.get(url)
@@ -50,7 +53,7 @@ def get_tradingview_symbol(coingecko_id):
         raise
 
 
-def get_price(coin):
+def get_price(coin: str) -> Optional[float]:
     """Get the price of a coin from CoinGecko API."""
     coin_id = get_coingecko_id(coin, type="coin")
     if not coin_id:
@@ -66,7 +69,7 @@ def get_price(coin):
         raise
 
 
-def get_floor_price(nft):
+def get_floor_price(nft: str) -> Optional[float]:
     """Get the floor price of an NFT from CoinGecko API."""
     nft_id = get_coingecko_id(str(nft), type="nft")
     if not nft_id:
@@ -81,7 +84,7 @@ def get_floor_price(nft):
         raise
 
 
-def get_fdv(coin):
+def get_fdv(coin: str) -> Optional[float]:
     """Get the fully diluted valuation of a coin from CoinGecko API."""
     coin_id = get_coingecko_id(coin, type="coin")
     if not coin_id:
@@ -97,7 +100,7 @@ def get_fdv(coin):
         raise
 
 
-def get_market_cap(coin):
+def get_market_cap(coin: str) -> Optional[float]:
     """Get the market cap of a coin from CoinGecko API."""
     coin_id = get_coingecko_id(coin, type="coin")
     if not coin_id:
@@ -113,7 +116,7 @@ def get_market_cap(coin):
         raise
 
 
-def get_protocols_list():
+def get_protocols_list() -> Tuple[List[str], List[str], List[str]]:
     """Get the list of protocols from DefiLlama API."""
     url = f"{Config.DEFILLAMA_BASE_URL}/protocols"
     try:
@@ -130,7 +133,7 @@ def get_protocols_list():
         raise
 
 
-def get_tvl_value(protocol_id):
+def get_tvl_value(protocol_id: str) -> Dict[str, Any]:
     """Gets the TVL value using the protocol ID from DefiLlama API."""
     url = f"{Config.DEFILLAMA_BASE_URL}/tvl/{protocol_id}"
     try:
@@ -142,7 +145,7 @@ def get_tvl_value(protocol_id):
         raise
 
 
-def get_protocol_tvl(protocol_name):
+def get_protocol_tvl(protocol_name: str) -> Optional[Dict[str, Any]]:
     """Get the TVL (Total Value Locked) of a protocol from DefiLlama API."""
     id, name, gecko = get_protocols_list()
     tag = get_coingecko_id(protocol_name)
@@ -155,18 +158,19 @@ def get_protocol_tvl(protocol_name):
         if not res:
             return None
         else:
-            result = []
+            result: List[Dict[str, Any]] = []
             for item in res:
                 protocol_id = next((i for i, j in zip(id, name) if j == item), None)
-                tvl = get_tvl_value(protocol_id)
-                result.append({protocol_id: tvl})
+                if protocol_id:
+                    tvl = get_tvl_value(protocol_id)
+                    result.append({protocol_id: tvl})
             if not result:
                 return None
-            max_key = max(result, key=lambda dct: dct.get(list(dct.keys())[0]))
+            max_key = max(result, key=lambda dct: float(dct[list(dct.keys())[0]]["tvl"]))
             return max_key
 
 
-def get_coin_price_tool(coin_name):
+def get_coin_price_tool(coin_name: str) -> str:
     """Get the price of a cryptocurrency."""
     try:
         price = get_price(coin_name)
@@ -177,7 +181,7 @@ def get_coin_price_tool(coin_name):
         return Config.API_ERROR_MESSAGE
 
 
-def get_nft_floor_price_tool(nft_name):
+def get_nft_floor_price_tool(nft_name: str) -> str:
     """Get the floor price of an NFT."""
     try:
         floor_price = get_floor_price(nft_name)
@@ -188,7 +192,7 @@ def get_nft_floor_price_tool(nft_name):
         return Config.API_ERROR_MESSAGE
 
 
-def get_protocol_total_value_locked_tool(protocol_name):
+def get_protocol_total_value_locked_tool(protocol_name: str) -> str:
     """Get the TVL (Total Value Locked) of a protocol."""
     try:
         tvl = get_protocol_tvl(protocol_name)
@@ -200,7 +204,7 @@ def get_protocol_total_value_locked_tool(protocol_name):
         return Config.API_ERROR_MESSAGE
 
 
-def get_fully_diluted_valuation_tool(coin_name):
+def get_fully_diluted_valuation_tool(coin_name: str) -> str:
     """Get the fully diluted valuation of a coin."""
     try:
         fdv = get_fdv(coin_name)
@@ -211,7 +215,7 @@ def get_fully_diluted_valuation_tool(coin_name):
         return Config.API_ERROR_MESSAGE
 
 
-def get_coin_market_cap_tool(coin_name):
+def get_coin_market_cap_tool(coin_name: str) -> str:
     """Get the market cap of a coin."""
     try:
         market_cap = get_market_cap(coin_name)
@@ -220,94 +224,3 @@ def get_coin_market_cap_tool(coin_name):
         return Config.MARKET_CAP_SUCCESS_MESSAGE.format(coin_name=coin_name, market_cap=market_cap)
     except requests.exceptions.RequestException:
         return Config.API_ERROR_MESSAGE
-
-
-def get_tools():
-    """Return a list of tools for the agent."""
-    return [
-        {
-            "type": "function",
-            "function": {
-                "name": "get_price",
-                "description": "Get the price of a cryptocurrency",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "coin_name": {
-                            "type": "string",
-                            "description": "The name of the coin.",
-                        }
-                    },
-                    "required": ["coin_name"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_floor_price",
-                "description": "Get the floor price of an NFT",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "nft_name": {
-                            "type": "string",
-                            "description": "Name of the NFT",
-                        }
-                    },
-                    "required": ["nft_name"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_tvl",
-                "description": "Get the TVL (Total Value Locked) of a protocol.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "protocol_name": {
-                            "type": "string",
-                            "description": "Name of the protocol",
-                        }
-                    },
-                    "required": ["protocol_name"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_fdv",
-                "description": "Get the fdv or fully diluted valuation of a coin",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "coin_name": {
-                            "type": "string",
-                            "description": "Name of the coin",
-                        }
-                    },
-                    "required": ["coin_name"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "get_market_cap",
-                "description": "Get the mc or market cap of a coin",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "coin_name": {
-                            "type": "string",
-                            "description": "Name of the coin",
-                        }
-                    },
-                    "required": ["coin_name"],
-                },
-            },
-        },
-    ]

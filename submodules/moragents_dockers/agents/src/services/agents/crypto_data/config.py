@@ -11,7 +11,7 @@ class Config:
     agent_config = AgentConfig(
         path="src.services.agents.crypto_data.agent",
         class_name="CryptoDataAgent",
-        description="Fetches cryptocurrency price and market data from various sources.",
+        description="Fetches basic cryptocurrency data such as price, market cap, TVL, and FDV from various sources.",
         human_readable_name="Crypto Data Analyst",
         command="cryptodata",
         upload_required=False,
@@ -20,39 +20,90 @@ class Config:
     # *************
     # TOOLS CONFIG
     # *************
-
     tools = [
         {
-            "name": "get_price",
-            "description": "Get current price of a cryptocurrency",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "coin_name": {"type": "string", "description": "Name of the cryptocurrency"},
+            "type": "function",
+            "function": {
+                "name": "get_price",
+                "description": "Get the price of a cryptocurrency",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "coin_name": {
+                            "type": "string",
+                            "description": "The name of the coin.",
+                        }
+                    },
+                    "required": ["coin_name"],
                 },
-                "required": ["coin_name"],
             },
         },
         {
-            "name": "get_floor_price",
-            "description": "Get NFT collection floor price",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "nft_name": {"type": "string", "description": "Name of the NFT collection"},
+            "type": "function",
+            "function": {
+                "name": "get_floor_price",
+                "description": "Get the floor price of an NFT",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "nft_name": {
+                            "type": "string",
+                            "description": "Name of the NFT",
+                        }
+                    },
+                    "required": ["nft_name"],
                 },
-                "required": ["nft_name"],
             },
         },
         {
-            "name": "get_tvl",
-            "description": "Get total value locked (TVL) of a protocol",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "protocol_name": {"type": "string", "description": "Name of the protocol"},
+            "type": "function",
+            "function": {
+                "name": "get_tvl",
+                "description": "Get the TVL (Total Value Locked) of a protocol.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "protocol_name": {
+                            "type": "string",
+                            "description": "Name of the protocol",
+                        }
+                    },
+                    "required": ["protocol_name"],
                 },
-                "required": ["protocol_name"],
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_fdv",
+                "description": "Get the fdv or fully diluted valuation of a coin",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "coin_name": {
+                            "type": "string",
+                            "description": "Name of the coin",
+                        }
+                    },
+                    "required": ["coin_name"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_market_cap",
+                "description": "Get the mc or market cap of a coin",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "coin_name": {
+                            "type": "string",
+                            "description": "Name of the coin",
+                        }
+                    },
+                    "required": ["coin_name"],
+                },
             },
         },
     ]

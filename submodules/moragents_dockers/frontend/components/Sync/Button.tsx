@@ -11,6 +11,7 @@ export const SyncButton: React.FC = () => {
     <>
       <Flex
         as="button"
+        cursor="pointer"
         align="center"
         gap={3}
         width="100%"

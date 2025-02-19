@@ -2,8 +2,7 @@ from typing import Dict, Any, Optional, Union
 import logging
 from src.models.service.agent_core import AgentCore
 from src.models.service.chat_models import ChatRequest, AgentResponse
-from src.stores import chat_manager_instance
-from langchain.schema import HumanMessage, SystemMessage
+from langchain.schema import SystemMessage
 from .config import Config, TokenRegistry
 from .client import RugcheckClient
 

@@ -5,7 +5,15 @@ import { MessageItem } from "@/components/MessageItem";
 
 import styles from "./index.module.css";
 
-export const MessageList: FC<{ messages: ChatMessage[] }> = ({ messages }) => {
+type MessageListProps = {
+  messages: ChatMessage[];
+  prefilledOptionsVisible?: boolean;
+};
+
+export const MessageList: FC<MessageListProps> = ({
+  messages,
+  prefilledOptionsVisible = false,
+}) => {
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -25,7 +33,12 @@ export const MessageList: FC<{ messages: ChatMessage[] }> = ({ messages }) => {
   }, [messages]);
 
   return (
-    <Box ref={containerRef} className={styles.messageList}>
+    <Box
+      ref={containerRef}
+      className={`${styles.messageList} ${
+        prefilledOptionsVisible ? styles.withPrefilledOptions : ""
+      }`}
+    >
       {messages.map((message, index) => (
         <div
           ref={index === messages.length - 1 ? lastMessageRef : undefined}

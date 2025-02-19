@@ -38,7 +38,7 @@ class ImagenAgent(AgentCore):
                         "and generating appropriate images."
                     )
                 ),
-                HumanMessage(content=request.prompt.content),
+                *request.messages_for_llm,
             ]
 
             # For image generation, we'll directly use the prompt content

@@ -4,6 +4,12 @@
   overflow-x: hidden;
   height: 100%;
   background-color: #000;
+  transition: padding-bottom 0.3s ease;
+}
+
+.messageList.withPrefilledOptions {
+  /* This class is applied when prefilled options are visible */
+  scroll-padding-bottom: 200px; /* Adjust this value based on prefilled options height */
 }
 
 .messageList::-webkit-scrollbar {

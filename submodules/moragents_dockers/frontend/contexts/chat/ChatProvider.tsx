@@ -1,9 +1,20 @@
-import React, { useReducer, useCallback, useEffect, ReactNode } from "react";
+import React, {
+  useReducer,
+  useCallback,
+  useEffect,
+  ReactNode,
+  useRef,
+} from "react";
 import { useChainId, useAccount } from "wagmi";
 import { ChatMessage } from "@/services/types";
 import { getHttpClient } from "@/services/constants";
-import { writeMessage, uploadFile } from "@/services/ChatManagement/api";
+import {
+  writeMessage,
+  uploadFile,
+  generateConversationTitle,
+} from "@/services/ChatManagement/api";
 import { getMessagesHistory } from "@/services/ChatManagement/storage";
+import { getStorageData } from "@/services/LocalStorage/core";
 import { deleteConversation } from "@/services/ChatManagement/conversations";
 import { chatReducer, initialState } from "@/contexts/chat/ChatReducer";
 import ChatContext from "@/contexts/chat/ChatContext";
@@ -17,21 +28,48 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
   const chainId = useChainId();
   const { address } = useAccount();
 
-  // Load initial messages for default conversation
+  // Track conversations that have already attempted title generation
+  const titleGenerationAttempted = useRef<Set<string>>(new Set());
+  // Track active title generation requests to prevent duplicates
+  const pendingTitleGeneration = useRef<Set<string>>(new Set());
+
+  // Load initial messages and titles for default conversation
   useEffect(() => {
-    const loadInitialMessages = async () => {
+    const loadInitialData = async () => {
       try {
         const messages = getMessagesHistory("default");
         dispatch({
           type: "SET_MESSAGES",
           payload: { conversationId: "default", messages },
         });
+
+        // Load conversation titles from localStorage
+        const data = getStorageData();
+        const titles: Record<string, string> = {};
+
+        Object.keys(data.conversations).forEach((convId) => {
+          if (data.conversations[convId].name) {
+            titles[convId] = data.conversations[convId].name;
+            // Mark conversations with custom titles as already having attempted title generation
+            if (data.conversations[convId].name !== "New Conversation") {
+              titleGenerationAttempted.current.add(convId);
+            }
+          }
+        });
+
+        // Set all titles at once
+        Object.entries(titles).forEach(([convId, title]) => {
+          dispatch({
+            type: "SET_CONVERSATION_TITLE",
+            payload: { conversationId: convId, title },
+          });
+        });
       } catch (error) {
-        console.error("Failed to load initial messages:", error);
+        console.error("Failed to load initial data:", error);
       }
     };
 
-    loadInitialMessages();
+    loadInitialData();
   }, []);
 
   // Set current conversation and load its messages
@@ -48,12 +86,34 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             type: "SET_MESSAGES",
             payload: { conversationId, messages },
           });
+
+          // Load conversation title if available
+          const data = getStorageData();
+          if (data.conversations[conversationId]?.name) {
+            dispatch({
+              type: "SET_CONVERSATION_TITLE",
+              payload: {
+                conversationId,
+                title: data.conversations[conversationId].name,
+              },
+            });
+
+            // Mark as having a custom title if it's not the default
+            if (
+              data.conversations[conversationId].name !== "New Conversation"
+            ) {
+              titleGenerationAttempted.current.add(conversationId);
+            }
+          }
         } catch (error) {
           console.error(
-            `Failed to load messages for conversation ${conversationId}:`,
+            `Failed to load conversation ${conversationId}:`,
             error
           );
-          dispatch({ type: "SET_ERROR", payload: "Failed to load messages" });
+          dispatch({
+            type: "SET_ERROR",
+            payload: "Failed to load conversation",
+          });
         } finally {
           dispatch({ type: "SET_LOADING", payload: false });
         }
@@ -62,24 +122,90 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     [state.messages]
   );
 
-  // Refresh messages for current conversation
+  // Refresh messages and title for current conversation
   const refreshMessages = useCallback(async () => {
     const { currentConversationId } = state;
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
+      // Get latest messages
       const messages = getMessagesHistory(currentConversationId);
       dispatch({
         type: "SET_MESSAGES",
         payload: { conversationId: currentConversationId, messages },
       });
+
+      // Get latest title
+      const data = getStorageData();
+      if (data.conversations[currentConversationId]?.name) {
+        dispatch({
+          type: "SET_CONVERSATION_TITLE",
+          payload: {
+            conversationId: currentConversationId,
+            title: data.conversations[currentConversationId].name,
+          },
+        });
+      }
+
+      // After receiving a response, check if we need to generate a title
+      // but ensure we don't trigger this logic repeatedly for the same conversation
+      maybeGenerateTitle(currentConversationId, messages);
     } catch (error) {
-      console.error("Failed to refresh messages:", error);
-      dispatch({ type: "SET_ERROR", payload: "Failed to refresh messages" });
+      console.error("Failed to refresh conversation data:", error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Failed to refresh conversation",
+      });
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
     }
   }, [state.currentConversationId]);
+
+  // Safe title generation that avoids infinite loops
+  const maybeGenerateTitle = useCallback(
+    (conversationId: string, messages: ChatMessage[]) => {
+      // Skip if we've already attempted to generate a title for this conversation
+      if (titleGenerationAttempted.current.has(conversationId)) return;
+
+      // Skip if there's a pending title generation request
+      if (pendingTitleGeneration.current.has(conversationId)) return;
+
+      // Only generate title if there are enough messages
+      // and at least one is from the assistant (indicating a response occurred)
+      const hasAgentResponse = messages.some((m) => m.role === "assistant");
+      const hasEnoughMessages = messages.length >= 5;
+      const currentTitle = state.conversationTitles[conversationId];
+      const hasDefaultTitle =
+        currentTitle === "New Conversation" || !currentTitle;
+
+      if (hasEnoughMessages && hasAgentResponse && hasDefaultTitle) {
+        // Mark as attempted regardless of outcome
+        titleGenerationAttempted.current.add(conversationId);
+        pendingTitleGeneration.current.add(conversationId);
+
+        // Run title generation outside the current execution context
+        setTimeout(() => {
+          generateConversationTitle(messages, getHttpClient(), conversationId)
+            .then((title) => {
+              if (title) {
+                dispatch({
+                  type: "SET_CONVERSATION_TITLE",
+                  payload: { conversationId, title },
+                });
+              }
+            })
+            .catch((error) => {
+              console.error("Failed to generate conversation title:", error);
+            })
+            .finally(() => {
+              // Clean up pending request tracking
+              pendingTitleGeneration.current.delete(conversationId);
+            });
+        }, 0);
+      }
+    },
+    [state.conversationTitles]
+  );
 
   // Send message or file
   const sendMessage = useCallback(
@@ -146,6 +272,10 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
       try {
         deleteConversation(conversationId);
+
+        // Remove from title generation tracking
+        titleGenerationAttempted.current.delete(conversationId);
+        pendingTitleGeneration.current.delete(conversationId);
 
         // If current conversation was deleted, switch to default
         if (conversationId === state.currentConversationId) {

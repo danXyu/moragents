@@ -1,8 +1,6 @@
 import { Axios } from "axios";
 import {
   ChatMessage,
-  UserMessage,
-  ClaimTransactionPayload,
   SwapTxPayloadType,
   XCredentials,
   CoinbaseCredentials,
@@ -115,122 +113,6 @@ export const sendSwapStatus = async (
   }
 };
 
-export const writeMessage = async (
-  history: ChatMessage[],
-  message: string,
-  backendClient: Axios,
-  chainId: number,
-  address: string,
-  conversationId: string = "default"
-) => {
-  const newMessage: UserMessage = {
-    role: "user",
-    content: message,
-  };
-
-  history.push(newMessage);
-  let resp;
-  try {
-    resp = await backendClient.post("/api/v1/chat", {
-      prompt: {
-        role: "user",
-        content: message,
-      },
-      chain_id: String(chainId),
-      wallet_address: address,
-      conversation_id: conversationId,
-    });
-  } catch (e) {
-    console.error(e);
-  }
-
-  return await getMessagesHistory(backendClient, conversationId);
-};
-
-export const postTweet = async (
-  backendClient: Axios,
-  content: string
-): Promise<void> => {
-  const apiKey = localStorage.getItem("apiKey");
-  const apiSecret = localStorage.getItem("apiSecret");
-  const accessToken = localStorage.getItem("accessToken");
-  const accessTokenSecret = localStorage.getItem("accessTokenSecret");
-  const bearerToken = localStorage.getItem("bearerToken");
-
-  if (
-    !apiKey ||
-    !apiSecret ||
-    !accessToken ||
-    !accessTokenSecret ||
-    !bearerToken
-  ) {
-    throw new Error(
-      "X API credentials not found. Please set them in the settings."
-    );
-  }
-
-  try {
-    await backendClient.post("/tweet/post", {
-      post_content: content,
-      api_key: apiKey,
-      api_secret: apiSecret,
-      access_token: accessToken,
-      access_token_secret: accessTokenSecret,
-      bearer_token: bearerToken,
-    });
-  } catch (error) {
-    console.error("Error posting tweet:", error);
-    throw error;
-  }
-};
-
-export const regenerateTweet = async (
-  backendClient: Axios
-): Promise<string> => {
-  try {
-    const response = await backendClient.post("/tweet/regenerate");
-    return response.data;
-  } catch (error) {
-    console.error("Error regenerating tweet:", error);
-    throw error;
-  }
-};
-
-export const getClaimTxPayload = async (
-  backendClient: Axios,
-  transactions: ClaimTransactionPayload[]
-): Promise<ClaimTransactionPayload[]> => {
-  const response = await backendClient.post("/claim/claim", { transactions });
-  return response.data.transactions;
-};
-
-export const sendClaimStatus = async (
-  backendClient: Axios,
-  chainId: number,
-  walletAddress: string,
-  claimStatus: string,
-  txHash?: string
-): Promise<ChatMessage> => {
-  const responseBody = await backendClient.post("/claim/tx_status", {
-    chain_id: chainId,
-    wallet_address: walletAddress,
-    status: claimStatus,
-    tx_hash: txHash || "",
-    tx_type: "claim",
-  });
-
-  return {
-    role: responseBody.data.role,
-    content: responseBody.data.content,
-    agentName: responseBody.data.agentName,
-    error_message: responseBody.data.error_message,
-    metadata: responseBody.data.metadata,
-    requires_action: responseBody.data.requires_action,
-    action_type: responseBody.data.action_type,
-    timestamp: responseBody.data.timestamp,
-  } as ChatMessage;
-};
-
 export const getAvailableAgents = async (backendClient: Axios) => {
   try {
     const response = await backendClient.get("/agents/available");
@@ -296,8 +178,6 @@ export const setOneInchCredentials = async (
     throw error;
   }
 };
-
-import { Axios } from "axios";
 
 interface ElfaCredentials {
   api_key: string;

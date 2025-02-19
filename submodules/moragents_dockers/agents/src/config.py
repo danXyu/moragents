@@ -8,6 +8,8 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_ollama import ChatOllama
+from langchain_together import ChatTogether
+from langchain.pydantic_v1 import SecretStr
 
 logger = logging.getLogger(__name__)
 
@@ -168,15 +170,22 @@ class AppConfig:
 
     # Together AI configuration
     TOGETHER_API_KEY = "4d96d40ca55afa5a8867867e751b99aba12eb2a09bfad1c70235d084f637a053"
-    TOGETHER_MODEL = "meta-llama/Llama-3.3-70B-Instruct-Turbo"  # Or your preferred model
+    TOGETHER_MODEL_SMALL = "meta-llama/Llama-3.2-3B-Instruct-Turbo"
+    TOGETHER_MODEL_LARGE = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
     TOGETHER_EMBEDDING_MODEL = "TogetherComputer/m2-bert-80M-8k-retrieval"
 
 
 from langchain_together import ChatTogether
 
 
-LLM = ChatTogether(
-    model=AppConfig.TOGETHER_MODEL,
+LLM_SMALL = ChatTogether(
+    model=AppConfig.TOGETHER_MODEL_SMALL,
+    api_key=AppConfig.TOGETHER_API_KEY,
+    temperature=0.7,
+)
+
+LLM_LARGE = ChatTogether(
+    model=AppConfig.TOGETHER_MODEL_LARGE,
     api_key=AppConfig.TOGETHER_API_KEY,
     temperature=0.7,
 )

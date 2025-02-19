@@ -6,6 +6,7 @@ export const initialState: ChatState = {
   currentConversationId: "default",
   isLoading: false,
   error: null,
+  conversationTitles: {},
 };
 
 /**
@@ -49,6 +50,15 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
             ...(state.messages[action.payload.conversationId] || []),
             action.payload.message,
           ],
+        },
+      };
+
+    case "SET_CONVERSATION_TITLE":
+      return {
+        ...state,
+        conversationTitles: {
+          ...state.conversationTitles,
+          [action.payload.conversationId]: action.payload.title,
         },
       };
 

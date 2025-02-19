@@ -4,10 +4,7 @@ import {
   decryptData,
   downloadFromIrys,
 } from "@/services/LitProtocol/utils";
-import {
-  getStorageData,
-  saveStorageData,
-} from "@/services/ChatManagement/sessions";
+import { getStorageData, saveStorageData } from "@/services/LocalStorage/core";
 
 export const encryptAndUploadChats = async (): Promise<string> => {
   try {

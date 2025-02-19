@@ -24,13 +24,13 @@ interface Token {
   uniqueSells24?: number;
 }
 
-interface TopTokensData {
+interface TopTokensMetadata {
   success: boolean;
   data: Token[];
 }
 
 interface CodexTopTokensMessageProps {
-  metadata: TopTokensData;
+  metadata: TopTokensMetadata;
 }
 
-export type { CodexTopTokensMessageProps, Token };
+export type { CodexTopTokensMessageProps, TopTokensMetadata, Token };

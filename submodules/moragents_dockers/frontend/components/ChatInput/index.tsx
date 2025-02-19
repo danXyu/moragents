@@ -27,6 +27,7 @@ type ChatInputProps = {
   disabled: boolean;
   hasMessages?: boolean;
   isSidebarOpen?: boolean;
+  onPrefilledOptionsChange?: (isVisible: boolean, height: number) => void;
 };
 
 export const ChatInput: FC<ChatInputProps> = ({
@@ -34,6 +35,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   disabled,
   hasMessages = false,
   isSidebarOpen = false,
+  onPrefilledOptionsChange,
 }) => {
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -46,6 +48,8 @@ export const ChatInput: FC<ChatInputProps> = ({
     width: 0,
   });
   const [isMobile] = useMediaQuery("(max-width: 768px)");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const prefilledOptionsRef = useRef<HTMLDivElement>(null);
 
   const inputGroupRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -69,6 +73,22 @@ export const ChatInput: FC<ChatInputProps> = ({
       });
     }
   }, [message, showCommands, isMobile]);
+
+  // Monitor prefilled options height and visibility
+  useEffect(() => {
+    if (prefilledOptionsRef.current && onPrefilledOptionsChange) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        const height = entries[0].contentRect.height;
+        onPrefilledOptionsChange(height > 0, height);
+      });
+
+      resizeObserver.observe(prefilledOptionsRef.current);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+  }, [onPrefilledOptionsChange]);
 
   const filteredCommands = message.startsWith("/")
     ? commands.filter((cmd) =>
@@ -132,14 +152,37 @@ export const ChatInput: FC<ChatInputProps> = ({
   const agentSupportsFileUploads = !isMobile;
 
   const handleSubmit = async () => {
-    if (!message && !file) return;
-    await onSubmit(message, file);
-    setMessage("");
-    setFile(null);
+    if ((!message && !file) || isSubmitting || disabled) return;
+
+    try {
+      setIsSubmitting(true);
+      const messageToSend = message;
+      const fileToSend = file;
+
+      // Clear input immediately to improve UX
+      setMessage("");
+      setFile(null);
+
+      // Then submit the message
+      await onSubmit(messageToSend, fileToSend);
+    } catch (error) {
+      console.error("Error submitting message:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePrefilledSelect = async (selectedMessage: string) => {
-    await onSubmit(selectedMessage, null);
+    if (isSubmitting || disabled) return;
+
+    try {
+      setIsSubmitting(true);
+      await onSubmit(selectedMessage, null);
+    } catch (error) {
+      console.error("Error submitting prefilled message:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -205,12 +248,12 @@ export const ChatInput: FC<ChatInputProps> = ({
       )}
 
       <div className={styles.container}>
-        {!hasMessages && (
+        <div ref={prefilledOptionsRef}>
           <PrefilledOptions
             onSelect={handlePrefilledSelect}
             isSidebarOpen={isSidebarOpen}
           />
-        )}
+        </div>
         <div className={styles.flexContainer}>
           <InputGroup ref={inputGroupRef} className={styles.inputGroup}>
             {agentSupportsFileUploads && (
@@ -219,6 +262,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                   type="file"
                   className={styles.hiddenInput}
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  disabled={isSubmitting || disabled}
                 />
                 <IconButton
                   aria-label="Attach file"
@@ -228,8 +272,10 @@ export const ChatInput: FC<ChatInputProps> = ({
                       height={isMobile ? "16px" : "20px"}
                     />
                   }
-                  className={disabled ? styles.disabledIcon : ""}
-                  disabled={disabled}
+                  className={
+                    isSubmitting || disabled ? styles.disabledIcon : ""
+                  }
+                  disabled={isSubmitting || disabled}
                   onClick={() =>
                     document
                       .querySelector('input[type="file"]')
@@ -242,10 +288,10 @@ export const ChatInput: FC<ChatInputProps> = ({
               ref={inputRef}
               className={styles.messageInput}
               onKeyDown={handleKeyDown}
-              disabled={disabled || file !== null}
+              disabled={isSubmitting || disabled || file !== null}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Start typing or press / for commands..."
+              placeholder="Start typing or / for commands"
               rows={1}
               resize="none"
               overflow="hidden"
@@ -254,7 +300,7 @@ export const ChatInput: FC<ChatInputProps> = ({
             <InputRightAddon className={styles.rightAddon}>
               <IconButton
                 className={styles.sendButton}
-                disabled={disabled}
+                disabled={isSubmitting || disabled || (!message && !file)}
                 aria-label="Send"
                 onClick={handleSubmit}
                 icon={

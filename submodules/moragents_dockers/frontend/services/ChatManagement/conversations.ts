@@ -15,6 +15,7 @@ export const createNewConversation = (): string => {
 
   data.conversations[newId] = {
     id: newId,
+    name: "New Conversation",
     messages: [{ ...DEFAULT_MESSAGE, timestamp }],
     createdAt: timestamp,
     hasUploadedFile: false,
@@ -46,11 +47,13 @@ export const deleteConversation = (conversationId: string): void => {
 /**
  * Get all conversations, sorted with default first, then by creation date
  */
-export const getAllConversations = (): string[] => {
+export const getAllConversations = () => {
   const data = getStorageData();
-  return Object.keys(data.conversations).sort((a, b) => {
+  const sortedIds = Object.keys(data.conversations).sort((a, b) => {
     if (a === DEFAULT_CONVERSATION_ID) return -1;
     if (b === DEFAULT_CONVERSATION_ID) return 1;
     return data.conversations[b].createdAt - data.conversations[a].createdAt;
   });
+
+  return sortedIds.map((id) => data.conversations[id]);
 };
