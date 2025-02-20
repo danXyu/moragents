@@ -16,7 +16,6 @@ venv.bak/
 
 # Distribution / packaging
 dist/
-build/
 *.egg-info/
 *.egg
 .eggs/
@@ -50,6 +49,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+.mypy_cache/
 ## resource files
 resources/*
 
@@ -60,6 +60,7 @@ build_assets/macOS/MORAgentsInstaller.pkg
 
 ## app
 MORagents.app
+app.log
 
 ## lint
 .pytest_cache/

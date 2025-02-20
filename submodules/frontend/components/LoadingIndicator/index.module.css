@@ -1,0 +1,26 @@
+.messageContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  color: white;
+  min-height: 30px;
+  padding-bottom: 2px;
+}
+
+.assistantContent {
+  background-color: #000;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.agentName {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 0px;
+}
+
+.loaderWrapper {
+  display: flex;
+  justify-content: center;
+}
