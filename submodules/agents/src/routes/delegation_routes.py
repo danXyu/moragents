@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from models.service.chat_models import ChatRequest
 from services.delegator.delegator import Delegator
 from controllers.delegation_controller import DelegationController
-from config import LLM_LARGE, EMBEDDINGS, setup_logging
+from config import LLM_DELEGATOR, EMBEDDINGS, setup_logging
 from models.service.service_models import GenerateConversationTitleRequest
 
 logger = setup_logging()
@@ -17,7 +17,7 @@ async def chat(chat_request: ChatRequest) -> JSONResponse:
     logger.info(f"Received chat request for conversation {chat_request.conversation_id}")
 
     # Initialize new delegator and controller for each request
-    delegator = Delegator(LLM_LARGE, EMBEDDINGS)
+    delegator = Delegator(LLM_DELEGATOR, EMBEDDINGS)
     controller = DelegationController(delegator)
 
     try:

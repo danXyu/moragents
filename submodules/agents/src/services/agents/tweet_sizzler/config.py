@@ -11,7 +11,10 @@ class Config:
     agent_config = AgentConfig(
         path="src.services.agents.tweet_sizzler.agent",
         class_name="TweetSizzlerAgent",
-        description="Generates engaging tweets and manages Twitter interactions",
+        description="Creates engaging cryptocurrency-related social media content, generates tweet drafts, analyzes tweet performance metrics, and suggests hashtags or posting strategies",
+        delegator_description="Creates engaging cryptocurrency-related social media content, generates tweet drafts, "
+        "analyzes tweet performance metrics, and suggests hashtags or posting strategies. Use when users "
+        "want to create or optimize social media content related to crypto.",
         human_readable_name="Tweet Generator",
         command="tweet",
         upload_required=False,

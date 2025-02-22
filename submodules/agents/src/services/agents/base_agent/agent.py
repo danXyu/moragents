@@ -4,8 +4,9 @@ from typing import Any, Dict
 from services.agents.base_agent import tools
 from models.service.chat_models import ChatRequest, AgentResponse
 from models.service.agent_core import AgentCore
-from langchain.schema import HumanMessage, SystemMessage
+from langchain.schema import SystemMessage
 from services.agents.base_agent.config import Config
+from services.agents.base_agent.tool_types import BaseAgentToolType
 from stores import wallet_manager_instance
 
 logger = logging.getLogger(__name__)
@@ -57,11 +58,11 @@ class BaseAgent(AgentCore):
     async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate Base transaction tool based on function name."""
         try:
-            if func_name == "swap_assets":
+            if func_name == BaseAgentToolType.SWAP_ASSETS.value:
                 return AgentResponse.action_required(content="Ready to perform swap", action_type="swap")
-            elif func_name == "transfer_asset":
+            elif func_name == BaseAgentToolType.TRANSFER_ASSET.value:
                 return AgentResponse.action_required(content="Ready to perform transfer", action_type="transfer")
-            elif func_name == "get_balance":
+            elif func_name == BaseAgentToolType.GET_BALANCE.value:
                 wallet = wallet_manager_instance.get_active_wallet()
                 if not wallet:
                     return AgentResponse.success(

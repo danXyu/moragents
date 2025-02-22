@@ -13,20 +13,20 @@ import {
 } from "@/services/types";
 
 import { Tweet } from "@/components/Agents/Tweet/CustomMessages/TweetMessage";
-import { TopTokensMessage } from "@/components/Agents/Dexscreener/CustomMessages/TopTokensMessage";
+import { TopTokensMessage } from "@/components/Agents/Dexscreener/TopTokens/TopTokensMessage";
 import CryptoChartMessage from "@/components/Agents/CryptoData/CryptoChartMessage";
 import DCAMessage from "@/components/Agents/DCA/DCAMessage";
 import BaseTransferMessage from "@/components/Agents/Base/TransferMessage";
 import BaseSwapMessage from "@/components/Agents/Base/SwapMessage";
 import OneInchSwapMessage from "@/components/Agents/Swaps/SwapMessage";
-import { ElfaTopMentionsMessage } from "@/components/Agents/Elfa/TopMentionsMessage";
-import { ElfaTrendingTokensMessage } from "@/components/Agents/Elfa/TrendingTokensMessage";
+import { ElfaTopMentionsMessage } from "@/components/Agents/Elfa/TopMentions/TopMentionsMessage";
+import { ElfaTrendingTokensMessage } from "@/components/Agents/Elfa/TrendingTokens/TrendingTokensMessage";
 import { RugcheckReportMessage } from "@/components/Agents/Rugcheck/RugcheckReportMessage";
-import { CodexTopTokensMessage } from "@/components/Agents/Codex/CodexTopTokensMessage";
-import { TopMentionsMetadata } from "@/components/Agents/Elfa/TopMentionsMessage.types";
-import { TrendingTokensMetadata } from "@/components/Agents/Elfa/TrendingTokensMessage.types";
+import { CodexTopTokensMessage } from "@/components/Agents/Codex/TopTokens/CodexTopTokensMessage";
+import { TopMentionsMetadata } from "@/components/Agents/Elfa/TopMentions/TopMentionsMessage.types";
+import { TrendingTokensMetadata } from "@/components/Agents/Elfa/TrendingTokens/TrendingTokensMessage.types";
 import { RugcheckMetadata } from "@/components/Agents/Rugcheck/RugcheckReportMessage.types";
-import { TopTokensMetadata } from "@/components/Agents/Codex/CodexTopTokensMessage.types";
+import { TopTokensMetadata } from "@/components/Agents/Codex/TopTokens/CodexTopTokensMessage.types";
 
 type MessageRenderer = {
   check: (message: ChatMessage) => boolean;

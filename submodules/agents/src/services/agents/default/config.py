@@ -15,6 +15,9 @@ class Config:
         path="src.services.agents.default.agent",
         class_name="DefaultAgent",
         description="Must be used for meta-queries that ask about active Morpheus agents, and also for general, simple questions",
+        delegator_description="Handles meta-queries about Morpheus itself, available agents, system capabilities, and "
+        "general cryptocurrency questions that don't require specialized agents. Use when no other agent is clearly "
+        "applicable or for simple informational requests.",
         human_readable_name="Default General Purpose",
         command="morpheus",
         upload_required=False,

@@ -7,6 +7,16 @@ import { RugcheckReportMessageProps } from "./RugcheckReportMessage.types";
 export const RugcheckReportMessage: React.FC<RugcheckReportMessageProps> = ({
   metadata,
 }) => {
+  if (!metadata?.report) {
+    return (
+      <div className={styles.container}>
+        <Text className={styles.title}>
+          No security analysis report available
+        </Text>
+      </div>
+    );
+  }
+
   const { report, mint_address } = metadata;
 
   const truncateAddress = (address: string) => {
@@ -44,8 +54,10 @@ export const RugcheckReportMessage: React.FC<RugcheckReportMessageProps> = ({
       <div className={styles.header}>
         <Text className={styles.title}>Security Analysis Report</Text>
         <div className={styles.scoreWrapper}>
-          <span className={`${styles.score} ${getScoreClass(report.score)}`}>
-            Score: {report.score.toLocaleString()}
+          <span
+            className={`${styles.score} ${getScoreClass(report?.score || 0)}`}
+          >
+            Score: {report?.score?.toLocaleString() || "0"}
           </span>
         </div>
       </div>
@@ -61,7 +73,7 @@ export const RugcheckReportMessage: React.FC<RugcheckReportMessageProps> = ({
       </div>
 
       <div className={styles.riskList}>
-        {report.risks.map((risk, index) => (
+        {report?.risks?.map((risk, index) => (
           <div
             key={index}
             className={`${styles.riskCard} ${getRiskClass(risk.level)}`}

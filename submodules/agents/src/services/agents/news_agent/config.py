@@ -12,6 +12,9 @@ class Config:
         path="src.services.agents.news_agent.agent",
         class_name="NewsAgent",
         description="Fetches and analyzes cryptocurrency news for potential price impacts",
+        delegator_description="Discovers, summarizes, and analyzes cryptocurrency news stories with potential market "
+        "impact, including regulatory developments, partnership announcements, protocol updates, "
+        "and market-moving events. Use when users seek information about crypto news or event analysis.",
         human_readable_name="Crypto News Analyst",
         command="news",
         upload_required=False,

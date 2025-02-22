@@ -10,7 +10,7 @@ import styles from "./CodexTopTokensMessage.module.css";
 import {
   CodexTopTokensMessageProps,
   Token,
-} from "@/components/Agents/Codex/CodexTopTokensMessage.types";
+} from "@/components/Agents/Codex/TopTokens/CodexTopTokensMessage.types";
 import { Text } from "@chakra-ui/react";
 
 const INITIAL_DISPLAY_COUNT = 3;

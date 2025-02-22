@@ -4,8 +4,8 @@ from typing import Dict, Any
 from services.agents.crypto_data import tools
 from models.service.chat_models import ChatRequest, AgentResponse
 from models.service.agent_core import AgentCore
-from langchain.schema import SystemMessage
 from services.agents.crypto_data.config import Config
+from services.agents.crypto_data.tool_types import CryptoDataToolType
 
 logger = logging.getLogger(__name__)
 
@@ -21,17 +21,7 @@ class CryptoDataAgent(AgentCore):
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for crypto-related queries."""
         try:
-            messages = [
-                SystemMessage(
-                    content=(
-                        "Don't make assumptions about function arguments - "
-                        "they should always be supplied by the user. "
-                        "Ask for clarification if a request is ambiguous."
-                    )
-                ),
-                *request.messages_for_llm,
-            ]
-
+            messages = [Config.system_message, *request.messages_for_llm]
             result = self.tool_bound_llm.invoke(messages)
             return await self._handle_llm_response(result)
 
@@ -44,32 +34,32 @@ class CryptoDataAgent(AgentCore):
         try:
             metadata = {}
 
-            if func_name == "get_price":
+            if func_name == CryptoDataToolType.GET_PRICE.value:
                 if "coin_name" not in args:
                     return AgentResponse.needs_info(content="Please provide the name of the coin to get its price")
                 content = tools.get_coin_price_tool(args["coin_name"])
                 trading_symbol = tools.get_tradingview_symbol(tools.get_coingecko_id(args["coin_name"]))
                 if trading_symbol:
                     metadata["coinId"] = trading_symbol
-            elif func_name == "get_floor_price":
+            elif func_name == CryptoDataToolType.GET_FLOOR_PRICE.value:
                 if "nft_name" not in args:
                     return AgentResponse.needs_info(
                         content="Please provide the name of the NFT collection to get its floor price"
                     )
                 content = tools.get_nft_floor_price_tool(args["nft_name"])
-            elif func_name == "get_fdv":
+            elif func_name == CryptoDataToolType.GET_FULLY_DILUTED_VALUATION.value:
                 if "coin_name" not in args:
                     return AgentResponse.needs_info(
                         content="Please provide the name of the coin to get its fully diluted valuation"
                     )
                 content = tools.get_fully_diluted_valuation_tool(args["coin_name"])
-            elif func_name == "get_tvl":
+            elif func_name == CryptoDataToolType.GET_TOTAL_VALUE_LOCKED.value:
                 if "protocol_name" not in args:
                     return AgentResponse.needs_info(
                         content="Please provide the name of the protocol to get its total value locked"
                     )
                 content = tools.get_protocol_total_value_locked_tool(args["protocol_name"])
-            elif func_name == "get_market_cap":
+            elif func_name == CryptoDataToolType.GET_MARKET_CAP.value:
                 if "coin_name" not in args:
                     return AgentResponse.needs_info(content="Please provide the name of the coin to get its market cap")
                 content = tools.get_coin_market_cap_tool(args["coin_name"])

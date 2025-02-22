@@ -5,7 +5,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from models.config import Config
+from models.config.config import Config
 from config import load_agent_routes, setup_logging
 from stores import workflow_manager_instance
 

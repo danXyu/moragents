@@ -30,7 +30,7 @@ Docker compose will build and run two containers. One will be for the agents, th
       ```
    2. For Apple silicon (M1, M2, M3, M4, etc)
       ```sh
-      docker compose -f docker-compose-apple.yml up
+      docker compose -f build/docker-compose-apple.yml up
       ```
 
 Open in the browser: `http://localhost:3333/`
@@ -238,17 +238,18 @@ The `Delegator` will automatically:
 1. **Ensure the `Delegator` can properly route requests** to the new agent.
 2. **Test the agent's functionality** through the chat interface.
 
-
 ### 6. Code Quality & Linting
 
 We use several tools to maintain code quality:
 
 #### Python (Root & Agents)
+
 1. **black** - Code formatting
 2. **isort** - Import sorting
 3. **flake8** - Style guide enforcement
 
 #### Frontend
+
 1. **eslint** - JavaScript/TypeScript linting
 
 ---

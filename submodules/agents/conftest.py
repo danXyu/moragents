@@ -5,8 +5,8 @@ import pytest
 from langchain_ollama import ChatOllama
 from langchain_community.embeddings import OllamaEmbeddings
 
-from models.service.chat_models import ChatRequest, ChatMessage
-from config import AppConfig
+from src.models.service.chat_models import ChatRequest, ChatMessage
+from src.config import AppConfig
 
 
 def pytest_addoption(parser):

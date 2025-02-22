@@ -1887,6 +1887,21 @@ SQLAlchemy = ">=1.4,<3"
 tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
+name = "langchain-cerebras"
+version = "0.5.0"
+description = "An integration package connecting Cerebras and LangChain"
+optional = false
+python-versions = "<4.0,>=3.9"
+files = [
+    {file = "langchain_cerebras-0.5.0-py3-none-any.whl", hash = "sha256:f129df699d6eb71d8e2602d7abe9ae75c289168b2e52d33cdefe5d4982e027b9"},
+    {file = "langchain_cerebras-0.5.0.tar.gz", hash = "sha256:24cfe76358cd8c779f33c77708df08cc5fec81ed13797830396be0f52abdd80a"},
+]
+
+[package.dependencies]
+langchain-core = ">=0.3.29,<0.4.0"
+langchain-openai = ">=0.3.0,<0.4.0"
+
+[[package]]
 name = "langchain-community"
 version = "0.3.1"
 description = "Community contributed LangChain integrations."
@@ -4459,4 +4474,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "c4b94b6bf5dba60e81c7cef887b35c5b4e290a9840f028cf76f9d197f02bafa8"
+content-hash = "1486e251e978cb07f844963a74dbfc37bfc1f7c831175265a61c7e1140b4be52"

@@ -1,8 +1,10 @@
 from pydantic import BaseModel
-from typing import Optional, List, Union, Any
+from typing import Optional, List
 
 
 class TokenMetadata(BaseModel):
+    """Model for token metadata."""
+
     address: str
     createdAt: int
     decimals: int
@@ -43,6 +45,7 @@ class TokenMetadata(BaseModel):
 
     @property
     def formatted_response(self) -> str:
+        """Format token metadata for response."""
         formatted = f"## ${self.symbol} ({self.name})\n\n"
         formatted += f"Price: ${self.price:,.6f}\n"
         formatted += f"Market Cap: {self.marketCap or 'N/A'}\n"
@@ -77,11 +80,14 @@ class TokenMetadata(BaseModel):
 
 
 class TopTokensResponse(BaseModel):
+    """Model for top tokens response."""
+
     success: bool
     data: List[TokenMetadata]
 
     @property
     def formatted_response(self) -> str:
+        """Format top tokens response for display."""
         if not self.success:
             return "Failed to get top tokens."
 
@@ -100,11 +106,14 @@ class TopTokensResponse(BaseModel):
 
 
 class TopHoldersResponse(BaseModel):
+    """Model for top holders response."""
+
     success: bool
     data: float  # Percentage owned by top 10 holders
 
     @property
     def formatted_response(self) -> str:
+        """Format top holders response for display."""
         if not self.success:
             return "Failed to get top holders data."
 
@@ -131,6 +140,8 @@ class TopHoldersResponse(BaseModel):
 
 
 class NftSearchItem(BaseModel):
+    """Model for NFT search item."""
+
     address: str
     average: str
     ceiling: str
@@ -148,6 +159,7 @@ class NftSearchItem(BaseModel):
 
     @property
     def formatted_response(self) -> str:
+        """Format NFT search item for display."""
         formatted = f"## {self.name or 'Unnamed Collection'}\n\n"
         if self.symbol:
             formatted += f"Symbol: {self.symbol}\n"
@@ -166,12 +178,15 @@ class NftSearchItem(BaseModel):
 
 
 class NftSearchResponse(BaseModel):
+    """Model for NFT search response."""
+
     success: bool
     hasMore: int
     items: List[NftSearchItem]
 
     @property
     def formatted_response(self) -> str:
+        """Format NFT search response for display."""
         if not self.success:
             return "Failed to search NFT collections."
 

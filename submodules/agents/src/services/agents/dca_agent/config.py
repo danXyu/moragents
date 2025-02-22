@@ -12,6 +12,9 @@ class Config:
         path="src.services.agents.dca_agent.agent",
         class_name="DCAAgent",
         description="Handles automated dollar cost averaging transactions. Use when the user wants to set up recurring purchases of crypto assets.",
+        delegator_description="Manages dollar-cost averaging setup and execution, including schedule creation, "
+        "asset allocation adjustment, and transaction automation across multiple networks. Use when users mention "
+        "recurring purchases, DCA strategies, or automated investment approaches.",
         human_readable_name="DCA Transaction Manager",
         command="dca",
         upload_required=False,

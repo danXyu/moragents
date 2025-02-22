@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from models.service.chat_models import ChatRequest, AgentResponse
 from stores import agent_manager_instance
 from services.delegator.delegator import Delegator
-from config import setup_logging, LLM_LARGE
+from config import setup_logging, LLM_DELEGATOR
 from models.service.service_models import GenerateConversationTitleRequest
 from langchain.schema import SystemMessage
 
@@ -87,7 +87,7 @@ class DelegationController:
         try:
             for attempt in range(3):
                 try:
-                    result = LLM_LARGE.invoke(messages)
+                    result = LLM_DELEGATOR.invoke(messages)
                     if not result:
                         continue
 

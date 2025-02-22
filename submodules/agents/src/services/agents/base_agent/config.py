@@ -1,4 +1,5 @@
 from models.service.agent_config import AgentConfig
+from services.agents.base_agent.tool_types import BaseAgentToolType
 
 
 class Config:
@@ -11,7 +12,8 @@ class Config:
     agent_config = AgentConfig(
         path="src.services.agents.base_agent.agent",
         class_name="BaseAgent",
-        description="Handles transactions on the Base crypto network. Use when the user makes any reference to Base, base, the base network, or Coinbase",
+        description="Specializes in transactions and interactions specifically on the Base network, including Base-specific protocols, Coinbase ecosystem integration, and Base network status monitoring. Use ONLY when users explicitly reference Base, base network, or Coinbase.",
+        delegator_description="Handles transactions on the Base crypto network. Use when the user makes any reference to Base, base, the base network, or Coinbase",
         human_readable_name="Base Transaction Manager",
         command="base",
         upload_required=False,
@@ -23,7 +25,7 @@ class Config:
 
     tools = [
         {
-            "name": "swap_assets",
+            "name": BaseAgentToolType.SWAP_ASSETS.value,
             "description": "Swap one asset for another (Base Mainnet only)",
             "parameters": {
                 "type": "object",
@@ -36,7 +38,7 @@ class Config:
             },
         },
         {
-            "name": "transfer_asset",
+            "name": BaseAgentToolType.TRANSFER_ASSET.value,
             "description": "Transfer an asset to another address",
             "parameters": {
                 "type": "object",
@@ -48,7 +50,7 @@ class Config:
             },
         },
         {
-            "name": "get_balance",
+            "name": BaseAgentToolType.GET_BALANCE.value,
             "description": "Get balance of a specific asset",
             "parameters": {
                 "type": "object",
@@ -58,7 +60,7 @@ class Config:
         },
         # TODO: Add more base tools / functionality
         # {
-        #     "name": "create_token",
+        #     "name": BaseAgentToolType.CREATE_TOKEN.value,
         #     "description": "Create a new ERC-20 token",
         #     "parameters": {
         #         "type": "object",
@@ -74,12 +76,12 @@ class Config:
         #     },
         # },
         # {
-        #     "name": "request_eth_from_faucet",
+        #     "name": BaseAgentToolType.REQUEST_ETH_FROM_FAUCET.value,
         #     "description": "Request ETH from testnet faucet",
         #     "parameters": {"type": "object", "properties": {}},
         # },
         # {
-        #     "name": "mint_nft",
+        #     "name": BaseAgentToolType.MINT_NFT.value,
         #     "description": "Mint an NFT to an address",
         #     "parameters": {
         #         "type": "object",
@@ -91,7 +93,7 @@ class Config:
         #     },
         # },
         # {
-        #     "name": "register_basename",
+        #     "name": BaseAgentToolType.REGISTER_BASENAME.value,
         #     "description": "Register a basename for the agent's wallet",
         #     "parameters": {
         #         "type": "object",

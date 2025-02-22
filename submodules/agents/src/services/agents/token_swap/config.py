@@ -12,6 +12,10 @@ class Config:
         path="src.services.agents.token_swap.agent",
         class_name="TokenSwapAgent",
         description="Handles token swaps across multiple networks",
+        delegator_description="Executes and optimizes token exchange transactions across multiple blockchains, "
+        "including route optimization, gas fee estimation, slippage protection, and cross-chain "
+        "bridge coordination. Use when users want to exchange one token for another or need swap "
+        "execution guidance.",
         human_readable_name="Token Swap Manager",
         command="swap",
         upload_required=False,

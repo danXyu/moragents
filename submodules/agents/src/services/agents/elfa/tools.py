@@ -6,12 +6,13 @@ from datetime import datetime, timedelta
 import aiohttp
 from urllib.parse import urlencode
 
+from .tool_types import ElfaToolType
 from .config import Config
 from .models import (
-    MentionsResponse,
-    TopMentionsResponse,
-    TrendingTokensResponse,
-    AccountSmartStatsResponse,
+    ElfaMentionsResponse,
+    ElfaTopMentionsResponse,
+    ElfaTrendingTokensResponse,
+    ElfaAccountSmartStatsResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,12 +43,12 @@ async def _make_request(endpoint: str, params: Optional[dict] = None) -> Any:
         raise Exception(f"Failed to fetch data: {str(e)}")
 
 
-async def get_mentions(limit: Optional[int] = None, offset: Optional[int] = None) -> MentionsResponse:
+async def get_mentions(limit: Optional[int] = None, offset: Optional[int] = None) -> ElfaMentionsResponse:
     """Get mentions from smart accounts."""
     try:
         params = {"limit": min(limit or 100, 100), "offset": offset or 0}  # Default 100, max 100
-        response = await _make_request(Config.ENDPOINTS["mentions"], params)
-        return MentionsResponse.model_validate(response)
+        response = await _make_request(Config.ENDPOINTS[ElfaToolType.GET_MENTIONS.value], params)
+        return ElfaMentionsResponse.model_validate(response)
     except Exception as e:
         logger.error(f"Failed to get mentions: {str(e)}", exc_info=True)
         raise Exception(f"Failed to get mentions: {str(e)}")
@@ -55,7 +56,7 @@ async def get_mentions(limit: Optional[int] = None, offset: Optional[int] = None
 
 async def get_top_mentions(
     ticker: str, time_window: Optional[str] = None, include_account_details: Optional[bool] = None
-) -> TopMentionsResponse:
+) -> ElfaTopMentionsResponse:
     """Get top mentions for a specific ticker."""
     try:
         params = {"ticker": ticker, "timeWindow": time_window or "1d", "page": 1, "pageSize": 10}  # Sensible defaults
@@ -64,8 +65,8 @@ async def get_top_mentions(
         if include_account_details:
             params["includeAccountDetails"] = "true"
 
-        response = await _make_request(Config.ENDPOINTS["top_mentions"], params)
-        return TopMentionsResponse.model_validate(response)
+        response = await _make_request(Config.ENDPOINTS[ElfaToolType.GET_TOP_MENTIONS.value], params)
+        return ElfaTopMentionsResponse.model_validate(response)
     except Exception as e:
         logger.error(f"Failed to get top mentions: {str(e)}", exc_info=True)
         raise Exception(f"Failed to get top mentions: {str(e)}")
@@ -77,7 +78,7 @@ async def search_mentions(
     to_timestamp: Optional[int] = None,
     limit: Optional[int] = None,
     cursor: Optional[str] = None,
-) -> MentionsResponse:
+) -> ElfaMentionsResponse:
     """Search for mentions by keywords within a time range. Defaults to last 7 days."""
     try:
         # Default to last 7 days if not specified
@@ -94,8 +95,8 @@ async def search_mentions(
         if cursor:
             params["cursor"] = cursor
 
-        response = await _make_request(Config.ENDPOINTS["mentions_search"], params)
-        return MentionsResponse.model_validate(response)
+        response = await _make_request(Config.ENDPOINTS[ElfaToolType.SEARCH_MENTIONS.value], params)
+        return ElfaMentionsResponse.model_validate(response)
     except Exception as e:
         logger.error(f"Failed to search mentions: {str(e)}", exc_info=True)
         raise Exception(f"Failed to search mentions: {str(e)}")
@@ -103,7 +104,7 @@ async def search_mentions(
 
 async def get_trending_tokens(
     time_window: Optional[str] = None, min_mentions: Optional[int] = None
-) -> TrendingTokensResponse:
+) -> ElfaTrendingTokensResponse:
     """Get trending tokens based on social media mentions."""
     try:
         params = {
@@ -112,19 +113,19 @@ async def get_trending_tokens(
             "pageSize": 50,
             "minMentions": min_mentions or 5,
         }
-        response = await _make_request(Config.ENDPOINTS["trending_tokens"], params)
-        return TrendingTokensResponse.model_validate(response)
+        response = await _make_request(Config.ENDPOINTS[ElfaToolType.GET_TRENDING_TOKENS.value], params)
+        return ElfaTrendingTokensResponse.model_validate(response)
     except Exception as e:
         logger.error(f"Failed to get trending tokens: {str(e)}", exc_info=True)
         raise Exception(f"Failed to get trending tokens: {str(e)}")
 
 
-async def get_account_smart_stats(username: str) -> AccountSmartStatsResponse:
+async def get_account_smart_stats(username: str) -> ElfaAccountSmartStatsResponse:
     """Get smart stats and social metrics for a given username."""
     try:
         params = {"username": username}
-        response = await _make_request(Config.ENDPOINTS["account_smart_stats"], params)
-        return AccountSmartStatsResponse.model_validate(response)
+        response = await _make_request(Config.ENDPOINTS[ElfaToolType.GET_ACCOUNT_SMART_STATS.value], params)
+        return ElfaAccountSmartStatsResponse.model_validate(response)
     except Exception as e:
         logger.error(f"Failed to get account stats: {str(e)}", exc_info=True)
         raise Exception(f"Failed to get account stats: {str(e)}")

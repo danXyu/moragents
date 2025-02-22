@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y gcc g++ procps curl && rm -rf /var/lib/
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
     ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
-# Copy pyproject.toml first for lock file generation
+    # Copy pyproject.toml first for lock file generation
 COPY pyproject.toml ./
 
 # Generate lock file if it doesn't exist
@@ -51,4 +51,5 @@ COPY . .
 EXPOSE 5000
 
 # Use the full path to the virtualenv's uvicorn
-CMD ["poetry", "run", "uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]
+WORKDIR /app/src
+CMD ["poetry", "run", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]

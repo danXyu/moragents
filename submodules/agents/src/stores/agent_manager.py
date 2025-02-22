@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from langchain_ollama import ChatOllama
 from langchain_community.embeddings import OllamaEmbeddings
 
-from config import load_agent_configs, setup_logging, LLM_SMALL, LLM_LARGE, EMBEDDINGS
+from config import load_agent_configs, setup_logging, EMBEDDINGS
 
 logger = setup_logging()
 

@@ -1,4 +1,7 @@
+from langchain.schema import SystemMessage
+
 from models.service.agent_config import AgentConfig
+from .tool_types import CodexToolType
 
 
 class Config:
@@ -15,9 +18,22 @@ class Config:
         path="src.services.agents.codex.agent",
         class_name="CodexAgent",
         description="Fetches and analyzes advanced token and NFT data from Codex.io such as trending tokens, top holders, and more",
+        delegator_description="Retrieves and analyzes advanced on-chain metrics and token data from Codex.io, including holder behavior patterns, whale movements, token distribution analytics, and contract interactions. Use for sophisticated blockchain data analysis beyond basic price information.",
         human_readable_name="Codex Market Analyst",
         command="codex",
         upload_required=False,
+    )
+
+    # **************
+    # SYSTEM MESSAGE
+    # **************
+
+    system_message = SystemMessage(
+        content=(
+            "You are an agent that can fetch and analyze token and NFT data "
+            "from Codex.io. You can get trending tokens, analyze token holder "
+            "concentration, and search for NFT collections."
+        )
     )
 
     # *************
@@ -26,7 +42,7 @@ class Config:
 
     tools = [
         {
-            "name": "list_top_tokens",
+            "name": CodexToolType.LIST_TOP_TOKENS.value,
             "description": "Get a list of trending tokens across specified networks",
             "parameters": {
                 "type": "object",
@@ -51,7 +67,7 @@ class Config:
             },
         },
         {
-            "name": "get_top_holders_percent",
+            "name": CodexToolType.GET_TOP_HOLDERS_PERCENT.value,
             "description": "Get the top holders for a token",
             "parameters": {
                 "type": "object",
@@ -65,7 +81,7 @@ class Config:
             },
         },
         {
-            "name": "search_nfts",
+            "name": CodexToolType.SEARCH_NFTS.value,
             "description": "Search for NFT collections by name or address",
             "parameters": {
                 "type": "object",

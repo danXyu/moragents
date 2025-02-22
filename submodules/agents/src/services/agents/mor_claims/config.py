@@ -12,6 +12,10 @@ class Config:
         path="src.services.agents.mor_claims.agent",
         class_name="MORClaimsAgent",
         description="Handles MOR token claims and rewards distribution",
+        delegator_description="Handles the technical process of claiming MOR tokens, including wallet connection "
+        "troubleshooting, transaction confirmation, gas optimization, and claim verification. "
+        "Use when users need assistance with the actual process of claiming rewards. "
+        "DO NOT use for reward calculations or projections.",
         human_readable_name="MOR Claims Manager",
         command="morclaims",
         upload_required=False,

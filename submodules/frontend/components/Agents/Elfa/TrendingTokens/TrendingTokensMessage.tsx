@@ -12,7 +12,7 @@ import styles from "./TrendingTokensMessage.module.css";
 import {
   ElfaTrendingTokensMessageProps,
   TokenData,
-} from "./TrendingTokensMessage.types";
+} from "../TrendingTokensMessage.types";
 import { Text } from "@chakra-ui/react";
 
 const INITIAL_DISPLAY_COUNT = 10;

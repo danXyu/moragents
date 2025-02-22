@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.exc import SQLAlchemyError
 
-from models.config import Config
+from agents.src.models.config.config import Config
 
 logger = logging.getLogger(__name__)
 

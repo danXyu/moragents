@@ -12,6 +12,10 @@ class Config:
         path="src.services.agents.mor_rewards.agent",
         class_name="MORRewardsAgent",
         description="Handles MOR token rewards distribution and claiming",
+        delegator_description="Specializes in calculating, forecasting, and explaining MOR token reward mechanisms, "
+        "distribution schedules, and yield optimization strategies. Use when users want to understand "
+        "potential rewards, APY calculations, or reward-related projections. DO NOT use for actual "
+        "token claiming processes.",
         human_readable_name="MOR Rewards Manager",
         command="morrewards",
         upload_required=False,

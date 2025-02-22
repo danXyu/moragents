@@ -1,4 +1,7 @@
+from langchain.schema import SystemMessage
+
 from models.service.agent_config import AgentConfig
+from services.agents.crypto_data.tool_types import CryptoDataToolType
 
 
 class Config:
@@ -12,9 +15,31 @@ class Config:
         path="src.services.agents.crypto_data.agent",
         class_name="CryptoDataAgent",
         description="Fetches basic cryptocurrency data such as price, market cap, TVL, and FDV from various sources.",
+        delegator_description="Handles all queries related to cryptocurrency market statistics including current and "
+        "historical price data, market capitalization, trading volume, liquidity metrics, and price movements. "
+        "Use when users request factual information about crypto assets without requiring real-time analysis "
+        "or specialized token functionality.",
         human_readable_name="Crypto Data Analyst",
         command="cryptodata",
         upload_required=False,
+    )
+
+    # *************
+    # SYSTEM MESSAGE
+    # *************
+
+    system_message = SystemMessage(
+        content="You are a cryptocurrency data analyst that can fetch various metrics about cryptocurrencies, NFTs and DeFi protocols. "
+        "You can get price data for any cryptocurrency, floor prices for NFTs, Total Value Locked (TVL) for DeFi protocols, "
+        "and market metrics like market cap and fully diluted valuation (FDV) for cryptocurrencies. "
+        "When users ask questions, carefully analyze what metric they're looking for and use the appropriate tool. "
+        "For example:\n"
+        "- For general price queries, use the price tool\n"
+        "- For NFT valuations, use the floor price tool\n"
+        "- For DeFi protocol size/usage, use the TVL tool\n"
+        "- For token valuations, use market cap or FDV tools\n\n"
+        "Don't make assumptions about function arguments - they should always be supplied by the user. "
+        "Ask for clarification if a request is ambiguous or if you're unsure which metric would be most appropriate."
     )
 
     # *************
@@ -24,7 +49,7 @@ class Config:
         {
             "type": "function",
             "function": {
-                "name": "get_price",
+                "name": CryptoDataToolType.GET_PRICE.value,
                 "description": "Get the price of a cryptocurrency",
                 "parameters": {
                     "type": "object",
@@ -41,7 +66,7 @@ class Config:
         {
             "type": "function",
             "function": {
-                "name": "get_floor_price",
+                "name": CryptoDataToolType.GET_FLOOR_PRICE.value,
                 "description": "Get the floor price of an NFT",
                 "parameters": {
                     "type": "object",
@@ -58,7 +83,7 @@ class Config:
         {
             "type": "function",
             "function": {
-                "name": "get_tvl",
+                "name": CryptoDataToolType.GET_TOTAL_VALUE_LOCKED.value,
                 "description": "Get the TVL (Total Value Locked) of a protocol.",
                 "parameters": {
                     "type": "object",
@@ -75,7 +100,7 @@ class Config:
         {
             "type": "function",
             "function": {
-                "name": "get_fdv",
+                "name": CryptoDataToolType.GET_FULLY_DILUTED_VALUATION.value,
                 "description": "Get the fdv or fully diluted valuation of a coin",
                 "parameters": {
                     "type": "object",
@@ -92,7 +117,7 @@ class Config:
         {
             "type": "function",
             "function": {
-                "name": "get_market_cap",
+                "name": CryptoDataToolType.GET_MARKET_CAP.value,
                 "description": "Get the mc or market cap of a coin",
                 "parameters": {
                     "type": "object",

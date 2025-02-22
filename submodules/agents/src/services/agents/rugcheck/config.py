@@ -1,7 +1,9 @@
 import re
 from typing import Dict, List, Optional, Pattern
 
+from langchain.schema import SystemMessage
 from models.service.agent_config import AgentConfig
+from services.agents.rugcheck.tool_types import RugcheckToolType
 
 
 class TokenRegistry:
@@ -95,9 +97,31 @@ class Config:
         path="src.services.agents.rugcheck.agent",
         class_name="RugcheckAgent",
         description="Analyzes tokens for potential risks and scams",
+        delegator_description="Performs comprehensive security analysis on cryptocurrency tokens and projects to identify "
+        "potential scam indicators, including contract audits, liquidity analysis, holder concentration "
+        "checks, and team verification. Use when users express any concerns about token safety or "
+        "project legitimacy.",
         human_readable_name="Token Risk Analyzer",
         command="rugcheck",
         upload_required=False,
+    )
+
+    # *************
+    # SYSTEM MESSAGE
+    # *************
+
+    system_message = SystemMessage(
+        content=(
+            "You are an agent that can analyze tokens for safety and view trending tokens. "
+            "You can handle both token names (like 'BONK' or 'RAY') and mint addresses. "
+            "When you need to perform an analysis, use the appropriate function call. "
+            "For token names, you must verify they exist in the supported token list. "
+            "The supported tokens are: " + ", ".join(TokenRegistry().get_all_tokens()) + ". "
+            "If a token name is not in this list, you must find its mint address in the "
+            "current chat message or in the conversation history. "
+            "Do not make up or hallucinate mint addresses - if you cannot find a valid mint address, "
+            "inform the user that the token is not supported."
+        )
     )
 
     # *************
@@ -106,7 +130,7 @@ class Config:
 
     tools = [
         {
-            "name": "get_token_report",
+            "name": RugcheckToolType.GET_TOKEN_REPORT.value,
             "description": "Generate a report summary for a given token using either its name or mint address",
             "parameters": {
                 "type": "object",
@@ -117,7 +141,7 @@ class Config:
             },
         },
         {
-            "name": "get_most_viewed",
+            "name": RugcheckToolType.GET_MOST_VIEWED.value,
             "description": "Get most viewed tokens in past 24 hours",
             "parameters": {
                 "type": "object",
@@ -125,7 +149,7 @@ class Config:
             },
         },
         {
-            "name": "get_most_voted",
+            "name": RugcheckToolType.GET_MOST_VOTED.value,
             "description": "Get most voted tokens in past 24 hours",
             "parameters": {
                 "type": "object",

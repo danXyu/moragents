@@ -12,7 +12,7 @@ import styles from "./TopMentionsMessage.module.css";
 import {
   ElfaTopMentionsMessageProps,
   Mention,
-} from "./TopMentionsMessage.types";
+} from "../TopMentionsMessage.types";
 import { Text } from "@chakra-ui/react";
 
 const INITIAL_DISPLAY_COUNT = 3;

@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from models.service.chat_models import AgentResponse
-from stores import chat_manager_instance, agent_manager_instance, key_manager_instance
+from stores import agent_manager_instance
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,6 @@ async def regenerate_tweet():
             )
 
         response = tweet_agent.generate_tweet()
-        chat_manager_instance.add_message(response)
         return response
     except Exception as e:
         logger.error(f"Failed to regenerate tweet: {str(e)}")
@@ -53,7 +52,6 @@ async def post_tweet(request: Request):
                 content=f"Tweet posted successfully: {tweet_response['tweet']}",
                 metadata={"tweet_id": tweet_response["tweet_id"]},
             )
-        chat_manager_instance.add_response(agent_response.dict(), "tweet sizzler")
         return JSONResponse(
             status_code=200,
             content={"status": "success", "tweet": tweet_response["tweet"], "tweet_id": tweet_response["tweet_id"]},

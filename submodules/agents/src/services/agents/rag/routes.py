@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
-from stores import chat_manager_instance, agent_manager_instance
+from stores import agent_manager_instance
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,6 @@ async def upload_file(file: UploadFile = File(...)):
             )
 
         response = await rag_agent.upload_file({"file": file})
-        chat_manager_instance.add_response(response.dict(), "rag")
         return response
     except Exception as e:
         logger.error(f"Failed to upload file: {str(e)}")

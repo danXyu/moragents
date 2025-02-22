@@ -12,6 +12,9 @@ class Config:
         path="src.services.agents.realtime_search.agent",
         class_name="RealtimeSearchAgent",
         description="Performs real-time web searches to find current information. Should be used whenever the user refers to something recent or time-sensitive.",
+        delegator_description="Performs up-to-the-minute web searches to retrieve current information on breaking news, "
+        "recent events, or time-sensitive market developments. Use whenever queries reference recent "
+        'events, require current data, or include time indicators ("today", "latest", etc.).',
         human_readable_name="Web Search Assistant",
         command="search",
         upload_required=False,

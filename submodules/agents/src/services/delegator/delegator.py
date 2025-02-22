@@ -7,7 +7,8 @@ from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 from stores import agent_manager_instance
 from models.service.chat_models import ChatRequest, AgentResponse, ResponseType
-from config import load_agent_config, LLM_SMALL, LLM_LARGE, EMBEDDINGS
+from config import load_agent_config, LLM_AGENT, LLM_DELEGATOR, EMBEDDINGS
+from .system_prompt import SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class RankAgentsOutput(BaseModel):
 
 class Delegator:
     def __init__(self, llm: Any, embeddings: Any):
-        self.llm = LLM_LARGE
+        self.llm = LLM_DELEGATOR
         self.attempted_agents: set[str] = set()
         self.selected_agents_for_request: list[str] = []
         self.parser = PydanticOutputParser(pydantic_object=RankAgentsOutput)
@@ -55,7 +56,7 @@ Your job:
 
             module = importlib.import_module(agent_config["path"])
             agent_class = getattr(module, agent_config["class_name"])
-            agent = agent_class(agent_config, LLM_LARGE, EMBEDDINGS)
+            agent = agent_class(agent_config, LLM_AGENT, EMBEDDINGS)
 
             result: AgentResponse = await agent.chat(chat_request)
             if result.response_type == ResponseType.ERROR:
@@ -78,7 +79,13 @@ Your job:
                 return ["default"]
             raise ValueError("No remaining agents available")
 
-        system_prompt = self._build_system_prompt(available_agents)
+        # system_prompt = self._build_system_prompt(available_agents)
+        system_prompt = SYSTEM_PROMPT
+
+        logger.info("System prompt")
+        logger.info("System prompt")
+        logger.info("System prompt")
+        logger.info(f"System prompt: {system_prompt}")
 
         # Build message history from chat history
         messages: List[BaseMessage] = [SystemMessage(content=system_prompt)]

@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from stores import chat_manager_instance, agent_manager_instance
+from stores import agent_manager_instance
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,6 @@ async def tx_status(request: Request):
             )
 
         response = await swap_agent.tx_status(request)
-        chat_manager_instance.add_response(response.dict(), "swap")
         return response
     except Exception as e:
         logger.error(f"Failed to check tx status: {str(e)}")

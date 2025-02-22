@@ -7,9 +7,8 @@ from typing import List, Dict, Any, Optional
 
 from fastapi import APIRouter
 from langchain_community.embeddings import OllamaEmbeddings
-from langchain_ollama import ChatOllama
 from langchain_together import ChatTogether
-from langchain.pydantic_v1 import SecretStr
+from langchain_cerebras import ChatCerebras
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ def load_agent_routes() -> List[APIRouter]:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            if hasattr(module, "router"):
+            if hasattr(module, "router") and module.Config.agent_config.is_enabled:
                 routers.append(module.router)
                 logger.info(f"Successfully loaded routes from {agent_dir}")
             else:
@@ -95,7 +94,11 @@ def load_agent_config(agent_name: str) -> Optional[Dict[str, Any]]:
         spec.loader.exec_module(module)
 
         # Check for Config class and agent_config
-        if hasattr(module, "Config") and hasattr(module.Config, "agent_config"):
+        if (
+            hasattr(module, "Config")
+            and hasattr(module.Config, "agent_config")
+            and module.Config.agent_config.is_enabled
+        ):
             config_dict: Dict[str, Any] = module.Config.agent_config.model_dump()
             config_dict["name"] = agent_name
             logger.info(f"Successfully loaded config for {agent_name}")
@@ -175,28 +178,12 @@ class AppConfig:
     TOGETHER_EMBEDDING_MODEL = "TogetherComputer/m2-bert-80M-8k-retrieval"
 
 
-from langchain_together import ChatTogether
-
-
-LLM_SMALL = ChatTogether(
-    model=AppConfig.TOGETHER_MODEL_SMALL,
-    api_key=AppConfig.TOGETHER_API_KEY,
-    temperature=0.7,
-)
-
-LLM_LARGE = ChatTogether(
+LLM_AGENT = ChatTogether(
     model=AppConfig.TOGETHER_MODEL_LARGE,
     api_key=AppConfig.TOGETHER_API_KEY,
     temperature=0.7,
 )
-# EMBEDDINGS = Together(
-#     model=AppConfig.TOGETHER_EMBEDDING_MODEL,
-#     together_api_key=AppConfig.TOGETHER_API_KEY,
-# ).get_embeddings()
 
-# Initialize LLM and embeddings
-# LLM = ChatOllama(
-#     model=AppConfig.OLLAMA_MODEL,
-#     base_url=AppConfig.OLLAMA_URL,
-# )
+LLM_DELEGATOR = ChatCerebras(api_key=os.getenv("CEREBRAS_API_KEY"), model="llama-3.3-70b")
+
 EMBEDDINGS = OllamaEmbeddings(model=AppConfig.OLLAMA_EMBEDDING_MODEL, base_url=AppConfig.OLLAMA_URL)

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from models.session import DBSessionFactory
 from models.daos.user_dao import UserDAO
-from models.service.user_models import UserModel, UserSettingModel
+from agents.src.models.service.user_service_models import UserModel, UserSettingModel
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,10 @@ class UserController:
         """Context manager exit point."""
         if self._auto_close_session and self._session:
             self._session.close()
+
+    # ************
+    # User Methods
+    # ************
 
     def get_user(self, user_id: int) -> Optional[UserModel]:
         """Get a user by ID."""
@@ -81,7 +85,10 @@ class UserController:
         user_dao = UserDAO(self._session)
         return user_dao.delete(user_id)
 
+    # *********************
     # User Settings Methods
+    # *********************
+
     def get_setting(self, user_id: int, settings_key: str) -> Optional[UserSettingModel]:
         """Get a setting by key for a specific user."""
         if not self._session:

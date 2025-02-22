@@ -11,7 +11,6 @@ from werkzeug.utils import secure_filename
 
 from models.service.agent_core import AgentCore
 from models.service.chat_models import ChatRequest, AgentResponse
-from stores import chat_manager_instance
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +74,6 @@ class RagAgent(AgentCore):
 
         try:
             await self.handle_file_upload(file)
-            chat_manager_instance.set_uploaded_file(True)
             return AgentResponse.success(content="You have successfully uploaded the text")
         except Exception as e:
             self.logger.error(f"Error during file upload: {str(e)}")
@@ -86,12 +84,7 @@ class RagAgent(AgentCore):
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for RAG."""
         try:
-            if not chat_manager_instance.get_uploaded_file_status():
-                return AgentResponse.needs_info(content="Please upload a file first")
-
-            prompt = request.prompt.content
-            response = await self._get_rag_response(prompt)
-            return AgentResponse.success(content=response)
+            return AgentResponse.needs_info(content="Please upload a file first")
 
         except Exception as e:
             self.logger.error(f"Error processing request: {str(e)}", exc_info=True)

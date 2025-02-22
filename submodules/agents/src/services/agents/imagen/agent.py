@@ -14,7 +14,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from models.service.chat_models import ChatRequest, AgentResponse
 from models.service.agent_core import AgentCore
-from langchain.schema import HumanMessage, SystemMessage
+from .config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -30,16 +30,7 @@ class ImagenAgent(AgentCore):
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for image generation."""
         try:
-            messages = [
-                SystemMessage(
-                    content=(
-                        "You are an image generation assistant. "
-                        "Help users create images by understanding their prompts "
-                        "and generating appropriate images."
-                    )
-                ),
-                *request.messages_for_llm,
-            ]
+            messages = [Config.system_message, *request.messages_for_llm]
 
             # For image generation, we'll directly use the prompt content
             result = self.generate_image(request.prompt.content)

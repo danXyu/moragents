@@ -20,3 +20,4 @@ class AgentConfig(BaseModel):
     human_readable_name: str
     command: str
     upload_required: bool = False
+    is_enabled: bool = True

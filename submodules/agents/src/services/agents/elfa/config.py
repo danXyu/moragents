@@ -1,4 +1,6 @@
 from models.service.agent_config import AgentConfig
+from langchain.schema import SystemMessage
+from .tool_types import ElfaToolType
 
 
 class Config:
@@ -15,18 +17,34 @@ class Config:
         path="src.services.agents.elfa.agent",
         class_name="ElfaAgent",
         description="Fetches and analyzes social media data related to cryptocurrency from Elfa.",
+        delegator_description="Monitors and analyzes social sentiment and engagement metrics across crypto communities, "
+        "including trending topics, influential accounts, sentiment shifts, and community growth patterns. "
+        "Use when users want insights about social perception of crypto projects.",
         human_readable_name="Elfa Social Analyst",
         command="elfa",
         upload_required=False,
     )
 
     # *************
-    # TOOLS CONFIG
+    # SYSTEM MESSAGE
+    # *************
+
+    system_message = (
+        SystemMessage(
+            content=(
+                "You are an agent that can fetch and analyze social media data "
+                "from Elfa. You can get trending tokens, mentions, and smart account "
+                "statistics. The data is focused on cryptocurrency and blockchain "
+                "related social media activity."
+            )
+        ),
+    )
+
     # *************
 
     tools = [
         {
-            "name": "get_mentions",
+            "name": ElfaToolType.GET_MENTIONS.value,
             "description": "Get tweets by smart accounts with at least 10 other smart interactions",
             "parameters": {
                 "type": "object",
@@ -45,7 +63,7 @@ class Config:
             },
         },
         {
-            "name": "get_top_mentions",
+            "name": ElfaToolType.GET_TOP_MENTIONS.value,
             "description": "Get top mentions for a specific ticker, ranked by view count",
             "parameters": {
                 "type": "object",
@@ -69,7 +87,7 @@ class Config:
             },
         },
         {
-            "name": "search_mentions",
+            "name": ElfaToolType.SEARCH_MENTIONS.value,
             "description": "Search for mentions by keywords within a time range",
             "parameters": {
                 "type": "object",
@@ -104,7 +122,7 @@ class Config:
             },
         },
         {
-            "name": "get_trending_tokens",
+            "name": ElfaToolType.GET_TRENDING_TOKENS.value,
             "description": "Get trending tokens based on social media mentions",
             "parameters": {
                 "type": "object",
@@ -123,7 +141,7 @@ class Config:
             },
         },
         {
-            "name": "get_account_smart_stats",
+            "name": ElfaToolType.GET_ACCOUNT_SMART_STATS.value,
             "description": "Get smart stats and social metrics for a given username",
             "parameters": {
                 "type": "object",
@@ -150,9 +168,9 @@ class Config:
     API_KEY_HEADER = "x-elfa-api-key"  # Updated header name for API key
 
     ENDPOINTS = {
-        "mentions": f"/{API_VERSION}/mentions",
-        "top_mentions": f"/{API_VERSION}/top-mentions",
-        "mentions_search": f"/{API_VERSION}/mentions/search",
-        "trending_tokens": f"/{API_VERSION}/trending-tokens",
-        "account_smart_stats": f"/{API_VERSION}/account/smart-stats",
+        ElfaToolType.GET_MENTIONS.value: f"/{API_VERSION}/mentions",
+        ElfaToolType.GET_TOP_MENTIONS.value: f"/{API_VERSION}/top-mentions",
+        ElfaToolType.SEARCH_MENTIONS.value: f"/{API_VERSION}/mentions/search",
+        ElfaToolType.GET_TRENDING_TOKENS.value: f"/{API_VERSION}/trending-tokens",
+        ElfaToolType.GET_ACCOUNT_SMART_STATS.value: f"/{API_VERSION}/account/smart-stats",
     }

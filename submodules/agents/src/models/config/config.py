@@ -1,10 +1,12 @@
 import logging
 import logging.config
 import os
+from pathlib import Path
 
 from configparser import ConfigParser
 
-BASE_DIR = "./config"
+# Get the absolute path to the config directory
+BASE_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 
 
 class Config:
@@ -37,26 +39,22 @@ class Config:
         """Load config from config file and environment variables"""
         # load base config
         conf_parser = ConfigParser()
-        base_config = f"{BASE_DIR}/config.ini"
+        base_config = BASE_DIR / "config.ini"
         print(f"loading base config: {base_config}")
         with open(base_config, "r", encoding="utf-8") as handle:
             conf_parser.read_file(handle)
 
         # load env specific config
-        env = os.environ.get("ENV")
-        if not env:
-            env = "dev"
-        env_conf = f"{BASE_DIR}/config-{env.lower()}.ini"
-        if os.path.isfile(env_conf):
+        env = os.environ.get("ENV", "dev")
+        env_conf = BASE_DIR / f"config-{env.lower()}.ini"
+        if env_conf.is_file():
             print(f"loading config: {env_conf}")
             with open(env_conf, "r", encoding="utf-8") as handle:
                 conf_parser.read_file(handle)
 
         # load local config if set
-        local_conf_file = os.environ.get("LOCAL_CONF")
-        if not local_conf_file:
-            local_conf_file = f"{BASE_DIR}/local.conf"
-        if os.path.isfile(local_conf_file):
+        local_conf_file = os.environ.get("LOCAL_CONF", BASE_DIR / "local.conf")
+        if Path(local_conf_file).is_file():
             print(f"loading additional config: {local_conf_file}")
             with open(local_conf_file, "r", encoding="utf-8") as handle:
                 conf_parser.read_file(handle)
@@ -66,7 +64,7 @@ class Config:
 
     def _app_config_init(self):
         """Initialize app config"""
-        logging.config.fileConfig(f'{BASE_DIR}/{self.get("logging_config")}')
+        logging.config.fileConfig(BASE_DIR / self.get("logging_config"))
 
         # disable noisy loggers
         logging.getLogger("google.cloud.pubsub_v1").setLevel(logging.WARNING)
