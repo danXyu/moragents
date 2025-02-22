@@ -12,7 +12,6 @@ import {
 } from "@chakra-ui/react";
 import { AttachmentIcon } from "@chakra-ui/icons";
 import { SendIcon } from "../CustomIcon/SendIcon";
-import PrefilledOptions from "./PrefilledOptions";
 import styles from "./index.module.css";
 import API_BASE_URL from "../../config";
 
@@ -26,16 +25,12 @@ type ChatInputProps = {
   onSubmit: (message: string, file: File | null) => Promise<void>;
   disabled: boolean;
   hasMessages?: boolean;
-  isSidebarOpen?: boolean;
-  onPrefillOptionsHeightChange?: (height: number) => void;
 };
 
 export const ChatInput: FC<ChatInputProps> = ({
   onSubmit,
   disabled,
   hasMessages = false,
-  isSidebarOpen = false,
-  onPrefillOptionsHeightChange,
 }) => {
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -53,54 +48,6 @@ export const ChatInput: FC<ChatInputProps> = ({
   const inputGroupRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const commandsRef = useRef<HTMLDivElement>(null);
-  const prefillOptionsRef = useRef<HTMLDivElement>(null);
-  const updateTimeoutRef = useRef<number | null>(null);
-
-  // Function to directly update height - no state management
-  const updatePrefillHeight = (height: number) => {
-    if (onPrefillOptionsHeightChange) {
-      // Clear any pending updates
-      if (updateTimeoutRef.current) {
-        window.clearTimeout(updateTimeoutRef.current);
-        updateTimeoutRef.current = null;
-      }
-
-      // Immediate update with no delay
-      onPrefillOptionsHeightChange(height);
-    }
-  };
-
-  // Immediate update whenever prefill options expand/collapse
-  const handlePrefillExpandChange = (
-    isExpanded: boolean,
-    selectedGroup: string | null
-  ) => {
-    if (!isExpanded) {
-      // Immediate collapse to 0 height
-      updatePrefillHeight(0);
-      return;
-    }
-
-    // For expansion, force immediate update via direct DOM measurement
-    if (prefillOptionsRef.current) {
-      const directMeasurement = () => {
-        if (!prefillOptionsRef.current) return;
-        const prefilledEl = prefillOptionsRef.current.firstChild as HTMLElement;
-        if (!prefilledEl) return;
-
-        const height = prefilledEl.getBoundingClientRect().height;
-        if (height > 0) {
-          updatePrefillHeight(height);
-        } else {
-          // If height is 0, try again in 5ms (aggressive retry for immediate update)
-          updateTimeoutRef.current = window.setTimeout(directMeasurement, 5);
-        }
-      };
-
-      // Execute measurement immediately
-      directMeasurement();
-    }
-  };
 
   // Fetch commands
   useEffect(() => {
@@ -108,44 +55,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       .then((res) => res.json())
       .then((data) => setCommands(data.commands))
       .catch((error) => console.error("Error fetching commands:", error));
-
-    // Clean up any pending updates on unmount
-    return () => {
-      if (updateTimeoutRef.current) {
-        window.clearTimeout(updateTimeoutRef.current);
-      }
-    };
   }, []);
-
-  // Set up AGGRESSIVE DOM monitor to catch any height changes
-  useEffect(() => {
-    if (!prefillOptionsRef.current || !onPrefillOptionsHeightChange) return;
-
-    let rafId: number;
-    let lastHeight = 0;
-
-    // Check for height changes on every animation frame
-    const checkHeight = () => {
-      if (prefillOptionsRef.current) {
-        const prefilledEl = prefillOptionsRef.current.firstChild as HTMLElement;
-        if (prefilledEl) {
-          const currentHeight = prefilledEl.getBoundingClientRect().height;
-          if (currentHeight > 0 && currentHeight !== lastHeight) {
-            lastHeight = currentHeight;
-            updatePrefillHeight(currentHeight);
-          }
-        }
-      }
-      rafId = requestAnimationFrame(checkHeight);
-    };
-
-    // Start monitoring
-    rafId = requestAnimationFrame(checkHeight);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
-  }, [onPrefillOptionsHeightChange]);
 
   // Update dropdown position when message changes
   useEffect(() => {
@@ -245,19 +155,6 @@ export const ChatInput: FC<ChatInputProps> = ({
     }
   };
 
-  const handlePrefilledSelect = async (selectedMessage: string) => {
-    if (isSubmitting || disabled) return;
-
-    try {
-      setIsSubmitting(true);
-      await onSubmit(selectedMessage, null);
-    } catch (error) {
-      console.error("Error submitting prefilled message:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <>
       {showCommands && (
@@ -320,73 +217,62 @@ export const ChatInput: FC<ChatInputProps> = ({
         </Box>
       )}
 
-      <div className={styles.container}>
-        <div ref={prefillOptionsRef}>
-          <PrefilledOptions
-            onSelect={handlePrefilledSelect}
-            isSidebarOpen={isSidebarOpen}
-            onExpandChange={handlePrefillExpandChange}
-          />
-        </div>
-        <div className={styles.flexContainer}>
-          <InputGroup ref={inputGroupRef} className={styles.inputGroup}>
-            {agentSupportsFileUploads && (
-              <InputLeftAddon className={styles.fileAddon}>
-                <input
-                  type="file"
-                  className={styles.hiddenInput}
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  disabled={isSubmitting || disabled}
-                />
-                <IconButton
-                  aria-label="Attach file"
-                  icon={
-                    <AttachmentIcon
-                      width={isMobile ? "16px" : "20px"}
-                      height={isMobile ? "16px" : "20px"}
-                    />
-                  }
-                  className={
-                    isSubmitting || disabled ? styles.disabledIcon : ""
-                  }
-                  disabled={isSubmitting || disabled}
-                  onClick={() =>
-                    document
-                      .querySelector('input[type="file"]')
-                      ?.dispatchEvent(new MouseEvent("click"))
-                  }
-                />
-              </InputLeftAddon>
-            )}
-            <Textarea
-              ref={inputRef}
-              className={styles.messageInput}
-              onKeyDown={handleKeyDown}
-              disabled={isSubmitting || disabled || file !== null}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Start typing or press / for commands"
-              rows={1}
-              resize="none"
-              fontSize="14px"
-              overflow="hidden"
-            />
-            <InputRightAddon className={styles.rightAddon}>
+      <div className={styles.flexContainer}>
+        <InputGroup ref={inputGroupRef} className={styles.inputGroup}>
+          {agentSupportsFileUploads && (
+            <InputLeftAddon className={styles.fileAddon}>
+              <input
+                type="file"
+                className={styles.hiddenInput}
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                disabled={isSubmitting || disabled}
+              />
               <IconButton
-                className={styles.sendButton}
-                disabled={isSubmitting || disabled || (!message && !file)}
-                aria-label="Send"
-                onClick={handleSubmit}
+                aria-label="Attach file"
                 icon={
-                  <SendIcon
-                    width={isMobile ? "20px" : "24px"}
-                    height={isMobile ? "20px" : "24px"}
+                  <AttachmentIcon
+                    width={isMobile ? "16px" : "20px"}
+                    height={isMobile ? "16px" : "20px"}
                   />
                 }
+                className={isSubmitting || disabled ? styles.disabledIcon : ""}
+                disabled={isSubmitting || disabled}
+                onClick={() =>
+                  document
+                    .querySelector('input[type="file"]')
+                    ?.dispatchEvent(new MouseEvent("click"))
+                }
               />
-            </InputRightAddon>
-          </InputGroup>
-        </div>
+            </InputLeftAddon>
+          )}
+          <Textarea
+            ref={inputRef}
+            className={styles.messageInput}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting || disabled || file !== null}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Start typing or press / for commands"
+            rows={1}
+            resize="none"
+            fontSize="14px"
+            overflow="hidden"
+          />
+          <InputRightAddon className={styles.rightAddon}>
+            <IconButton
+              className={styles.sendButton}
+              disabled={isSubmitting || disabled || (!message && !file)}
+              aria-label="Send"
+              onClick={handleSubmit}
+              icon={
+                <SendIcon
+                  width={isMobile ? "20px" : "24px"}
+                  height={isMobile ? "20px" : "24px"}
+                />
+              }
+            />
+          </InputRightAddon>
+        </InputGroup>
       </div>
     </>
   );
