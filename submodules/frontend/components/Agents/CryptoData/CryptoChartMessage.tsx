@@ -12,7 +12,7 @@ const CryptoChartMessage = ({
   content: any;
   metadata: any;
 }) => {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(true);
 
   return (
     <Box width="100%" mb={4}>

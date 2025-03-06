@@ -9,7 +9,7 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.dca_agent.agent",
+        path="services.agents.dca_agent.agent",
         class_name="DCAAgent",
         description="Handles automated dollar cost averaging transactions. Use when the user wants to set up recurring purchases of crypto assets.",
         delegator_description="Manages dollar-cost averaging setup and execution, including schedule creation, "

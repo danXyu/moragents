@@ -34,33 +34,31 @@ const PrefilledOptions: React.FC<PrefilledOptionsProps> = ({
     }
   }, [selectedGroup, isExamplesPanelVisible, onExpandChange]);
 
+  // This effect ensures panel visibility follows selected group state
+  useEffect(() => {
+    if (selectedGroup) {
+      setIsExamplesPanelVisible(true);
+    } else {
+      setIsExamplesPanelVisible(false);
+    }
+  }, [selectedGroup]);
+
   const handleGroupClick = (group: string) => {
     if (selectedGroup === group) {
-      setIsExamplesPanelVisible(false);
-      setTimeout(() => setSelectedGroup(null), 200);
+      setSelectedGroup(null);
     } else {
-      // Don't hide panel when switching between groups - smoother transition
-      const wasExpanded = selectedGroup !== null;
-      if (wasExpanded) {
-        // Switch group without collapsing first
-        setSelectedGroup(group);
-        setIsExamplesPanelVisible(true);
-      } else {
-        // Original behavior for first expansion
-        setIsExamplesPanelVisible(false);
-        setTimeout(() => {
-          setSelectedGroup(group);
-          setIsExamplesPanelVisible(true);
-        }, 200);
-      }
+      setSelectedGroup(group);
     }
   };
 
+  // Calculate container style with adjusted padding to avoid sidebar overlap
   const containerStyle = isMobile
-    ? {}
+    ? { width: "100%" }
     : {
-        paddingLeft: isSidebarOpen ? "40%" : "20%",
+        paddingLeft: isSidebarOpen ? "380px" : "100px", // Adjusted to be wider than the sidebar (360px)
         paddingRight: "20%",
+        position: "relative" as const,
+        zIndex: 100, // Ensure it's above content but below sidebar
       };
 
   const renderExamples = () => {

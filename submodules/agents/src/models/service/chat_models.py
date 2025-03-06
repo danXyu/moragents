@@ -52,8 +52,8 @@ class ChatRequest(BaseModel):
         """Get formatted message history for LLM, including current prompt"""
         messages: List[BaseMessage] = []
 
-        # Add chat history messages up to the past 10 messages
-        for i, msg in enumerate(reversed(self.chat_history[:10])):
+        # Add chat history messages up to the past 5 messages
+        for i, msg in enumerate(reversed(self.chat_history[:5])):
             if msg.role == "user":
                 messages.append(HumanMessage(content=f"Chat History index {i}: {msg.content}"))
             elif msg.role == "assistant":

@@ -11,6 +11,16 @@ import {
   generateAuthSig,
 } from "@lit-protocol/auth-helpers";
 
+// Choose network based on environment
+const getLitNetwork = () => {
+  // Check if we're in production
+  if (process.env.NODE_ENV === "production") {
+    return LIT_NETWORK.Datil; // Use production network (Manzano)
+  } else {
+    return LIT_NETWORK.DatilDev; // Use dev network otherwise
+  }
+};
+
 const gatewayAddress = "https://gateway.irys.xyz/";
 
 const getIrysUploader = async () => {
@@ -22,7 +32,7 @@ const getIrysUploader = async () => {
 };
 
 const litClient = new LitNodeClient({
-  litNetwork: LIT_NETWORK.DatilDev,
+  litNetwork: getLitNetwork(),
 });
 
 const getAccessControlConditions = () => {
@@ -157,6 +167,7 @@ export const decryptData = async (
         walletAddress: walletAddress,
         nonce: latestBlockhash,
         litNodeClient: litClient,
+        domain: window.location.hostname,
       });
 
       return await generateAuthSig({

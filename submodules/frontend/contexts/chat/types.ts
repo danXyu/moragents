@@ -30,5 +30,6 @@ export interface ChatContextType {
   setCurrentConversation: (id: string) => void;
   sendMessage: (message: string, file: File | null) => Promise<void>;
   refreshMessages: () => Promise<void>;
+  refreshAllTitles: () => Promise<void>;
   deleteChat: (conversationId: string) => Promise<void>;
 }

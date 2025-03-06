@@ -74,7 +74,6 @@ export const prefilledOptionsMap = {
     icon: <LineChart size={20} color={ICON_COLORS[AgentType.CRYPTO_DATA]} />,
     examples: [
       { text: "What's the price of ETH?", agent: "crypto_data" },
-      { text: "Show me BTC's market cap", agent: "crypto_data" },
       { text: "What's the FDV of USDC?", agent: "crypto_data" },
     ],
   },
@@ -99,17 +98,17 @@ export const prefilledOptionsMap = {
       },
     ],
   },
-  [AgentType.DCA_AGENT]: {
-    title: "DCA Strategy Planning",
-    icon: <DollarSign size={20} color={ICON_COLORS[AgentType.DCA_AGENT]} />,
-    examples: [
-      { text: "DCA into ETH weekly", agent: "dca_agent" },
-      {
-        text: "Help me create a monthly BTC buying strategy",
-        agent: "dca_agent",
-      },
-    ],
-  },
+  // [AgentType.DCA_AGENT]: {
+  //   title: "DCA Strategy Planning",
+  //   icon: <DollarSign size={20} color={ICON_COLORS[AgentType.DCA_AGENT]} />,
+  //   examples: [
+  //     { text: "DCA into ETH weekly", agent: "dca_agent" },
+  //     {
+  //       text: "Help me create a monthly BTC buying strategy",
+  //       agent: "dca_agent",
+  //     },
+  //   ],
+  // },
   [AgentType.BASE_AGENT]: {
     title: "Base Transactions",
     icon: <Send size={20} color={ICON_COLORS[AgentType.BASE_AGENT]} />,
@@ -134,20 +133,20 @@ export const prefilledOptionsMap = {
       { text: "Calculate my pending MOR rewards", agent: "mor_rewards" },
     ],
   },
-  [AgentType.REALTIME_SEARCH]: {
-    title: "Real-Time Search",
-    icon: <Search size={20} color={ICON_COLORS[AgentType.REALTIME_SEARCH]} />,
-    examples: [
-      {
-        text: "Search the web for latest news about Ethereum",
-        agent: "realtime_search",
-      },
-      {
-        text: "What did Donald Trump say about Bitcoin?",
-        agent: "realtime_search",
-      },
-    ],
-  },
+  // [AgentType.REALTIME_SEARCH]: {
+  //   title: "Real-Time Search",
+  //   icon: <Search size={20} color={ICON_COLORS[AgentType.REALTIME_SEARCH]} />,
+  //   examples: [
+  //     {
+  //       text: "Search the web for latest news about Ethereum",
+  //       agent: "realtime_search",
+  //     },
+  //     {
+  //       text: "What did Donald Trump say about Bitcoin?",
+  //       agent: "realtime_search",
+  //     },
+  //   ],
+  // },
   [AgentType.CRYPTO_NEWS]: {
     title: "Crypto News Analysis",
     icon: <Newspaper size={20} color={ICON_COLORS[AgentType.CRYPTO_NEWS]} />,
@@ -164,10 +163,13 @@ export const prefilledOptionsMap = {
     icon: <BarChart2 size={20} color={ICON_COLORS[AgentType.DEXSCREENER]} />,
     examples: [
       {
-        text: "What are the most active tokens on solana?",
+        text: "Scan Dexscreener for the most active tokens on solana",
         agent: "dexscreener",
       },
-      { text: "Show me DEX activity for ETH", agent: "dexscreener" },
+      {
+        text: "Show me DEX activity for ETH as reported by Dexscreener",
+        agent: "dexscreener",
+      },
     ],
   },
   [AgentType.ELFA]: {
@@ -175,11 +177,11 @@ export const prefilledOptionsMap = {
     icon: <IconSocial size={20} color={ICON_COLORS[AgentType.ELFA]} />,
     examples: [
       {
-        text: "What are they saying about MOR on social?",
+        text: "Search for mentions of MOR on social media",
         agent: "elfa",
       },
       {
-        text: "What are the top trending tokens on social media",
+        text: "What are the top trending tokens on social media?",
         agent: "elfa",
       },
     ],
@@ -189,7 +191,7 @@ export const prefilledOptionsMap = {
     icon: <Shield size={20} color={ICON_COLORS[AgentType.RUGCHECK]} />,
     examples: [
       { text: "Check token safety for SAMO", agent: "rugcheck" },
-      { text: "Show me the most voted tokens on rugcheck", agent: "rugcheck" },
+      { text: "Show me the most viewed tokens on rugcheck", agent: "rugcheck" },
     ],
   },
   [AgentType.CODEX]: {
@@ -201,7 +203,7 @@ export const prefilledOptionsMap = {
         agent: "codex",
       },
       {
-        text: "Who are the top holders of $TRUMP?",
+        text: "Who are the top holders of $TRUMP on Solana?",
         agent: "codex",
       },
     ],
@@ -210,8 +212,8 @@ export const prefilledOptionsMap = {
 
 export const OPTION_GROUPS = {
   Data: [AgentType.CRYPTO_DATA, AgentType.DEXSCREENER, AgentType.CODEX],
-  Trade: [AgentType.TOKEN_SWAP, AgentType.BASE_AGENT, AgentType.DCA_AGENT],
-  Social: [AgentType.TWEET_SIZZLER, AgentType.REALTIME_SEARCH, AgentType.ELFA],
-  Morpheus: [AgentType.MOR_CLAIMS, AgentType.MOR_REWARDS],
+  Trade: [AgentType.TOKEN_SWAP, AgentType.BASE_AGENT],
+  Social: [AgentType.TWEET_SIZZLER, AgentType.ELFA],
+  Morpheus: [AgentType.MOR_REWARDS, AgentType.MOR_CLAIMS],
   Analysis: [AgentType.RAG, AgentType.CRYPTO_NEWS, AgentType.RUGCHECK],
 };

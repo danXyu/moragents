@@ -2,26 +2,35 @@
   position: relative;
   width: 100%;
   background-color: transparent;
-  z-index: 1;
   transition: padding 0.3s ease;
+  z-index: 100; /* Add a z-index lower than the sidebar */
 }
 
 .prefilledInner {
   width: 100%;
   margin: 0 auto;
   display: flex;
-  padding: 0.5rem;
+  padding: 0.2rem;
   flex-direction: column;
   background-color: #000000;
   border-radius: 12px 12px 0 0;
   transition: transform 0.3s ease, opacity 0.3s ease;
+  position: relative; /* Ensure the component has its own stacking context */
 }
+
 /* Pills Container */
 .pillsContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 8px;
   justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .prefilledContainer {
+    padding-left: 2% !important;
+    padding-right: 2% !important;
+  }
 }
 
 .pillButton {
@@ -50,14 +59,20 @@
 /* Examples Panel */
 .examplesPanel {
   display: grid;
-  grid-template-columns: 1fr; /* Default to single column for mobile */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
   margin-top: 1rem;
   padding: 0 1rem;
+  width: 100%;
   opacity: 0;
-  transform: translateX(5px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  will-change: opacity, transform;
+
+  /* Modify transition to be more specific */
+  transition: opacity 0.3s ease;
+
+  /* Add these to prevent blur during animation */
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  will-change: opacity;
 }
 
 @media (min-width: 768px) {
@@ -109,6 +124,7 @@
 }
 
 .exampleButton {
+  /* Previous styles remain the same */
   text-align: left;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -116,16 +132,25 @@
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 12px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   line-height: 1.4;
   position: relative;
   overflow: hidden;
+
+  /* Modified transition */
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Add these properties to fix text blur */
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  transform: translateZ(0);
+  will-change: transform, background;
 }
 
 .exampleButton:hover {
   background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px);
+  /* Remove transform on hover to prevent blur */
+  transform: translateZ(0);
 }
 
 @keyframes slideIn {

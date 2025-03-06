@@ -1,12 +1,12 @@
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TokenLink(BaseModel):
     """Model representing a link associated with a token."""
 
-    type: str
-    label: str
+    type: Optional[str] = None  # Made optional since some links only have label
+    label: Optional[str] = None  # Made optional since some links only have type
     url: str
 
 
@@ -67,8 +67,8 @@ class TokenProfileResponse(BaseModel):
 class BoostedToken(TokenProfile):
     """Model representing a boosted token, extending TokenProfile with boost amounts."""
 
-    amount: float
-    totalAmount: float
+    amount: float = Field(default=0.0)  # Default value added
+    totalAmount: float = Field(default=0.0)  # Default value added
 
 
 class BoostedTokenResponse(BaseModel):
@@ -117,7 +117,7 @@ class DexPairSearchResponse(BaseModel):
         formatted = f"# Found {len(pairs)} popular DEX Trading Pairs\n\n"
 
         for pair in pairs:
-            formatted += f"## {pair.baseToken.symbol} / {pair.quoteToken.symbol} on {pair.dexId.title()}\n"
+            formatted += f"## {pair.baseToken.tokenAddress} / {pair.quoteToken.tokenAddress} on {pair.dexId.title()}\n"
             formatted += f"Chain: {pair.chainId.upper()}\n\n"
 
             if pair.priceUsd:

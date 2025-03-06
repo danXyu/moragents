@@ -61,8 +61,6 @@ export const writeMessage = async (
 export const uploadFile = async (
   file: File,
   backendClient: any,
-  chainId: number,
-  address: string,
   conversationId: string = DEFAULT_CONVERSATION_ID
 ): Promise<ChatMessage[]> => {
   const convId = getOrCreateConversation(conversationId);
@@ -71,11 +69,9 @@ export const uploadFile = async (
     // Create form data
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("chain_id", String(chainId));
-    formData.append("wallet_address", address);
 
     // Upload file to backend
-    const response = await backendClient.post("/api/v1/upload", formData, {
+    const response = await backendClient.post("/rag/upload", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -93,10 +89,8 @@ export const uploadFile = async (
         convId
       );
 
-      // Add assistant's response if any
-      if (response.data.message) {
-        addMessageToHistory(response.data.message, convId);
-      }
+      // Add assistant's response
+      addMessageToHistory(response.data, convId);
     }
 
     return getMessagesHistory(convId);

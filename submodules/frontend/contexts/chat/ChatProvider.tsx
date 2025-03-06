@@ -161,6 +161,38 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }
   }, [state.currentConversationId]);
 
+  // Refresh all conversation titles from storage
+  const refreshAllTitles = useCallback(async () => {
+    dispatch({ type: "SET_LOADING", payload: true });
+
+    try {
+      // Get storage data which contains all conversations
+      const data = getStorageData();
+
+      // For each conversation
+      Object.keys(data.conversations).forEach((conversationId) => {
+        // Update title if one exists
+        if (data.conversations[conversationId]?.name) {
+          dispatch({
+            type: "SET_CONVERSATION_TITLE",
+            payload: {
+              conversationId,
+              title: data.conversations[conversationId].name,
+            },
+          });
+        }
+      });
+    } catch (error) {
+      console.error("Failed to refresh all conversation titles:", error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Failed to refresh conversation titles",
+      });
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
+    }
+  }, []);
+
   // Safe title generation that avoids infinite loops
   const maybeGenerateTitle = useCallback(
     (conversationId: string, messages: ChatMessage[]) => {
@@ -244,13 +276,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
           );
         } else {
           // File upload flow
-          await uploadFile(
-            file,
-            getHttpClient(),
-            chainId,
-            address || "",
-            currentConversationId
-          );
+          await uploadFile(file, getHttpClient(), currentConversationId);
         }
 
         // Refresh messages to get server response
@@ -305,6 +331,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     setCurrentConversation,
     sendMessage,
     refreshMessages,
+    refreshAllTitles,
     deleteChat,
   };
 

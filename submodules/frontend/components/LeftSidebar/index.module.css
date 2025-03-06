@@ -6,7 +6,7 @@
   width: 460px;
   overflow: visible;
   transition: transform 0.3s ease;
-  z-index: 1000;
+  z-index: 2147483647;
 }
 
 .sidebarContainer.collapsed {
@@ -124,7 +124,7 @@
 
 .deleteButton,
 .resetButton {
-  opacity: 0;
+  opacity: 1;
   background-color: transparent;
   color: rgba(255, 255, 255, 0.6);
   border: none;
@@ -137,13 +137,44 @@
   justify-content: center;
 }
 
-.conversationItem:hover .deleteButton,
-.conversationItem:hover .resetButton {
-  opacity: 1;
-}
-
 .deleteButton:hover,
 .resetButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}
+
+.titleInput {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  font-weight: 500;
+  width: 100%;
+  padding: 0;
+  outline: none;
+}
+
+.titleInput:focus {
+  border: none;
+  outline: none;
+}
+
+.editButton {
+  opacity: 1;
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editButton:hover {
   background-color: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.9);
   transform: scale(1.1);

@@ -12,21 +12,42 @@ import {
   isValidAgentType,
 } from "@/services/types";
 
+// Agent Message Components
 import { Tweet } from "@/components/Agents/Tweet/CustomMessages/TweetMessage";
-import { TopTokensMessage } from "@/components/Agents/Dexscreener/TopTokens/TopTokensMessage";
 import CryptoChartMessage from "@/components/Agents/CryptoData/CryptoChartMessage";
 import DCAMessage from "@/components/Agents/DCA/DCAMessage";
+
+// Base Agent Components
 import BaseTransferMessage from "@/components/Agents/Base/TransferMessage";
 import BaseSwapMessage from "@/components/Agents/Base/SwapMessage";
-import OneInchSwapMessage from "@/components/Agents/Swaps/SwapMessage";
+
+// Swap Components
+import OneInchSwapMessage from "@/components/Agents/Swaps/Swap/SwapMessage";
+
+// Token Components
+import { CodexTopTokensMessage } from "@/components/Agents/Codex/TopTokens/CodexTopTokensMessage";
+import { TopTokensMessage } from "@/components/Agents/Dexscreener/TopTokens/TopTokensMessage";
+import { TopTokensMetadata } from "@/components/Agents/Codex/TopTokens/CodexTopTokensMessage.types";
+import { CodexTopHoldersMessage } from "@/components/Agents/Codex/TopHolders/CodexTopHoldersMessage";
+
+// Rugcheck Components
+import { RugcheckReportMessage } from "@/components/Agents/Rugcheck/Report/RugcheckReportMessage";
+import { RugcheckMetadata } from "@/components/Agents/Rugcheck/Report/RugcheckReportMessage.types";
+import { VotedTokensMessage } from "@/components/Agents/Rugcheck/MostVoted/MostVotedTokensMessage";
+import { ViewedTokensMessage } from "@/components/Agents/Rugcheck/MostViewed/MostViewedTokensMessage";
+import { VotedTokensMetadata } from "@/components/Agents/Rugcheck/MostVoted/MostVotedTokensMessage.types";
+import { ViewedTokensMetadata } from "@/components/Agents/Rugcheck/MostViewed/MostViewedTokensMessage.types";
+
+// Elfa Components
 import { ElfaTopMentionsMessage } from "@/components/Agents/Elfa/TopMentions/TopMentionsMessage";
 import { ElfaTrendingTokensMessage } from "@/components/Agents/Elfa/TrendingTokens/TrendingTokensMessage";
-import { RugcheckReportMessage } from "@/components/Agents/Rugcheck/RugcheckReportMessage";
-import { CodexTopTokensMessage } from "@/components/Agents/Codex/TopTokens/CodexTopTokensMessage";
+import { ElfaAccountSmartStatsMessage } from "@/components/Agents/Elfa/AccountSmartStats/AccountSmartStatsMessage";
 import { TopMentionsMetadata } from "@/components/Agents/Elfa/TopMentions/TopMentionsMessage.types";
 import { TrendingTokensMetadata } from "@/components/Agents/Elfa/TrendingTokens/TrendingTokensMessage.types";
-import { RugcheckMetadata } from "@/components/Agents/Rugcheck/RugcheckReportMessage.types";
-import { TopTokensMetadata } from "@/components/Agents/Codex/TopTokens/CodexTopTokensMessage.types";
+import { AccountSmartStatsMetadata } from "@/components/Agents/Elfa/AccountSmartStats/AccountSmartStatsMessage.types";
+import { TopHoldersMetadata } from "../Agents/Codex/TopHolders/CodexTopHoldersMessage.types";
+import { ElfaMentionsMessage } from "../Agents/Elfa/Mentions/MentionsMessage";
+import { MentionsMetadata } from "../Agents/Elfa/Mentions/MentionsMessage.types";
 
 type MessageRenderer = {
   check: (message: ChatMessage) => boolean;
@@ -110,6 +131,18 @@ const messageRenderers: MessageRenderer[] = [
     check: (message) => message.agentName === AgentType.DEXSCREENER,
     render: (message) => <TopTokensMessage metadata={message.metadata} />,
   },
+  // {
+  //   check: (message) =>
+  //     message.agentName === AgentType.DEXSCREENER &&
+  //     message.action_type === "get_latest_boosted_tokens",
+  //   render: (message) => <TopTokensMessage metadata={message.metadata} />,
+  // },
+  // {
+  //   check: (message) =>
+  //     message.agentName === AgentType.DEXSCREENER &&
+  //     message.action_type === "get_top_boosted_tokens",
+  //   render: (message) => <TopTokensMessage metadata={message.metadata} />,
+  // },
 
   // Elfa agent renderers
   {
@@ -125,10 +158,28 @@ const messageRenderers: MessageRenderer[] = [
   {
     check: (message) =>
       message.agentName === AgentType.ELFA &&
+      message.action_type == "search_mentions",
+    render: (message) => (
+      <ElfaMentionsMessage metadata={message.metadata as MentionsMetadata} />
+    ),
+  },
+  {
+    check: (message) =>
+      message.agentName === AgentType.ELFA &&
       message.action_type == "get_trending_tokens",
     render: (message) => (
       <ElfaTrendingTokensMessage
         metadata={message.metadata as TrendingTokensMetadata}
+      />
+    ),
+  },
+  {
+    check: (message) =>
+      message.agentName === AgentType.ELFA &&
+      message.action_type == "get_account_smart_stats",
+    render: (message) => (
+      <ElfaAccountSmartStatsMessage
+        metadata={message.metadata as AccountSmartStatsMetadata}
       />
     ),
   },
@@ -146,20 +197,56 @@ const messageRenderers: MessageRenderer[] = [
 
   // Rugcheck agent renderer
   {
-    check: (message) => message.agentName === AgentType.RUGCHECK,
+    check: (message) =>
+      message.agentName === AgentType.RUGCHECK &&
+      message.action_type === "get_token_report",
     render: (message) => (
       <RugcheckReportMessage
         metadata={(message as AssistantMessage).metadata as RugcheckMetadata}
       />
     ),
   },
+  {
+    check: (message) =>
+      message.agentName === AgentType.RUGCHECK &&
+      message.action_type === "get_most_voted",
+    render: (message) => (
+      <VotedTokensMessage
+        metadata={(message as AssistantMessage).metadata as VotedTokensMetadata}
+      />
+    ),
+  },
+  {
+    check: (message) =>
+      message.agentName === AgentType.RUGCHECK &&
+      message.action_type === "get_most_viewed",
+    render: (message) => (
+      <ViewedTokensMessage
+        metadata={
+          (message as AssistantMessage).metadata as ViewedTokensMetadata
+        }
+      />
+    ),
+  },
 
   // Codex agent renderer
   {
-    check: (message) => message.agentName === AgentType.CODEX,
+    check: (message) =>
+      message.agentName === AgentType.CODEX &&
+      message.action_type === "list_top_tokens",
     render: (message) => (
       <CodexTopTokensMessage
         metadata={(message as AssistantMessage).metadata as TopTokensMetadata}
+      />
+    ),
+  },
+  {
+    check: (message) =>
+      message.agentName === AgentType.CODEX &&
+      message.action_type === "get_top_holders_percent",
+    render: (message) => (
+      <CodexTopHoldersMessage
+        metadata={(message as AssistantMessage).metadata as TopHoldersMetadata}
       />
     ),
   },

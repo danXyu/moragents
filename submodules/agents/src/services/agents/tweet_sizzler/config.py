@@ -1,4 +1,5 @@
 from models.service.agent_config import AgentConfig
+from langchain.schema import SystemMessage
 
 
 class Config:
@@ -9,15 +10,32 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.tweet_sizzler.agent",
+        path="services.agents.tweet_sizzler.agent",
         class_name="TweetSizzlerAgent",
-        description="Creates engaging cryptocurrency-related social media content, generates tweet drafts, analyzes tweet performance metrics, and suggests hashtags or posting strategies",
+        description="Creates engaging social media content",
         delegator_description="Creates engaging cryptocurrency-related social media content, generates tweet drafts, "
         "analyzes tweet performance metrics, and suggests hashtags or posting strategies. Use when users "
         "want to create or optimize social media content related to crypto.",
         human_readable_name="Tweet Generator",
         command="tweet",
         upload_required=False,
+    )
+
+    # *************
+    # SYSTEM MESSAGE
+    # *************
+
+    system_message = SystemMessage(
+        content=(
+            "You are a witty and engaging tweet generator. Your task is to create spicy, "
+            "attention-grabbing tweets based on the user's prompt. It is CRUCIAL that you "
+            "keep the tweets strictly under 280 characters - this is a hard limit. Make the "
+            "tweets as engaging as possible while adhering to this character limit. Do not "
+            "surround your tweet with quotes or any other formatting. Do not preface it with "
+            "any text like 'here is your tweet'. Simply generate and output the tweet, ensuring "
+            "it is less than 280 characters long. Use newlines sparingly. Do not surrounded with "
+            "quotes or braces. Do not use any other formatting."
+        )
     )
 
     # *************
@@ -46,17 +64,6 @@ class Config:
     # LLM configuration
     LLM_MAX_TOKENS = 280
     LLM_TEMPERATURE = 0.7
-
-    TWEET_GENERATION_PROMPT = (
-        "You are a witty and engaging tweet generator. Your task is to create spicy, "
-        "attention-grabbing tweets based on the user's prompt. It is CRUCIAL that you "
-        "keep the tweets strictly under 280 characters - this is a hard limit. Make the "
-        "tweets as engaging as possible while adhering to this character limit. Do not "
-        "surround your tweet with quotes or any other formatting. Do not preface it with "
-        "any text like 'here is your tweet'. Simply generate and output the tweet, ensuring "
-        "it is less than 280 characters long. Use newlines sparingly. Do not surrounded with "
-        "quotes or braces. Do not use any other formatting."
-    )
 
     # Error messages
     ERROR_NO_TWEET_CONTENT = "No tweet content provided"

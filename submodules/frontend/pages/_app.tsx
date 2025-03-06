@@ -90,6 +90,30 @@ const generateColorFromAddress = (address: string): string => {
   return `#${colorCode}cc`;
 };
 
+// Add this function to your codebase (e.g., in a utils file or directly in _app.tsx)
+function setVhProperty() {
+  // Get the viewport height and multiply it by 1% to get a value for a vh unit
+  const vh = window.innerHeight * 0.01;
+  // Set the value in the --vh custom property to the root of the document
+  document.documentElement.style.setProperty("--vh", `${vh}px`);
+}
+
+// Call the function when the page loads
+if (typeof window !== "undefined") {
+  // Set the initial value on page load
+  setVhProperty();
+
+  // Update the value on resize
+  window.addEventListener("resize", () => {
+    setVhProperty();
+  });
+
+  // Update on orientation change specifically for mobile
+  window.addEventListener("orientationchange", () => {
+    setVhProperty();
+  });
+}
+
 const CustomAvatar: AvatarComponent = ({ address, ensImage, size }) => {
   const color = generateColorFromAddress(address);
 

@@ -3,6 +3,7 @@ import { Box, useBreakpointValue } from "@chakra-ui/react";
 import { MessageList } from "@/components/MessageList";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatContext } from "@/contexts/chat/useChatContext";
+import styles from "./index.module.css";
 
 export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
   isSidebarOpen = false,
@@ -28,12 +29,12 @@ export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
 
   return (
     <Box
-      height="100vh"
-      width="100%"
-      paddingLeft={isMobile ? "5%" : isSidebarOpen ? "30%" : "20%"}
-      paddingRight={isMobile ? "5%" : "20%"}
+      className={styles.chatContainer}
+      paddingLeft={isMobile ? "2%" : isSidebarOpen ? "30%" : "20%"}
+      paddingRight={isMobile ? "2%" : "20%"}
       display="flex"
       flexDirection="column"
+      zIndex="1"
     >
       <MessageList
         messages={currentMessages}
@@ -42,11 +43,12 @@ export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
         onSubmit={handleSubmit}
         disabled={showLoading}
       />
-      <Box position="sticky" bottom={0} bg="black" pt={2} pb={2}>
+      <Box position="sticky" bottom={0} bg="black" pt={2} pb={2} zIndex="1">
+        {/* Give ChatInput a higher z-index than sidebar to ensure it's always accessible */}
         <ChatInput
           onSubmit={handleSubmit}
-          hasMessages={currentMessages.length > 1}
           disabled={showLoading}
+          isSidebarOpen={isSidebarOpen}
         />
       </Box>
     </Box>

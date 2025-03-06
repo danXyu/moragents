@@ -14,6 +14,7 @@ from .models import (
     ElfaTrendingTokensResponse,
     ElfaAccountSmartStatsResponse,
 )
+from services.secrets import get_secret
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ async def _make_request(endpoint: str, params: Optional[dict] = None) -> Any:
         url = f"{url}?{urlencode(params)}"
 
     # Get API key from environment
-    api_key = os.environ.get("ELFA_API_KEY")
+    api_key = get_secret("ElfaApiKey")
     if not api_key:
         raise Exception("ELFA_API_KEY environment variable is not set")
 
@@ -41,17 +42,6 @@ async def _make_request(endpoint: str, params: Optional[dict] = None) -> Any:
     except Exception as e:
         logger.error(f"API request failed: {str(e)}", exc_info=True)
         raise Exception(f"Failed to fetch data: {str(e)}")
-
-
-async def get_mentions(limit: Optional[int] = None, offset: Optional[int] = None) -> ElfaMentionsResponse:
-    """Get mentions from smart accounts."""
-    try:
-        params = {"limit": min(limit or 100, 100), "offset": offset or 0}  # Default 100, max 100
-        response = await _make_request(Config.ENDPOINTS[ElfaToolType.GET_MENTIONS.value], params)
-        return ElfaMentionsResponse.model_validate(response)
-    except Exception as e:
-        logger.error(f"Failed to get mentions: {str(e)}", exc_info=True)
-        raise Exception(f"Failed to get mentions: {str(e)}")
 
 
 async def get_top_mentions(

@@ -1,14 +1,16 @@
 import logging
 import json
 import importlib
-from typing import Dict, List, Optional, Tuple, Any
+
+from typing import List, Optional, Tuple, Any
+
 from langchain.schema import BaseMessage, SystemMessage
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 from stores import agent_manager_instance
 from models.service.chat_models import ChatRequest, AgentResponse, ResponseType
-from config import load_agent_config, LLM_AGENT, LLM_DELEGATOR, EMBEDDINGS
-from .system_prompt import SYSTEM_PROMPT
+from config import load_agent_config, LLM_AGENT, LLM_DELEGATOR
+from .system_prompt import get_system_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -20,31 +22,11 @@ class RankAgentsOutput(BaseModel):
 
 
 class Delegator:
-    def __init__(self, llm: Any, embeddings: Any):
+    def __init__(self, llm: Any):
         self.llm = LLM_DELEGATOR
         self.attempted_agents: set[str] = set()
         self.selected_agents_for_request: list[str] = []
         self.parser = PydanticOutputParser(pydantic_object=RankAgentsOutput)
-
-    def _build_system_prompt(self, available_agents: List[Dict]) -> str:
-        """Build the system prompt for agent selection"""
-        agent_descriptions = "\n".join(f"- {agent['name']}: {agent['description']}" for agent in available_agents)
-
-        return f"""\
-You are Morpheus, a specialized "agent delegator."
-You MUST respond ONLY in valid JSON format with an "agents" array containing 1-3 agent names.
-Example valid response: {{"agents": ["agent1", "agent2"]}}
-
-Available agents:
-{agent_descriptions}
-
-Your job:
-1. Read the user's question or query, which contains a chat history and a current prompt
-2. The current prompt is the last message from the user, which is the MOST IMPORTANT when deciding which agents to use
-3. Select up to 3 most relevant agents from the available agents
-4. Output a JSON object with an "agents" array containing the selected agent names in priority order
-5. Do not output anything besides the JSON object
-"""
 
     async def _try_agent(self, agent_name: str, chat_request: ChatRequest) -> Optional[AgentResponse]:
         """Attempt to use a single agent, with error handling"""
@@ -56,12 +38,12 @@ Your job:
 
             module = importlib.import_module(agent_config["path"])
             agent_class = getattr(module, agent_config["class_name"])
-            agent = agent_class(agent_config, LLM_AGENT, EMBEDDINGS)
+            agent = agent_class(agent_config, LLM_AGENT)
 
             result: AgentResponse = await agent.chat(chat_request)
             if result.response_type == ResponseType.ERROR:
-                logger.warning(f"Agent {agent_name} returned error response")
-                return None
+                logger.warning(f"Agent {agent_name} returned error response. You should probably look into this")
+                logger.error(f"Error message: {result.error_message}")
 
             return result
 
@@ -79,13 +61,7 @@ Your job:
                 return ["default"]
             raise ValueError("No remaining agents available")
 
-        # system_prompt = self._build_system_prompt(available_agents)
-        system_prompt = SYSTEM_PROMPT
-
-        logger.info("System prompt")
-        logger.info("System prompt")
-        logger.info("System prompt")
-        logger.info(f"System prompt: {system_prompt}")
+        system_prompt = get_system_prompt(available_agents)
 
         # Build message history from chat history
         messages: List[BaseMessage] = [SystemMessage(content=system_prompt)]

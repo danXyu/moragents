@@ -1,17 +1,19 @@
 .messageList {
   flex: 1;
-  overflow-y: scroll;
-  overflow-x: hidden;
-  height: 100%;
-  background-color: #000;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+  overscroll-behavior: contain; /* Prevent scroll chaining */
+}
+
+/* Make sure content doesn't overflow horizontally */
+.messageList > div {
+  width: 100%;
 }
 
 .messageList::-webkit-scrollbar {
-  width: 0;
   display: none;
 }
 
 .messageList::-webkit-scrollbar-thumb {
-  background-color: #111613;
-  border-radius: 4px;
+  display: none;
 }

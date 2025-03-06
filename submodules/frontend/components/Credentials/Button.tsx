@@ -20,7 +20,7 @@ export const ApiCredentialsButton: React.FC = () => {
       >
         <Lock className={styles.icon} size={20} />
         <Text fontSize="14px" color="white">
-          API Keys
+          API Integrations
         </Text>
       </Flex>
 

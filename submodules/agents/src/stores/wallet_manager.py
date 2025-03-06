@@ -3,7 +3,6 @@ import logging
 from typing import Dict, Optional
 from cdp import Cdp, Wallet, WalletData
 from pathlib import Path
-from stores.key_manager import key_manager_instance
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +49,11 @@ class WalletManager:
         try:
             if self.cdp_client:
                 return True
-            if not key_manager_instance.has_coinbase_keys():
-                logger.error("CDP credentials not found")
-                return False
+            # if not key_manager_instance.has_coinbase_keys():
+            #     logger.error("CDP credentials not found")
+            #     return False
 
-            keys = key_manager_instance.get_coinbase_keys()
+            # keys = key_manager_instance.get_coinbase_keys()
             logger.info("Configuring CDP client with stored credentials")
             self.cdp_client = Cdp.configure(keys.cdp_api_key, keys.cdp_api_secret)
 

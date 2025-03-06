@@ -1,7 +1,7 @@
 from langchain.schema import SystemMessage
 
 from models.service.agent_config import AgentConfig
-from .tool_types import CodexToolType
+from .utils.tool_types import CodexToolType
 
 
 class Config:
@@ -15,10 +15,15 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.codex.agent",
+        path="services.agents.codex.agent",
         class_name="CodexAgent",
         description="Fetches and analyzes advanced token and NFT data from Codex.io such as trending tokens, top holders, and more",
-        delegator_description="Retrieves and analyzes advanced on-chain metrics and token data from Codex.io, including holder behavior patterns, whale movements, token distribution analytics, and contract interactions. Use for sophisticated blockchain data analysis beyond basic price information.",
+        delegator_description=(
+            "Use this agent for: 1) Getting lists of trending tokens across networks with customizable time frames, "
+            "2) Analyzing token holder concentration by getting top holder percentages for specific tokens on specific networks, "
+            "3) Searching NFT collections with detailed metrics and wash trading detection. "
+            "This agent MUST be used for any queries related to trending tokens, token holder analysis, or NFT collection searches."
+        ),
         human_readable_name="Codex Market Analyst",
         command="codex",
         upload_required=False,
@@ -52,10 +57,10 @@ class Config:
                         "description": "Maximum number of tokens to return (max 50)",
                         "required": False,
                     },
-                    "networkFilter": {
+                    "networks": {
                         "type": "array",
-                        "items": {"type": "integer"},
-                        "description": "List of network IDs to filter by",
+                        "items": {"type": "string"},
+                        "description": "List of network names to filter by (Ethereum, Solana, etc.)",
                         "required": False,
                     },
                     "resolution": {
@@ -68,14 +73,19 @@ class Config:
         },
         {
             "name": CodexToolType.GET_TOP_HOLDERS_PERCENT.value,
-            "description": "Get the top holders for a token",
+            "description": "Get the top holders for a token. If no network is provided, then LEAVE IT AS NONE",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "tokenId": {
+                    "tokenName": {
                         "type": "string",
-                        "description": "Token ID",
-                        "required": True,
+                        "description": "Token name to get top holders for",
+                        "required": False,
+                    },
+                    "network": {
+                        "type": "string",
+                        "description": "Network to search for token on. Must be deliberately specified.",
+                        "required": False,
                     },
                 },
             },

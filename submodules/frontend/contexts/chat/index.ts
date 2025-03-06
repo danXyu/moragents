@@ -13,6 +13,7 @@ export {
   createNewConversation,
   deleteConversation,
   getAllConversations,
+  updateConversationTitle,
 } from "@/services/ChatManagement/conversations";
 
 // Message management

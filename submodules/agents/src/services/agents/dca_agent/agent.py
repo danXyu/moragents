@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 class DCAAgent(AgentCore):
     """Agent for handling DCA (Dollar Cost Averaging) strategies."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any, embeddings: Any):
+    def __init__(self, config: Dict[str, Any], llm: Any):
         """Initialize the DCAAgent."""
-        super().__init__(config, llm, embeddings)
+        super().__init__(config, llm)
 
         # TODO: Create specialized tools to pull out DCA params from user message
         # For now, we can ignore these tools

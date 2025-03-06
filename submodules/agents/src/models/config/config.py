@@ -69,6 +69,18 @@ class Config:
         # disable noisy loggers
         logging.getLogger("google.cloud.pubsub_v1").setLevel(logging.WARNING)
 
+    def has(self, key: str, section: str = "default") -> bool:
+        """Check if key exists in environment variables or config section"""
+        # Check env vars first
+        if key in self._env_vars:
+            return True
+
+        # Then check config section
+        try:
+            return key in self._conf[section]
+        except KeyError:
+            return False
+
     def get(self, key, section="default", type_conv=lambda x: x):
         """Get config value for key, section.  If not found in config file, check environment variables"""
         value = self._env_vars.get(key)

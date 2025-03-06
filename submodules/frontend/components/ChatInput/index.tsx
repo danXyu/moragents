@@ -5,49 +5,66 @@ import {
   InputLeftAddon,
   InputRightAddon,
   IconButton,
-  Box,
-  VStack,
-  Text,
   useMediaQuery,
 } from "@chakra-ui/react";
 import { AttachmentIcon } from "@chakra-ui/icons";
 import { SendIcon } from "../CustomIcon/SendIcon";
+import { Command } from "./Commands";
+import { CommandsPortal } from "./CommandsPortal";
 import styles from "./index.module.css";
 import API_BASE_URL from "../../config";
-
-type Command = {
-  command: string;
-  description: string;
-  name: string;
-};
 
 type ChatInputProps = {
   onSubmit: (message: string, file: File | null) => Promise<void>;
   disabled: boolean;
-  hasMessages?: boolean;
+  isSidebarOpen: boolean;
 };
 
 export const ChatInput: FC<ChatInputProps> = ({
   onSubmit,
   disabled,
-  hasMessages = false,
+  isSidebarOpen,
 }) => {
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [commands, setCommands] = useState<Command[]>([]);
   const [showCommands, setShowCommands] = useState(false);
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
-  const [dropdownPosition, setDropdownPosition] = useState({
-    top: 0,
-    left: 0,
-    width: 0,
-  });
   const [isMobile] = useMediaQuery("(max-width: 768px)");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const inputGroupRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const commandsRef = useRef<HTMLDivElement>(null);
+
+  // Add this useEffect to prevent focus zoom on mobile
+  useEffect(() => {
+    // Add meta viewport tag to prevent zoom
+    const viewportMeta = document.createElement("meta");
+    viewportMeta.name = "viewport";
+    viewportMeta.content =
+      "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no";
+
+    // Check if there's already a viewport meta tag
+    const existingMeta = document.querySelector('meta[name="viewport"]');
+
+    if (existingMeta) {
+      // Update existing meta tag
+      existingMeta.setAttribute(
+        "content",
+        "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+      );
+    } else {
+      // Add new meta tag
+      document.head.appendChild(viewportMeta);
+    }
+
+    // Optional cleanup
+    return () => {
+      if (!existingMeta && viewportMeta.parentNode) {
+        document.head.removeChild(viewportMeta);
+      }
+    };
+  }, []);
 
   // Fetch commands
   useEffect(() => {
@@ -56,19 +73,6 @@ export const ChatInput: FC<ChatInputProps> = ({
       .then((data) => setCommands(data.commands))
       .catch((error) => console.error("Error fetching commands:", error));
   }, []);
-
-  // Update dropdown position when message changes
-  useEffect(() => {
-    if (inputGroupRef.current && message.startsWith("/")) {
-      const rect = inputGroupRef.current.getBoundingClientRect();
-      const mobileOffset = isMobile ? 20 : 400;
-      setDropdownPosition({
-        top: rect.top,
-        left: rect.left - mobileOffset,
-        width: rect.width,
-      });
-    }
-  }, [message, isMobile]);
 
   // Filter commands based on input
   const filteredCommands = message.startsWith("/")
@@ -82,21 +86,6 @@ export const ChatInput: FC<ChatInputProps> = ({
     setShowCommands(message.startsWith("/") && filteredCommands.length > 0);
     setSelectedCommandIndex(0);
   }, [message, filteredCommands.length]);
-
-  // Scroll to selected command
-  useEffect(() => {
-    if (commandsRef.current && showCommands) {
-      const selectedElement = commandsRef.current.querySelector(
-        `[data-index="${selectedCommandIndex}"]`
-      );
-      if (selectedElement) {
-        selectedElement.scrollIntoView({
-          block: "center",
-          behavior: "smooth",
-        });
-      }
-    }
-  }, [selectedCommandIndex, showCommands]);
 
   const handleCommandSelect = (command: Command) => {
     setMessage(`/${command.command} `);
@@ -158,63 +147,12 @@ export const ChatInput: FC<ChatInputProps> = ({
   return (
     <>
       {showCommands && (
-        <Box
-          ref={commandsRef}
-          position="fixed"
-          top={`${dropdownPosition.top - (isMobile ? 160 : 210)}px`}
-          left={`${dropdownPosition.left}px`}
-          right={0}
-          mx="auto"
-          width={`${dropdownPosition.width}px`}
-          bg="#353936"
-          borderRadius="8px"
-          boxShadow="0 4px 12px rgba(0, 0, 0, 0.3)"
-          maxH={isMobile ? "160px" : "200px"}
-          overflowY="auto"
-          border="1px solid #454945"
-          zIndex={1000}
-          sx={{
-            "&::-webkit-scrollbar": {
-              width: "8px",
-            },
-            "&::-webkit-scrollbar-track": {
-              background: "#2A2E2A",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              background: "#454945",
-              borderRadius: "4px",
-            },
-          }}
-        >
-          <VStack spacing={0} align="stretch">
-            {filteredCommands.map((cmd, index) => (
-              <Box
-                key={cmd.command}
-                data-index={index}
-                px={3}
-                py={2}
-                bg={index === selectedCommandIndex ? "#454945" : "transparent"}
-                _hover={{ bg: "#404540" }}
-                cursor="pointer"
-                onClick={() => handleCommandSelect(cmd)}
-                transition="background-color 0.2s"
-                borderBottom="1px solid #454945"
-                _last={{ borderBottom: "none" }}
-              >
-                <Text
-                  fontWeight="bold"
-                  fontSize={isMobile ? "xs" : "sm"}
-                  color="#59f886"
-                >
-                  /{cmd.command}
-                </Text>
-                <Text fontSize={isMobile ? "2xs" : "xs"} color="#A0A0A0">
-                  {cmd.name} - {cmd.description}
-                </Text>
-              </Box>
-            ))}
-          </VStack>
-        </Box>
+        <CommandsPortal
+          commands={filteredCommands}
+          selectedIndex={selectedCommandIndex}
+          onSelect={handleCommandSelect}
+          isSidebarOpen={isSidebarOpen}
+        />
       )}
 
       <div className={styles.flexContainer}>
@@ -252,10 +190,13 @@ export const ChatInput: FC<ChatInputProps> = ({
             disabled={isSubmitting || disabled || file !== null}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Start typing or press / for commands"
+            placeholder={
+              file
+                ? "Click the arrow to process your file"
+                : "Start typing or press / for commands"
+            }
             rows={1}
             resize="none"
-            fontSize="14px"
             overflow="hidden"
           />
           <InputRightAddon className={styles.rightAddon}>

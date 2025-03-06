@@ -20,27 +20,20 @@ import {
   IconSearch,
   IconRefresh,
   IconTrash,
+  IconPencil,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { ProfileMenu } from "./ProfileMenu";
 import styles from "./index.module.css";
 
-// Import from our new modular services
 import { useChatContext } from "@/contexts/chat/useChatContext";
 import {
   getAllConversations,
   createNewConversation,
   clearMessagesHistory,
+  updateConversationTitle,
 } from "@/contexts/chat";
 import { Conversation } from "@/services/types";
-
-// Add keyframes for blink animation
-const blinkKeyframes = `
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-`;
 
 export type LeftSidebarProps = {
   isSidebarOpen: boolean;
@@ -51,66 +44,34 @@ export const LeftSidebar: FC<LeftSidebarProps> = ({
   isSidebarOpen,
   onToggleSidebar,
 }) => {
-  // Add keyframes to document head once
-  useEffect(() => {
-    const styleElement = document.createElement("style");
-    styleElement.innerHTML = blinkKeyframes;
-    document.head.appendChild(styleElement);
-
-    return () => {
-      document.head.removeChild(styleElement);
-    };
-  }, []);
-
-  // Use our centralized chat context
-  const { state, setCurrentConversation, deleteChat, refreshMessages } =
-    useChatContext();
+  const {
+    state,
+    setCurrentConversation,
+    deleteChat,
+    refreshMessages,
+    refreshAllTitles,
+  } = useChatContext();
   const { currentConversationId, conversationTitles } = state;
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("llama3.2:3b");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const ToggleIcon = isSidebarOpen ? IconChevronLeft : IconChevronRight;
-
-  // Animation state (moved outside of component to prevent nesting issues)
-  const [animatingConversations, setAnimatingConversations] = useState<{
-    [id: string]: { text: string; typing: boolean };
-  }>({});
 
   const modelOptions = [{ value: "llama3.3:70b", label: "Llama 3.3 (70B)" }];
 
   const fetchConversations = () => {
     try {
       const conversationsData = getAllConversations();
-
-      // Merge conversation data with titles from context
-      const updatedConversations = conversationsData.map((conv) => {
-        const newName = conversationTitles[conv.id] || conv.name;
-
-        // Set up animation if the name has changed
-        if (newName !== conv.name && conv.name !== "New Conversation") {
-          setAnimatingConversations((prev) => ({
-            ...prev,
-            [conv.id]: { text: newName, typing: true },
-          }));
-
-          // Auto-clear typing after animation completes
-          setTimeout(() => {
-            setAnimatingConversations((prev) => ({
-              ...prev,
-              [conv.id]: { text: newName, typing: false },
-            }));
-          }, newName.length * 30 + 100);
-        }
-
-        return {
-          ...conv,
-          name: newName,
-        };
-      });
-
+      const updatedConversations = conversationsData.map((conv) => ({
+        ...conv,
+        name: conversationTitles[conv.id] || conv.name,
+      }));
       setConversations(updatedConversations);
     } catch (error) {
       console.error("Failed to fetch conversations:", error);
@@ -151,12 +112,30 @@ export const LeftSidebar: FC<LeftSidebarProps> = ({
     }
   };
 
-  // Watch for changes in conversation titles and current conversation
+  const handleStartEdit = (conversation: Conversation, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(conversation.id);
+    setEditValue(conversation.name);
+    setTimeout(() => editInputRef.current?.focus(), 0);
+  };
+
+  const handleSaveEdit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!editingId || !editValue.trim()) return;
+
+    try {
+      await updateConversationTitle(editingId, editValue.trim());
+      await refreshAllTitles();
+    } catch (error) {
+      console.error("Failed to update conversation title:", error);
+    }
+    setEditingId(null);
+  };
+
   useEffect(() => {
     fetchConversations();
   }, [conversationTitles, currentConversationId]);
 
-  // Poll for updates to ensure we catch title changes
   useEffect(() => {
     const intervalId = setInterval(() => {
       refreshMessages();
@@ -202,68 +181,74 @@ export const LeftSidebar: FC<LeftSidebarProps> = ({
           </div>
 
           <div className={styles.mainContent}>
-            {filteredConversations.map((conversation) => {
-              // Get animation state for this conversation
-              const isTyping =
-                animatingConversations[conversation.id]?.typing || false;
-
-              return (
-                <div
-                  key={conversation.id}
-                  className={`${styles.conversationItem} ${
-                    currentConversationId === conversation.id
-                      ? styles.conversationActive
-                      : ""
-                  }`}
-                  onClick={() => setCurrentConversation(conversation.id)}
-                >
-                  {/* No component wrapper, just direct styling on the span */}
-                  <span
-                    className={styles.conversationName}
-                    style={{
-                      color: isTyping ? "#1ed760" : undefined,
-                    }}
+            {filteredConversations.map((conversation) => (
+              <div
+                key={conversation.id}
+                className={`${styles.conversationItem} ${
+                  currentConversationId === conversation.id
+                    ? styles.conversationActive
+                    : ""
+                }`}
+                onClick={() => setCurrentConversation(conversation.id)}
+              >
+                {editingId === conversation.id ? (
+                  <form
+                    onSubmit={handleSaveEdit}
+                    style={{ flex: 1 }}
+                    onClick={(e) => e.stopPropagation()}
                   >
+                    <input
+                      ref={editInputRef}
+                      className={styles.titleInput}
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={handleSaveEdit}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setEditingId(null);
+                        }
+                      }}
+                    />
+                  </form>
+                ) : (
+                  <span className={styles.conversationName}>
                     {conversation.name}
-                    {isTyping && (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          marginLeft: "1px",
-                          animation: "blink 0.7s infinite",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        |
-                      </span>
-                    )}
                   </span>
-                  <div className={styles.buttonGroup}>
-                    {conversation.id === "default" ? (
-                      <button
-                        className={styles.resetButton}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleClearChatHistory();
-                        }}
-                      >
-                        <IconRefresh size={16} />
-                      </button>
-                    ) : (
-                      <button
-                        className={styles.deleteButton}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteConversation(conversation.id);
-                        }}
-                      >
-                        <IconTrash size={16} />
-                      </button>
-                    )}
-                  </div>
+                )}
+
+                <div className={styles.buttonGroup}>
+                  {conversation.id !== "default" && (
+                    <button
+                      className={styles.editButton}
+                      onClick={(e) => handleStartEdit(conversation, e)}
+                    >
+                      <IconPencil size={16} />
+                    </button>
+                  )}
+                  {conversation.id === "default" ? (
+                    <button
+                      className={styles.resetButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleClearChatHistory();
+                      }}
+                    >
+                      <IconRefresh size={16} />
+                    </button>
+                  ) : (
+                    <button
+                      className={styles.deleteButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteConversation(conversation.id);
+                      }}
+                    >
+                      <IconTrash size={16} />
+                    </button>
+                  )}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
 
           <Box width="100%" mb={1}>
@@ -337,9 +322,9 @@ export const LeftSidebar: FC<LeftSidebarProps> = ({
                 <div className={styles.comingSoonContainer}>
                   <Text className={styles.costInfo}>Coming soon</Text>
                   <Text className={styles.modelNote}>
-                    Stake your Morpheus tokens to access more powerful models
-                    and leverage builder keys to automatically enable advanced
-                    agents.
+                    Stake your Morpheus tokens to access even more powerful
+                    models, create your own agents, and leverage builder keys to
+                    automatically enable advanced agents.
                   </Text>
                 </div>
               </Box>

@@ -1,4 +1,6 @@
 from models.service.agent_config import AgentConfig
+from langchain.schema import SystemMessage
+from .utils.tool_types import SwapToolType
 
 
 class Config:
@@ -9,7 +11,7 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.token_swap.agent",
+        path="services.agents.token_swap.agent",
         class_name="TokenSwapAgent",
         description="Handles token swaps across multiple networks",
         delegator_description="Executes and optimizes token exchange transactions across multiple blockchains, "
@@ -20,6 +22,85 @@ class Config:
         command="swap",
         upload_required=False,
     )
+
+    # *************#
+    # SYSTEM MESSAGE
+    # *************#
+    system_message = SystemMessage(
+        content=(
+            "You are a helpful assistant for token swapping operations. "
+            "You can help users swap between different cryptocurrencies on various blockchain networks. "
+            "You can also check the status of pending transactions. "
+            "When a user wants to swap tokens, ask for the following information if not provided: "
+            "- Source token (token1) "
+            "- Destination token (token2) "
+            "- Amount to swap "
+            "When a user wants to check transaction status, ask for: "
+            "- Transaction hash "
+            "- Chain ID"
+        )
+    )
+
+    # *************
+    # TOOLS CONFIG
+    # *************
+
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": SwapToolType.SWAP_TOKENS.value,
+                "description": (
+                    "Construct a token swap transaction with validation and quote. "
+                    "Make sure the source token and destination token ONLY include "
+                    "the token symbol, not the amount. The amount is a separate field."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "source_token": {
+                            "type": "string",
+                            "description": "Name or address of the source token to sell",
+                            "required": False,
+                        },
+                        "destination_token": {
+                            "type": "string",
+                            "description": "Name or address of the destination token to buy",
+                            "required": False,
+                        },
+                        "amount": {
+                            "type": "string",
+                            "description": "Amount of source token to swap",
+                            "required": False,
+                        },
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": SwapToolType.GET_TRANSACTION_STATUS.value,
+                "description": "Get the current status of a transaction",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "tx_hash": {
+                            "type": "string",
+                            "description": "Transaction hash to check status for",
+                            "required": False,
+                        },
+                        "tx_type": {
+                            "type": "string",
+                            "description": "Type of transaction (approve/swap)",
+                            "enum": ["approve", "swap"],
+                            "required": False,
+                        },
+                    },
+                },
+            },
+        },
+    ]
 
     # *************
     # API CONFIG

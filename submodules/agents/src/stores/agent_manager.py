@@ -1,11 +1,9 @@
 import importlib
-import logging
 
 from typing import Any, Dict, List, Optional, Tuple
 from langchain_ollama import ChatOllama
-from langchain_community.embeddings import OllamaEmbeddings
 
-from config import load_agent_configs, setup_logging, EMBEDDINGS
+from config import load_agent_configs, setup_logging
 
 logger = setup_logging()
 
@@ -20,7 +18,6 @@ class AgentManager:
         config (Dict): Configuration dictionary for agents
         agents (Dict[str, Any]): Dictionary of loaded agent instances
         llm (ChatOllama): Language model instance
-        embeddings (OllamaEmbeddings): Embeddings model instance
     """
 
     def __init__(self, config: Dict) -> None:
@@ -35,7 +32,6 @@ class AgentManager:
         self.config = config
         self.agents: Dict[str, Any] = {}
         self.llm: Optional[ChatOllama] = None
-        self.embeddings: Optional[OllamaEmbeddings] = None
 
         # Select first 6 agents by default
         self.set_selected_agents([agent["name"] for agent in config])
@@ -55,23 +51,21 @@ class AgentManager:
         try:
             module = importlib.import_module(agent_config["path"])
             agent_class = getattr(module, agent_config["class"])
-            self.agents[agent_config["name"]] = agent_class(agent_config, self.llm, self.embeddings)
+            self.agents[agent_config["name"]] = agent_class(agent_config, self.llm)
             logger.info(f"Loaded agent: {agent_config['name']}")
             return True
         except Exception as e:
             logger.error(f"Failed to load agent {agent_config['name']}: {str(e)}")
             return False
 
-    def load_all_agents(self, llm: ChatOllama, embeddings: OllamaEmbeddings) -> None:
+    def load_all_agents(self, llm: ChatOllama) -> None:
         """
         Load all available agents with the given language and embedding models.
 
         Args:
             llm (ChatOllama): Language model instance
-            embeddings (OllamaEmbeddings): Embeddings model instance
         """
         self.llm = llm
-        self.embeddings = embeddings
         for agent_config in self.get_available_agents():
             self._load_agent(agent_config)
         logger.info(f"Loaded {len(self.agents)} agents")

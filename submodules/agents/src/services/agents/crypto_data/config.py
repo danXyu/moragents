@@ -12,14 +12,18 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.crypto_data.agent",
+        path="services.agents.crypto_data.agent",
         class_name="CryptoDataAgent",
         description="Fetches basic cryptocurrency data such as price, market cap, TVL, and FDV from various sources.",
-        delegator_description="Handles all queries related to cryptocurrency market statistics including current and "
-        "historical price data, market capitalization, trading volume, liquidity metrics, and price movements. "
-        "Use when users request factual information about crypto assets without requiring real-time analysis "
-        "or specialized token functionality.",
-        human_readable_name="Crypto Data Analyst",
+        delegator_description=(
+            "NOT a specialized agent. Fetches ONLY the very basic metrics for individual crypto assets including: current price, "
+            "market cap, fully diluted value (FDV), NFT floor prices, and TVL for DeFi protocols. "
+            "This agent CANNOT handle finding the most active tokens, rugcheck / safety, or any queries for multiple tokens. "
+            "Only use this agent when requesting a single specific metric (like price or TVL) for ONE "
+            "specific asset. For broader market analysis or comparisons across multiple assets, use "
+            "other specialized agents."
+        ),
+        human_readable_name="Basic Crypto Metrics",
         command="cryptodata",
         upload_required=False,
     )

@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 class DefaultAgent(AgentCore):
     """Agent for handling general conversation and providing information about Morpheus agents."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any, embeddings: Any):
-        super().__init__(config, llm, embeddings)
+    def __init__(self, config: Dict[str, Any], llm: Any):
+        super().__init__(config, llm)
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for general conversation."""

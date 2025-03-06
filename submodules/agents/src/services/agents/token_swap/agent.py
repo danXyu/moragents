@@ -1,209 +1,164 @@
 import logging
-import requests
-from typing import Optional
+from typing import Dict, Any
 
-from fastapi import Request
-from langchain.schema import HumanMessage, SystemMessage
-from dataclasses import dataclass
-
-from services.agents.token_swap import tools
-from models.service.chat_models import ChatRequest, AgentResponse
 from models.service.agent_core import AgentCore
-from stores.key_manager import key_manager_instance
+from models.service.chat_models import ChatRequest, AgentResponse
+
+from .config import Config
+from .utils.exceptions import TokenNotFoundError, InsufficientFundsError, SwapNotPossibleError
+from .tools import swap_coins, get_transaction_status
+from .utils.tool_types import SwapToolType
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class TokenSwapContext:
-    chain_id: Optional[str] = None
-    wallet_address: Optional[str] = None
+import logging
+from typing import Dict, Any, Union, Optional
+
+from models.service.agent_core import AgentCore
+from models.service.chat_models import ChatRequest, AgentResponse
+
+from .config import Config
+from .utils.exceptions import TokenNotFoundError, InsufficientFundsError, SwapNotPossibleError
+from .tools import swap_coins, get_transaction_status
+from .utils.tool_types import SwapToolType
+from .models import SwapQuoteResponse, TransactionResponse
+
+logger = logging.getLogger(__name__)
 
 
 class TokenSwapAgent(AgentCore):
-    """Agent for handling token swap operations."""
+    """Agent for token swapping operations."""
 
-    def __init__(self, config, llm, embeddings):
-        super().__init__(config, llm, embeddings)
-        self.tools_provided = tools.get_tools()
+    def __init__(self, config: Dict[str, Any], llm: Any):
+        super().__init__(config, llm)
+        self.tools_provided = Config.tools
         self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
-        self.context = TokenSwapContext()
-
-    def _api_request_url(self, method_name, query_params, chain_id):
-        base_url = self.config.APIBASEURL + str(chain_id)
-        return f"{base_url}{method_name}?{'&'.join([f'{key}={value}' for key, value in query_params.items()])}"
-
-    def _check_allowance(self, token_address, wallet_address, chain_id):
-        url = self._api_request_url(
-            "/approve/allowance",
-            {"tokenAddress": token_address, "walletAddress": wallet_address},
-            chain_id,
-        )
-        response = requests.get(url, headers=tools.get_headers())
-        return response.json()
-
-    def _approve_transaction(self, token_address, chain_id, amount=None):
-        query_params = {"tokenAddress": token_address, "amount": amount} if amount else {"tokenAddress": token_address}
-        url = self._api_request_url("/approve/transaction", query_params, chain_id)
-        response = requests.get(url, headers=tools.get_headers())
-        return response.json()
-
-    def _build_tx_for_swap(self, swap_params, chain_id):
-        url = self._api_request_url("/swap", swap_params, chain_id)
-        response = requests.get(url, headers=tools.get_headers())
-        if response.status_code != 200:
-            logger.error(f"1inch API error: {response.text}")
-            raise ValueError(f"1inch API error: {response.text}")
-        return response.json()
+        self.wallet_address = None
+        self.chain_id = None
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
-        """Process the validated chat request for token swaps."""
+        """Process the validated chat request for token swap operations."""
         try:
-            if not key_manager_instance.has_oneinch_keys():
-                return AgentResponse.needs_info(
-                    content="To help you with token swaps, I need your 1inch API key. Please set it up in Settings first."
-                )
+            messages = [Config.system_message, *request.messages_for_llm]
 
-            # Store request context
-            self.context.chain_id = request.chain_id
-            self.context.wallet_address = request.wallet_address
+            # Store wallet and chain information
+            self.wallet_address = request.wallet_address
+            self.chain_id = request.chain_id
 
-            messages = [
-                SystemMessage(
-                    content=(
-                        "You are a helpful assistant that processes token swap requests. "
-                        "When a user wants to swap tokens, analyze their request and provide a SINGLE tool call with complete information. "
-                        "Always return a single 'swap_agent' tool call with all three required parameters: "
-                        "- token1: the source token "
-                        "- token2: the destination token "
-                        "- value: the amount to swap "
-                        "If any information is missing from the user's request, do not make a tool call. Instead, respond asking for the missing information."
-                    )
-                ),
-                HumanMessage(content=request.prompt.content),
-            ]
+            # Validate wallet connection
+            if not self.wallet_address or not self.chain_id:
+                return AgentResponse.needs_info(content="Please connect your wallet to enable swap functionality")
 
             result = self.tool_bound_llm.invoke(messages)
             return await self._handle_llm_response(result)
 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
-            return AgentResponse.error(error_message=str(e))
+            return AgentResponse.error(error_message=f"Failed to process request: {str(e)}")
 
-    async def _execute_tool(self, func_name: str, args: dict) -> AgentResponse:
-        """Execute the appropriate swap tool based on function name."""
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
+        """Execute the appropriate token swap tool based on function name."""
         try:
-            if func_name == "swap_agent":
-                required_args = ["token1", "token2", "value"]
-                if not all(arg in args for arg in required_args):
-                    return AgentResponse.needs_info(
-                        content="Please provide all required parameters: source token (token1), destination token (token2), and amount to swap (value)."
-                    )
-
-                if not args["value"]:
-                    return AgentResponse.needs_info(content="Please specify the amount you want to swap.")
-
-                try:
-                    swap_result, _ = tools.swap_coins(
-                        args["token1"],
-                        args["token2"],
-                        float(args["value"]),
-                        self.context.chain_id,
-                        self.context.wallet_address,
-                    )
-
-                    # Return an action_required response with swap details
-                    return AgentResponse.action_required(
-                        content="Please review and confirm your swap transaction:",
-                        action_type="swap",
-                        metadata=swap_result,
-                    )
-                except (tools.InsufficientFundsError, tools.TokenNotFoundError, tools.SwapNotPossibleError) as e:
-                    return AgentResponse.needs_info(content=str(e))
-                except ValueError:
-                    return AgentResponse.needs_info(
-                        content="Something went wrong. Please try again and make sure your Metamask is connected."
-                    )
+            if func_name == SwapToolType.SWAP_TOKENS.value:
+                return await self._execute_swap_tokens(args)
+            elif func_name == SwapToolType.GET_TRANSACTION_STATUS.value:
+                return await self._execute_get_transaction_status(args)
             else:
+                return AgentResponse.error(error_message=f"Unknown tool: {func_name}")
+
+        except Exception as e:
+            logger.error(f"Unexpected error in tool execution {func_name}: {str(e)}", exc_info=True)
+            return AgentResponse.error(error_message=f"Unexpected error: {str(e)}")
+
+    async def _execute_swap_tokens(self, args: Dict[str, Any]) -> AgentResponse:
+        """Execute the swap tokens operation with comprehensive error handling."""
+        try:
+            # Revalidate wallet connection
+            if not self.wallet_address or not self.chain_id:
+                return AgentResponse.needs_info(content="Please connect your wallet to enable swap functionality")
+
+            # Validate required parameters
+            required_params = ["source_token", "destination_token", "amount"]
+            missing_params = [param for param in required_params if param not in args or args[param] is None]
+
+            if missing_params:
                 return AgentResponse.needs_info(
-                    content=f"I don't know how to {func_name}. Please try a different action."
+                    content=f"Please provide the following information: {', '.join(missing_params)}"
                 )
 
-        except Exception as e:
-            logger.error(f"Error executing tool {func_name}: {str(e)}", exc_info=True)
-            return AgentResponse.error(error_message=str(e))
+            # Validate amount is a positive number
+            try:
+                amount = float(args["amount"])
+                if amount <= 0:
+                    return AgentResponse.error(error_message="Swap amount must be greater than zero")
+            except ValueError:
+                return AgentResponse.error(error_message=f"Invalid amount format: {args['amount']}")
 
-    async def get_allowance(self, token_address: str, wallet_address: str, chain_id: str) -> AgentResponse:
-        """Check token allowance for a wallet."""
+            # Execute swap operation
+            swap_response = await swap_coins(
+                source_token=args["source_token"],
+                destination_token=args["destination_token"],
+                amount=amount,
+                chain_id=self.chain_id,
+                wallet_address=self.wallet_address,
+            )
+
+            return AgentResponse.success(
+                content=swap_response.formatted_response,
+                metadata=swap_response.model_dump(),
+                action_type="swap",
+            )
+
+        except TokenNotFoundError as e:
+            logger.error(f"Token not found: {str(e)}", exc_info=True)
+            return AgentResponse.error(error_message=f"Token not found: {str(e)}")
+
+        except InsufficientFundsError as e:
+            logger.error(f"Insufficient funds: {str(e)}", exc_info=True)
+            logger.info("We get here")
+            return AgentResponse.error(error_message=f"Insufficient funds: {str(e)}")
+
+        except SwapNotPossibleError as e:
+            logger.error(f"Swap not possible: {str(e)}", exc_info=True)
+            return AgentResponse.error(error_message=f"Swap not possible: {str(e)}")
+
+        except Exception as e:
+            logger.error(f"Error executing swap: {str(e)}", exc_info=True)
+            return AgentResponse.error(error_message=f"Error executing swap: {str(e)}")
+
+    async def _execute_get_transaction_status(self, args: Dict[str, Any]) -> AgentResponse:
+        """Execute the get transaction status operation with comprehensive error handling."""
         try:
-            result = self._check_allowance(token_address, wallet_address, chain_id)
-            return AgentResponse.success(content="Allowance checked successfully", metadata=result)
-        except Exception as e:
-            return AgentResponse.error(error_message=str(e))
+            # Extract and validate transaction hash
+            tx_hash = args.get("tx_hash")
+            if not tx_hash:
+                return AgentResponse.needs_info(content="Please provide a transaction hash")
 
-    async def approve(self, token_address: str, chain_id: str, amount: str) -> AgentResponse:
-        """Approve token spending."""
-        try:
-            result = self._approve_transaction(token_address, chain_id, amount)
-            return AgentResponse.success(content="Approval transaction created", metadata=result)
-        except Exception as e:
-            return AgentResponse.error(error_message=str(e))
+            # Use provided chain_id and wallet_address from args if available, otherwise use class values
+            chain_id = args.get("chainId", self.chain_id)
+            wallet_address = args.get("walletAddress", self.wallet_address)
 
-    async def swap(self, request_data: dict) -> AgentResponse:
-        """Build swap transaction."""
-        try:
-            if not all(k in request_data for k in ["src", "dst", "walletAddress", "amount", "slippage", "chain_id"]):
-                return AgentResponse.needs_info(
-                    content="Please provide all required parameters: source token, destination token, wallet address, amount, slippage, and chain ID."
-                )
+            # Validate we have the necessary parameters
+            if not chain_id:
+                return AgentResponse.needs_info(content="Please provide a chain ID or connect your wallet")
 
-            swap_params = {
-                "src": request_data["src"],
-                "dst": request_data["dst"],
-                "amount": request_data["amount"],
-                "from": request_data["walletAddress"],
-                "slippage": request_data["slippage"],
-                "disableEstimate": False,
-                "allowPartialFill": False,
-            }
+            if not wallet_address:
+                return AgentResponse.needs_info(content="Please provide a wallet address or connect your wallet")
 
-            result = self._build_tx_for_swap(swap_params, request_data["chain_id"])
-            return AgentResponse.success(content="Swap transaction created", metadata=result)
-        except Exception as e:
-            return AgentResponse.error(error_message=str(e))
+            # Execute transaction status check
+            tx_response = await get_transaction_status(
+                tx_hash=tx_hash,
+                chain_id=chain_id,
+                wallet_address=wallet_address,
+            )
 
-    async def tx_status(self, request: Request) -> AgentResponse:
-        """Handle transaction status updates."""
-        try:
-            request_data = await request.json()
-            status = request_data.get("status")
-            tx_hash = request_data.get("tx_hash", "")
-            tx_type = request_data.get("tx_type", "")
-
-            response = ""
-            if status == "cancelled":
-                response = f"The {tx_type} transaction has been cancelled."
-            elif status == "success":
-                response = f"The {tx_type} transaction was successful."
-            elif status == "failed":
-                response = f"The {tx_type} transaction has failed."
-            elif status == "initiated":
-                response = "Transaction has been sent, please wait for it to be confirmed."
-
-            if tx_hash:
-                response = response + f" The transaction hash is {tx_hash}."
-
-            if status == "success" and tx_type == "approve":
-                response = response + " Please proceed with the swap transaction."
-            elif status != "initiated":
-                response = response + " Is there anything else I can help you with?"
-
-            if status != "initiated":
-                # Reset context for new conversation
-                self.context = TokenSwapContext()
-
-            return AgentResponse.success(content=response)
+            return AgentResponse.success(
+                content=tx_response.formatted_response,
+                metadata=tx_response.model_dump(),
+                action_type="transaction_status",
+            )
 
         except Exception as e:
-            logger.error(f"Error processing transaction status: {str(e)}")
-            return AgentResponse.error(error_message=str(e))
+            logger.error(f"Error getting transaction status: {str(e)}", exc_info=True)
+            return AgentResponse.error(error_message=f"Error retrieving transaction status: {str(e)}")

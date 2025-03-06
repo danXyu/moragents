@@ -1,4 +1,5 @@
 from models.service.agent_config import AgentConfig
+from langchain.schema import SystemMessage
 
 
 class Config:
@@ -12,8 +13,8 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.rag.agent",
-        class_name="RAGAgent",
+        path="services.agents.rag.agent",
+        class_name="RagAgent",
         description="Processes and analyzes uploaded documents to answer questions about their contents",
         delegator_description="Specializes in analyzing and extracting insights from uploaded documents, PDFs, "
         "and text files. Use when users need to ask questions about specific documents they've "
@@ -22,12 +23,20 @@ class Config:
         human_readable_name="Document Q&A",
         command="rag",
         upload_required=True,
-        is_enabled=False,
     )
 
     # *************
-    # RAG CONFIG
+    # SYSTEM MESSAGE
     # *************
 
-    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
-    MAX_LENGTH = 16 * 1024 * 1024
+    system_message = SystemMessage(
+        content=(
+            "You are a helpful assistant that can answer questions about uploaded documents. "
+            "You must only answer questions based on the provided context from the documents. "
+            "If asked about topics outside the documents, politely explain that you can only "
+            "answer questions about the uploaded documents' contents. "
+            "Always maintain a helpful and professional tone. "
+            "If the context is insufficient to fully answer a question, acknowledge this "
+            "and explain what information is missing."
+        )
+    )

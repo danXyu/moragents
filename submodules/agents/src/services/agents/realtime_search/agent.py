@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 class RealtimeSearchAgent(AgentCore):
     """Agent for performing real-time web searches."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any, embeddings: Any):
-        super().__init__(config, llm, embeddings)
+    def __init__(self, config: Dict[str, Any], llm: Any):
+        super().__init__(config, llm)
         self.tools_provided = Config.tools
         self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
 

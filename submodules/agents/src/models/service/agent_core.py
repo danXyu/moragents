@@ -30,10 +30,9 @@ def handle_exceptions(func: Callable[..., Awaitable[AgentResponse]]) -> Callable
 class AgentCore(ABC):
     """Enhanced core agent functionality that all specialized agents inherit from."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any, embeddings: Any):
+    def __init__(self, config: Dict[str, Any], llm: Any):
         self.config = config
         self.llm = llm
-        self.embeddings = embeddings
         self._setup_logging()
 
     def _setup_logging(self) -> None:

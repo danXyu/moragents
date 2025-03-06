@@ -14,12 +14,15 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.dexscreener.agent",
+        path="services.agents.dexscreener.agent",
         class_name="DexScreenerAgent",
         description="Fetches and analyzes cryptocurrency trading data from DexScreener.",
-        delegator_description="Focuses on decentralized exchange trading data, including detailed pair analysis, "
-        "liquidity monitoring, trading volume patterns, and slippage calculations. Use when users need specific "
-        "DEX trading insights rather than general market data.",
+        delegator_description=(
+            "Fetches token profiles, boosted tokens, and DEX trading pair data from DexScreener. "
+            "Use when users need to search for specific trading pairs, monitor token activity, "
+            "or get information about recently listed or trending tokens across different chains. "
+            "Can filter results by specific chains. DO NOT USE FOR TOP HOLDERS OR TOKEN HOLDER ANALYSIS."
+        ),
         human_readable_name="DexScreener Analyst",
         command="dexscreener",
         upload_required=False,

@@ -12,7 +12,6 @@ from .models import (
     ElfaAccountSmartStatsResponse,
 )
 from .tools import (
-    get_mentions,
     get_top_mentions,
     search_mentions,
     get_trending_tokens,
@@ -25,8 +24,8 @@ logger = logging.getLogger(__name__)
 class ElfaAgent(AgentCore):
     """Agent for interacting with Elfa Social API."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any, embeddings: Any):
-        super().__init__(config, llm, embeddings)
+    def __init__(self, config: Dict[str, Any], llm: Any):
+        super().__init__(config, llm)
         self.tools_provided = Config.tools
         self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
 
@@ -45,15 +44,7 @@ class ElfaAgent(AgentCore):
     async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate Elfa API tool based on function name."""
         try:
-            if func_name == ElfaToolType.GET_MENTIONS.value:
-                mentions_response: ElfaMentionsResponse = await get_mentions(limit=args.get("limit"))
-                return AgentResponse.success(
-                    content=mentions_response.formatted_response,
-                    metadata=mentions_response.model_dump(),
-                    action_type=ElfaToolType.GET_MENTIONS.value,
-                )
-
-            elif func_name == ElfaToolType.GET_TOP_MENTIONS.value:
+            if func_name == ElfaToolType.GET_TOP_MENTIONS.value:
                 top_mentions_response: ElfaTopMentionsResponse = await get_top_mentions(
                     ticker=args["ticker"],
                     time_window=args.get("timeWindow"),
@@ -65,7 +56,7 @@ class ElfaAgent(AgentCore):
                     action_type=ElfaToolType.GET_TOP_MENTIONS.value,
                 )
 
-            elif func_name == ElfaToolType.SEARCH_MENTIONS.value:
+            if func_name == ElfaToolType.SEARCH_MENTIONS.value:
                 keywords = args.get("keywords", ["crypto"])
                 if isinstance(keywords, str):
                     keywords = [keywords]

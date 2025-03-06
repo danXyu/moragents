@@ -57,3 +57,25 @@ export const getAllConversations = () => {
 
   return sortedIds.map((id) => data.conversations[id]);
 };
+
+/**
+ * Update the title of a conversation
+ */
+export const updateConversationTitle = async (
+  conversationId: string,
+  newTitle: string
+) => {
+  try {
+    const data = getStorageData();
+
+    if (data.conversations[conversationId]) {
+      data.conversations[conversationId].name = newTitle;
+      saveStorageData(data);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Failed to update conversation title:", error);
+    throw error;
+  }
+};

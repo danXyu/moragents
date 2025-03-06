@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 class DexScreenerAgent(AgentCore):
     """Agent for interacting with DexScreener Token API."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any, embeddings: Any):
-        super().__init__(config, llm, embeddings)
+    def __init__(self, config: Dict[str, Any], llm: Any):
+        super().__init__(config, llm)
         self.tools_provided = Config.tools
         self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
 
@@ -40,21 +40,34 @@ class DexScreenerAgent(AgentCore):
 
             if func_name == DexScreenerToolType.SEARCH_DEX_PAIRS.value:
                 api_result = await tools.search_dex_pairs(args["query"])
-                return AgentResponse.success(content=api_result.formatted_response)
+                return AgentResponse.success(
+                    content=api_result.formatted_response,
+                    metadata=api_result.model_dump(),
+                    action_type=DexScreenerToolType.SEARCH_DEX_PAIRS.value,
+                )
             elif func_name == DexScreenerToolType.GET_LATEST_TOKEN_PROFILES.value:
                 api_result = await tools.get_latest_token_profiles(args.get("chain_id"))
+                return AgentResponse.success(
+                    content=api_result.formatted_response,
+                    metadata=api_result.model_dump(),
+                    action_type=DexScreenerToolType.GET_LATEST_TOKEN_PROFILES.value,
+                )
             elif func_name == DexScreenerToolType.GET_LATEST_BOOSTED_TOKENS.value:
                 api_result = await tools.get_latest_boosted_tokens(args.get("chain_id"))
+                return AgentResponse.success(
+                    content=api_result.formatted_response,
+                    metadata=api_result.model_dump(),
+                    action_type=DexScreenerToolType.GET_LATEST_BOOSTED_TOKENS.value,
+                )
             elif func_name == DexScreenerToolType.GET_TOP_BOOSTED_TOKENS.value:
                 api_result = await tools.get_top_boosted_tokens(args.get("chain_id"))
-                logger.info(f"Top boosted tokens: {api_result}")
+                return AgentResponse.success(
+                    content=api_result.formatted_response,
+                    metadata=api_result.model_dump(),
+                    action_type=DexScreenerToolType.GET_TOP_BOOSTED_TOKENS.value,
+                )
             else:
                 return AgentResponse.error(error_message=f"Unknown tool: {func_name}")
-
-            return AgentResponse.success(
-                content=api_result.formatted_response,
-                metadata={"chain_id": args.get("chain_id"), "tokens": api_result.tokens},
-            )
 
         except Exception as e:
             logger.error(f"Error executing tool {func_name}: {str(e)}", exc_info=True)

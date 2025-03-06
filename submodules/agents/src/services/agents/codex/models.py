@@ -46,37 +46,16 @@ class TokenMetadata(BaseModel):
     @property
     def formatted_response(self) -> str:
         """Format token metadata for response."""
-        formatted = f"## ${self.symbol} ({self.name})\n\n"
-        formatted += f"Price: ${self.price:,.6f}\n"
-        formatted += f"Market Cap: {self.marketCap or 'N/A'}\n"
-        formatted += f"Liquidity: {self.liquidity}\n"
-        formatted += f"24h Volume: {self.volume}\n\n"
-        formatted += "**Price Changes**:\n"
-        if self.priceChange1 is not None:
-            formatted += f"- 1h: {self.priceChange1:+.2f}%\n"
-        if self.priceChange4 is not None:
-            formatted += f"- 4h: {self.priceChange4:+.2f}%\n"
-        if self.priceChange12 is not None:
-            formatted += f"- 12h: {self.priceChange12:+.2f}%\n"
-        if self.priceChange24 is not None:
-            formatted += f"- 24h: {self.priceChange24:+.2f}%\n"
-        formatted += "\n"
-        formatted += "**Transaction Activity**:\n"
-        if self.txnCount24 is not None:
-            formatted += f"- 24h Transactions: {self.txnCount24:,}\n"
-        if self.uniqueBuys24 is not None and self.uniqueSells24 is not None:
-            formatted += f"- 24h Unique Buyers: {self.uniqueBuys24:,}\n"
-            formatted += f"- 24h Unique Sellers: {self.uniqueSells24:,}\n"
-        formatted += "\n"
-        formatted += f"Network ID: {self.networkId}\n"
-        formatted += f"Contract: {self.address}\n\n"
-        formatted += "---\n\n"
-        return formatted
-
-
-# *************
-# Top Tokens Response
-# *************
+        return (
+            f"Token {self.symbol} ({self.name}):\n"
+            f"Price: ${self.price:,.6f}\n"
+            f"Market Cap: {self.marketCap or 'N/A'}\n"
+            f"Liquidity: {self.liquidity}\n"
+            f"Volume: {self.volume}\n"
+            f"24h Change: {self.priceChange24 or 0:+.2f}%\n"
+            f"24h Transactions: {self.txnCount24 or 0}\n"
+            f"Contract: {self.address}"
+        )
 
 
 class TopTokensResponse(BaseModel):
@@ -90,19 +69,53 @@ class TopTokensResponse(BaseModel):
         """Format top tokens response for display."""
         if not self.success:
             return "Failed to get top tokens."
-
         if not self.data:
             return "No top tokens found."
 
-        formatted = "# Top Trending Tokens\n\n"
-        for token in self.data:
-            formatted += token.formatted_response
+        formatted = "# Top 5 Tokens\n\n"
+        for token in self.data[:10]:
+            formatted += f"{token.formatted_response}\n\n---\n\n"
         return formatted
 
 
-# *************
-# Top Holders Response
-# *************
+class TokenPair(BaseModel):
+    """Model for token pair information."""
+
+    token0: str
+    token1: str
+
+
+class Exchange(BaseModel):
+    """Model for exchange information."""
+
+    name: str
+
+
+class TokenDetails(BaseModel):
+    """Model for detailed token information."""
+
+    address: str
+    decimals: int
+    id: str
+    name: str
+    networkId: int
+    symbol: str
+
+
+class TokenFilterResult(BaseModel):
+    """Model for token information from filter tokens endpoint."""
+
+    buyCount1: Optional[int] = None
+    high1: Optional[str] = None
+    txnCount1: Optional[int] = None
+    uniqueTransactions1: Optional[int] = None
+    volume1: Optional[str] = None
+    liquidity: Optional[str] = None
+    marketCap: Optional[str] = None
+    priceUSD: Optional[str] = None
+    pair: Optional[TokenPair] = None
+    exchanges: Optional[List[Exchange]] = None
+    token: Optional[TokenDetails] = None
 
 
 class TopHoldersResponse(BaseModel):
@@ -110,6 +123,7 @@ class TopHoldersResponse(BaseModel):
 
     success: bool
     data: float  # Percentage owned by top 10 holders
+    token_info: Optional[TokenFilterResult] = None
 
     @property
     def formatted_response(self) -> str:
@@ -117,26 +131,33 @@ class TopHoldersResponse(BaseModel):
         if not self.success:
             return "Failed to get top holders data."
 
-        formatted = "# Token Holder Concentration\n\n"
-        formatted += f"Top 10 holders own {self.data:.2f}% of the total supply.\n\n"
+        risk = "High Risk" if self.data > 80 else "Medium Risk" if self.data > 50 else "Low Risk"
 
-        # Add interpretation
-        if self.data > 80:
-            formatted += "⚠️ **High Concentration Warning**: "
-            formatted += "Token ownership is highly concentrated, which could indicate higher volatility risk.\n"
-        elif self.data > 50:
-            formatted += "⚠️ **Moderate Concentration**: "
-            formatted += "Token ownership shows notable concentration among top holders.\n"
-        else:
-            formatted += "✅ **Well Distributed**: "
-            formatted += "Token ownership appears to be relatively well distributed.\n"
+        response = f"Top 10 holders own {self.data:.2f}% of supply. {risk}\n\n"
 
-        return formatted
+        if self.token_info and self.token_info.token:
+            response += f"Token Info:\n"
+            response += f"Name: {self.token_info.token.name} ({self.token_info.token.symbol})\n"
 
+            if self.token_info.priceUSD:
+                response += f"Price: ${float(self.token_info.priceUSD):,.6f}\n"
+            if self.token_info.marketCap:
+                response += f"Market Cap: ${float(self.token_info.marketCap):,.2f}\n"
+            if self.token_info.liquidity:
+                response += f"Liquidity: ${float(self.token_info.liquidity):,.2f}\n"
+            if self.token_info.volume1:
+                response += f"24h Volume: ${float(self.token_info.volume1):,.2f}\n"
+            if self.token_info.txnCount1:
+                response += f"24h Transactions: {self.token_info.txnCount1:,}\n"
+            if self.token_info.uniqueTransactions1:
+                response += f"Unique Transactions: {self.token_info.uniqueTransactions1:,}\n"
+            if self.token_info.exchanges:
+                exchange_names = [ex.name for ex in self.token_info.exchanges]
+                response += f"Available on: {', '.join(exchange_names)}\n"
+            if self.token_info.pair:
+                response += f"Trading Pair: {self.token_info.pair.token0}/{self.token_info.pair.token1}\n"
 
-# *************
-# Nft Search Response
-# *************
+        return response
 
 
 class NftSearchItem(BaseModel):
@@ -160,21 +181,13 @@ class NftSearchItem(BaseModel):
     @property
     def formatted_response(self) -> str:
         """Format NFT search item for display."""
-        formatted = f"## {self.name or 'Unnamed Collection'}\n\n"
-        if self.symbol:
-            formatted += f"Symbol: {self.symbol}\n"
-        formatted += f"Floor Price: {self.floor}\n"
-        formatted += f"Ceiling Price: {self.ceiling}\n"
-        formatted += f"Average Price: {self.average}\n\n"
-        formatted += "**Trading Activity**:\n"
-        formatted += f"- Volume: {self.volume}\n"
-        formatted += f"- Volume Change: {self.volumeChange:+.2f}%\n"
-        formatted += f"- Trade Count: {self.tradeCount}\n"
-        formatted += f"- Trade Count Change: {self.tradeCountChange:+.2f}%\n\n"
-        formatted += f"Network ID: {self.networkId}\n"
-        formatted += f"Contract: {self.address}\n\n"
-        formatted += "---\n\n"
-        return formatted
+        return (
+            f"# {self.name or 'Unnamed'} ({self.symbol or 'No Symbol'})\n"
+            f"Floor Price: {self.floor}\n"
+            f"Volume: {self.volume} ({self.volumeChange:+.2f}%)\n"
+            f"Trade Count: {self.tradeCount}\n"
+            f"Contract: {self.address}"
+        )
 
 
 class NftSearchResponse(BaseModel):
@@ -189,15 +202,10 @@ class NftSearchResponse(BaseModel):
         """Format NFT search response for display."""
         if not self.success:
             return "Failed to search NFT collections."
-
         if not self.items:
-            return "No NFT collections found matching your search."
+            return "No NFT collections found."
 
-        formatted = "# NFT Collection Search Results\n\n"
-        for item in self.items:
-            formatted += item.formatted_response
-
-        if self.hasMore > 0:
-            formatted += f"\n*{self.hasMore} more results available*\n"
-
+        formatted = "# Top 5 NFT Collections\n\n"
+        for item in self.items[:10]:
+            formatted += f"{item.formatted_response}\n\n---\n\n"
         return formatted

@@ -1,205 +1,231 @@
 import logging
 import time
+from typing import Optional
 
-import requests
-from services.agents.token_swap.config import Config
-from stores import key_manager_instance
 from web3 import Web3
+
+from .config import Config
+from .utils.exceptions import SwapNotPossibleError, TokenNotFoundError, InsufficientFundsError
+from .models import SwapQuoteResponse, TransactionResponse, TransactionStatus
+from .utils.helpers import (
+    validate_token_pair,
+    get_swap_quote,
+    convert_to_smallest_unit,
+    convert_to_readable_unit,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class InsufficientFundsError(Exception):
-    pass
+async def swap_coins(
+    source_token: str, destination_token: str, amount: float, chain_id: int, wallet_address: str
+) -> SwapQuoteResponse:
+    """
+    Get a quote for swapping tokens.
+
+    Args:
+        source_token: Symbol of source token
+        destination_token: Symbol of destination token
+        amount: Amount of source token to swap
+        chain_id: Blockchain network ID
+        wallet_address: User's wallet address
+
+    Returns:
+        SwapQuoteResponse object with swap details
+    """
+    logger.info(
+        f"Swapping {amount} {source_token} to {destination_token} on chain {chain_id} for wallet {wallet_address}"
+    )
+
+    try:
+        # Validate inputs
+        if not source_token or not destination_token:
+            raise ValueError("Source and destination tokens must be provided")
+
+        if amount <= 0:
+            raise ValueError("Swap amount must be greater than zero")
+
+        if not wallet_address:
+            raise ValueError("Wallet address must be provided")
+
+        if not chain_id:
+            raise ValueError("Chain ID must be provided")
+
+        # Initialize Web3 with appropriate provider
+        if str(chain_id) not in Config.WEB3RPCURL:
+            raise SwapNotPossibleError(f"Unsupported chain ID: {chain_id}")
+
+        web3 = Web3(Web3.HTTPProvider(Config.WEB3RPCURL[str(chain_id)]))
+
+        if not web3.is_connected():
+            raise SwapNotPossibleError(f"Cannot connect to RPC for chain ID: {chain_id}")
+
+        # Validate the swap and get token addresses and symbols
+        source_token_address, source_token_symbol, destination_token_address, destination_token_symbol = (
+            await validate_token_pair(web3, source_token, destination_token, chain_id, amount, wallet_address)
+        )
+
+        # Get quote from exchange API
+        time.sleep(1)  # Rate limiting
+        source_amount_in_wei = convert_to_smallest_unit(web3, amount, source_token_address)
+
+        quote_result = await get_swap_quote(
+            source_token_address, destination_token_address, source_amount_in_wei, chain_id
+        )
+
+        if not quote_result:
+            raise SwapNotPossibleError(
+                f"Failed to generate a quote for {source_token_symbol} to {destination_token_symbol}. "
+                "Please ensure you're on the correct network."
+            )
+
+        # Extract estimated destination amount from quote
+        destination_amount_in_wei = int(quote_result["dstAmount"])
+        destination_amount = convert_to_readable_unit(web3, destination_amount_in_wei, destination_token_address)
+
+        # Create successful response
+        return SwapQuoteResponse(
+            success=True,
+            src=source_token_symbol,
+            src_address=source_token_address,
+            src_amount=amount,
+            dst=destination_token_symbol,
+            dst_address=destination_token_address,
+            dst_amount=float(destination_amount),
+            approve_tx_cb="/approve",
+            swap_tx_cb="/swap",
+            estimated_gas=quote_result.get("estimatedGas"),
+        )
+    except (TokenNotFoundError, InsufficientFundsError, SwapNotPossibleError, ValueError) as e:
+        # Convert ValueError to SwapNotPossibleError for consistency
+        if isinstance(e, ValueError):
+            error = SwapNotPossibleError(str(e))
+        else:
+            error = e
+
+        # Let expected errors propagate to be handled by the agent
+        logger.error(f"Swap error: {str(error)}", exc_info=True)
+        raise error
+    except Exception as e:
+        # Handle unexpected errors
+        logger.error(f"Unexpected error during swap: {str(e)}", exc_info=True)
+        return SwapQuoteResponse(
+            success=False,
+            src=source_token,
+            src_address="",
+            src_amount=amount,
+            dst=destination_token,
+            dst_address="",
+            dst_amount=0.0,
+            error_message=f"Swap failed: {str(e)}",
+        )
 
 
-class TokenNotFoundError(Exception):
-    pass
+async def get_transaction_status(tx_hash: str, chain_id: int, wallet_address: str) -> TransactionResponse:
+    """
+    Get the status of a transaction.
 
+    Args:
+        tx_hash: Transaction hash
+        chain_id: Blockchain network ID
+        wallet_address: User's wallet address
 
-class SwapNotPossibleError(Exception):
-    pass
+    Returns:
+        TransactionResponse object with transaction details
+    """
+    logger.info(f"Getting status for transaction {tx_hash} on chain {chain_id}")
 
+    try:
+        # Validate inputs
+        if not tx_hash:
+            raise ValueError("Transaction hash must be provided")
 
-def get_headers() -> dict[str, str]:
-    """Get headers for 1inch API requests with optional API key override"""
-    oneinch_keys = key_manager_instance.get_oneinch_keys()
-    headers = {
-        "Authorization": f"Bearer {oneinch_keys.api_key}",
-        "accept": "application/json",
-    }
-    return headers
+        if not chain_id:
+            raise ValueError("Chain ID must be provided")
 
+        if not wallet_address:
+            raise ValueError("Wallet address must be provided")
 
-def search_tokens(
-    query: str,
-    chain_id: int,
-    limit: int = 1,
-    ignore_listed: str = "false",
-) -> dict | None:
-    logger.info(f"Searching tokens - Query: {query}, Chain ID: {chain_id}")
-    endpoint = f"/v1.2/{chain_id}/search"
-    params = {"query": str(query), "limit": str(limit), "ignore_listed": str(ignore_listed)}
+        # Check if chain is supported
+        if str(chain_id) not in Config.WEB3RPCURL:
+            raise ValueError(f"Unsupported chain ID: {chain_id}")
 
-    response = requests.get(Config.INCH_URL + endpoint, params=params, headers=get_headers())
-    logger.info(f"Search tokens response status: {response.status_code}")
-    if response.status_code == 200:
-        result = response.json()
-        logger.info(f"Found tokens: {result}")
-        return result
-    else:
-        logger.error(f"Failed to search tokens. Status code: {response.status_code}, Response: {response.text}")
-        return None
+        # Initialize Web3 with appropriate provider
+        web3 = Web3(Web3.HTTPProvider(Config.WEB3RPCURL[str(chain_id)]))
 
+        if not web3.is_connected():
+            raise ValueError(f"Cannot connect to RPC for chain ID: {chain_id}")
 
-def get_token_balance(web3: Web3, wallet_address: str, token_address: str, abi: list) -> int:
-    """Get the balance of an ERC-20 token for a given wallet address."""
-    if not token_address:  # If no token address is provided, assume checking ETH or native token balance
-        return web3.eth.get_balance(web3.to_checksum_address(wallet_address))
-    else:
-        contract = web3.eth.contract(address=web3.to_checksum_address(token_address), abi=abi)
-        return contract.functions.balanceOf(web3.to_checksum_address(wallet_address)).call()
+        # Get transaction receipt
+        try:
+            receipt = web3.eth.get_transaction_receipt(tx_hash)
+        except Exception as e:
+            logger.warning(f"Failed to get transaction receipt: {str(e)}")
+            receipt = None
 
+        # Get transaction details
+        try:
+            tx = web3.eth.get_transaction(tx_hash)
+        except Exception as e:
+            logger.warning(f"Failed to get transaction: {str(e)}")
+            # If we can't get the transaction, return a minimal response
+            return TransactionResponse(
+                success=False,
+                status=TransactionStatus.PENDING,
+                tx_hash=tx_hash,
+                from_address=wallet_address,
+                to_address="",
+                network_id=chain_id,
+                error_message=f"Transaction not found: {str(e)}",
+            )
 
-def eth_to_wei(amount_in_eth: float) -> int:
-    """Convert an amount in ETH to wei."""
-    return int(amount_in_eth * 10**18)
+        # Determine status
+        if receipt is None:
+            status = TransactionStatus.PENDING
+        elif receipt.status == 1:
+            status = TransactionStatus.CONFIRMED
+        else:
+            status = TransactionStatus.FAILED
 
-
-def validate_swap(web3: Web3, token1, token2, chain_id, amount, wallet_address):
-    native = Config.NATIVE_TOKENS
-
-    #  token1 is the native token
-    if token1.lower() == native[str(chain_id)].lower():
-        t1 = [
-            {
-                "symbol": native[str(chain_id)],
-                "address": Config.INCH_NATIVE_TOKEN_ADDRESS,
-            }
-        ]
-        t1_bal = get_token_balance(web3, wallet_address, "", Config.ERC20_ABI)
-        smallest_amount = eth_to_wei(amount)
-
-    #  token1 is an erc20 token
-    else:
-        t1 = search_tokens(token1, chain_id)
-        time.sleep(2)
-        if not t1:
-            raise TokenNotFoundError(f"Token {token1} not found.")
-        t1_bal = get_token_balance(web3, wallet_address, t1[0]["address"], Config.ERC20_ABI)
-        smallest_amount = convert_to_smallest_unit(web3, amount, t1[0]["address"])
-
-    # Check if token2 is the native token
-    if token2.lower() == native[str(chain_id)].lower():
-        t2 = [
-            {
-                "symbol": native[str(chain_id)],
-                "address": Config.INCH_NATIVE_TOKEN_ADDRESS,
-            }
-        ]
-    else:
-        t2 = search_tokens(token2, chain_id)
-        time.sleep(2)
-        if not t2:
-            raise TokenNotFoundError(f"Token {token2} not found.")
-
-    # Check if the user has sufficient balance for the swap
-    if t1_bal < smallest_amount:
-        raise InsufficientFundsError(f"Insufficient funds to perform the swap.")
-
-    return t1[0]["address"], t1[0]["symbol"], t2[0]["address"], t2[0]["symbol"]
-
-
-def get_quote(token1, token2, amount_in_wei, chain_id):
-    logger.info(f"Getting quote - Token1: {token1}, Token2: {token2}, Amount: {amount_in_wei}, Chain ID: {chain_id}")
-    endpoint = f"/v6.0/{chain_id}/quote"
-    params = {"src": token1, "dst": token2, "amount": int(amount_in_wei)}
-    logger.debug(f"Quote request - URL: {Config.QUOTE_URL + endpoint}, Params: {params}")
-
-    response = requests.get(Config.QUOTE_URL + endpoint, params=params, headers=get_headers())
-    logger.info(f"Quote response status: {response.status_code}")
-    if response.status_code == 200:
-        result = response.json()
-        logger.info(f"Quote received: {result}")
-        return result
-    else:
-        logger.error(f"Failed to get quote. Status code: {response.status_code}, Response: {response.text}")
-        return None
-
-
-def get_token_decimals(web3: Web3, token_address: str) -> int:
-    if not token_address:
-        return 18  # Assuming 18 decimals for the native gas token
-    else:
-        contract = web3.eth.contract(address=Web3.to_checksum_address(token_address), abi=Config.ERC20_ABI)
-        return contract.functions.decimals().call()
-
-
-def convert_to_smallest_unit(web3: Web3, amount: float, token_address: str) -> int:
-    decimals = get_token_decimals(web3, token_address)
-    return int(amount * (10**decimals))
-
-
-def convert_to_readable_unit(web3: Web3, smallest_unit_amount: int, token_address: str) -> float:
-    decimals = get_token_decimals(web3, token_address)
-    return smallest_unit_amount / (10**decimals)
-
-
-def swap_coins(token1, token2, amount, chain_id, wallet_address):
-    """Swap two crypto coins with each other"""
-    web3 = Web3(Web3.HTTPProvider(Config.WEB3RPCURL[str(chain_id)]))
-    t1_a, t1_id, t2_a, t2_id = validate_swap(web3, token1, token2, chain_id, amount, wallet_address)
-
-    time.sleep(2)
-    t1_address = "" if t1_a == Config.INCH_NATIVE_TOKEN_ADDRESS else t1_a
-    smallest_unit_amount = convert_to_smallest_unit(web3, amount, t1_address)
-    result = get_quote(t1_a, t2_a, smallest_unit_amount, chain_id)
-
-    if result:
-        price = result["dstAmount"]
-        t2_address = "" if t2_a == Config.INCH_NATIVE_TOKEN_ADDRESS else t2_a
-        t2_quote = convert_to_readable_unit(web3, int(price), t2_address)
-    else:
-        raise SwapNotPossibleError("Failed to generate a quote. Please ensure you're on the correct network.")
-
-    return {
-        "dst": t2_id,
-        "dst_address": t2_a,
-        "dst_amount": float(t2_quote),
-        "src": t1_id,
-        "src_address": t1_a,
-        "src_amount": amount,
-        "approve_tx_cb": "/approve",
-        "swap_tx_cb": "/swap",
-    }, "swap"
-
-
-def get_tools():
-    """Return a list of tools for the agent."""
-    return [
-        {
-            "type": "function",
-            "function": {
-                "name": "swap_agent",
-                "description": "swap two cryptocurrencies",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "token1": {
-                            "type": "string",
-                            "description": "name or address of the cryptocurrency to sell",
-                        },
-                        "token2": {
-                            "type": "string",
-                            "description": "name or address of the cryptocurrency to buy",
-                        },
-                        "value": {
-                            "type": "string",
-                            "description": "Value or amount of the cryptocurrency to sell",
-                        },
-                    },
-                    "required": ["token1", "token2", "value"],
-                },
+        # Create response
+        return TransactionResponse(
+            success=True,
+            status=status,
+            tx_hash=tx_hash,
+            from_address=tx["from"],
+            to_address=tx["to"],
+            value=web3.from_wei(tx["value"], "ether") if tx["value"] else None,
+            network_id=chain_id,
+            gas_used=receipt.gasUsed if receipt else None,
+            gas_price=tx["gasPrice"],
+            metadata={
+                "block_number": receipt.blockNumber if receipt else None,
+                "block_hash": receipt.blockHash.hex() if receipt and receipt.blockHash else None,
+                "confirmations": web3.eth.block_number - receipt.blockNumber if receipt and receipt.blockNumber else 0,
             },
-        }
-    ]
+        )
+
+    except ValueError as e:
+        # Handle validation errors
+        logger.error(f"Validation error in transaction status: {str(e)}")
+        return TransactionResponse(
+            success=False,
+            status=TransactionStatus.FAILED,
+            tx_hash=tx_hash if tx_hash else "",
+            from_address=wallet_address,
+            to_address="",
+            network_id=chain_id if chain_id else 0,
+            error_message=str(e),
+        )
+    except Exception as e:
+        # Handle unexpected errors
+        logger.error(f"Error getting transaction status: {str(e)}", exc_info=True)
+        return TransactionResponse(
+            success=False,
+            status=TransactionStatus.FAILED,
+            tx_hash=tx_hash if tx_hash else "",
+            from_address=wallet_address if wallet_address else "",
+            to_address="",
+            network_id=chain_id if chain_id else 0,
+            error_message=f"Failed to get transaction status: {str(e)}",
+        )

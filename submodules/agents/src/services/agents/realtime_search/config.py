@@ -9,7 +9,7 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.realtime_search.agent",
+        path="services.agents.realtime_search.agent",
         class_name="RealtimeSearchAgent",
         description="Performs real-time web searches to find current information. Should be used whenever the user refers to something recent or time-sensitive.",
         delegator_description="Performs up-to-the-minute web searches to retrieve current information on breaking news, "
@@ -18,6 +18,7 @@ class Config:
         human_readable_name="Web Search Assistant",
         command="search",
         upload_required=False,
+        is_enabled=False,
     )
 
     # *************

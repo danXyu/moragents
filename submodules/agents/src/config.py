@@ -1,16 +1,18 @@
-import logging
 import os
-import sys
 import importlib.util
 
 from typing import List, Dict, Any, Optional
 
 from fastapi import APIRouter
-from langchain_community.embeddings import OllamaEmbeddings
 from langchain_together import ChatTogether
 from langchain_cerebras import ChatCerebras
 
-logger = logging.getLogger(__name__)
+from services.vectorstore.together_embeddings import TogetherEmbeddings
+from services.vectorstore.vector_store_service import VectorStoreService
+from services.secrets import get_secret
+from logs import setup_logging
+
+logger = setup_logging()
 
 
 def load_agent_routes() -> List[APIRouter]:
@@ -35,7 +37,7 @@ def load_agent_routes() -> List[APIRouter]:
             continue
 
         try:
-            module_name = f"src.services.agents.{agent_dir}.routes"
+            module_name = f"services.agents.{agent_dir}.routes"
             spec = importlib.util.spec_from_file_location(module_name, routes_file)
 
             if spec is None or spec.loader is None:
@@ -45,7 +47,7 @@ def load_agent_routes() -> List[APIRouter]:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            if hasattr(module, "router") and module.Config.agent_config.is_enabled:
+            if hasattr(module, "router"):
                 routers.append(module.router)
                 logger.info(f"Successfully loaded routes from {agent_dir}")
             else:
@@ -83,7 +85,7 @@ def load_agent_config(agent_name: str) -> Optional[Dict[str, Any]]:
 
     try:
         # Import the config module
-        module_name = f"src.services.agents.{agent_name}.config"
+        module_name = f"services.agents.{agent_name}.config"
         spec = importlib.util.spec_from_file_location(module_name, config_file)
 
         if spec is None or spec.loader is None:
@@ -134,34 +136,6 @@ def load_agent_configs() -> List[Dict[str, Any]]:
     return configs
 
 
-def setup_logging() -> logging.Logger:
-    # Create formatter
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-
-    # Setup file handler
-    file_handler = logging.FileHandler("app.log")
-    file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(formatter)
-
-    # Setup console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(formatter)
-
-    # Get the root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-
-    # Remove any existing handlers
-    root_logger.handlers = []
-
-    # Add our handlers
-    root_logger.addHandler(file_handler)
-    root_logger.addHandler(console_handler)
-
-    return root_logger
-
-
 # Configuration object
 class AppConfig:
 
@@ -171,19 +145,36 @@ class AppConfig:
     OLLAMA_URL = "http://host.docker.internal:11434"
     MAX_UPLOAD_LENGTH = 16 * 1024 * 1024
 
-    # Together AI configuration
-    TOGETHER_API_KEY = "4d96d40ca55afa5a8867867e751b99aba12eb2a09bfad1c70235d084f637a053"
-    TOGETHER_MODEL_SMALL = "meta-llama/Llama-3.2-3B-Instruct-Turbo"
-    TOGETHER_MODEL_LARGE = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
-    TOGETHER_EMBEDDING_MODEL = "TogetherComputer/m2-bert-80M-8k-retrieval"
+    # LLM Configurations
+    LLM_AGENT_MODEL = "meta-llama/Llama-3.3-70B-Instruct-Turbo"  # Together AI
+    LLM_DELEGATOR_MODEL = "llama-3.3-70b"  # Cerebras
 
 
 LLM_AGENT = ChatTogether(
-    model=AppConfig.TOGETHER_MODEL_LARGE,
-    api_key=AppConfig.TOGETHER_API_KEY,
+    api_key=get_secret("TogetherApiKey"),
+    model=AppConfig.LLM_AGENT_MODEL,
     temperature=0.7,
 )
 
-LLM_DELEGATOR = ChatCerebras(api_key=os.getenv("CEREBRAS_API_KEY"), model="llama-3.3-70b")
+LLM_DELEGATOR = ChatCerebras(
+    api_key=get_secret("CerebrasApiKey"),
+    model=AppConfig.LLM_DELEGATOR_MODEL,
+)
+# Vector store path for persistence
+VECTOR_STORE_PATH = os.path.join(os.getcwd(), "data", "vector_store")
 
-EMBEDDINGS = OllamaEmbeddings(model=AppConfig.OLLAMA_EMBEDDING_MODEL, base_url=AppConfig.OLLAMA_URL)
+together_embeddings = TogetherEmbeddings(
+    model_name="togethercomputer/m2-bert-80M-8k-retrieval",
+    api_key=get_secret("TogetherApiKey"),
+)
+
+# Initialize vector store service and load existing store if it exists
+RAG_VECTOR_STORE = VectorStoreService(together_embeddings)
+if os.path.exists(VECTOR_STORE_PATH):
+    logger.info(f"Loading existing vector store from {VECTOR_STORE_PATH}")
+    try:
+        RAG_VECTOR_STORE = VectorStoreService.load(VECTOR_STORE_PATH, together_embeddings)
+    except Exception as e:
+        logger.error(f"Failed to load vector store: {str(e)}")
+        # Continue with empty vector store if load fails
+        RAG_VECTOR_STORE = VectorStoreService(together_embeddings)

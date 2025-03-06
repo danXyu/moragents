@@ -7,7 +7,7 @@ export const LoadingIndicator: FC = () => {
   return (
     <Box className={styles.messageContainer}>
       <div className={styles.assistantContent}>
-        <Text className={styles.agentName}>Finding the best agent</Text>
+        <Text className={styles.agentName}>Thinking</Text>
         <Box className={styles.loaderWrapper}>
           <Loader />
         </Box>

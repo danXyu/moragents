@@ -13,7 +13,6 @@ import {
   VStack,
   Button,
   Flex,
-  Tooltip,
 } from "@chakra-ui/react";
 import { ArrowLeft } from "lucide-react";
 import { TwitterConfig } from "./Integrations/TwitterConfig";
@@ -24,6 +23,7 @@ import { CodexConfig } from "./Integrations/CodexConfig";
 import { SantimentConfig } from "./Integrations/SantimentConfig";
 import styles from "./Integrations/ApiCredentials.module.css";
 import { useAccount } from "wagmi";
+import { StyledTooltip } from "@/components/Common/StyledTooltip";
 
 interface ApiOption {
   id: string;
@@ -51,6 +51,7 @@ const API_OPTIONS: ApiOption[] = [
     name: "1inch API",
     logo: "/images/one-inch-logo.png",
     component: OneInchConfig,
+    proEnabled: true,
   },
   {
     id: "elfa",
@@ -161,36 +162,30 @@ export const ApiCredentialsModal: React.FC<ApiCredentialsModalProps> = ({
                   Set up your API credentials for various services to enable
                   advanced features and integrations. These secrets are
                   encrypted with Lit Protocol, a key management network for
-                  decentralized signing and encryption. No one except for you
-                  and your connected wallet will be able to decrypt these
-                  secrets. Neither Morpheus nor anyone else will be able to
-                  decrypt the secrets, and we never send your secrets anywhere.
+                  decentralized signing and encryption. No one but you will be
+                  able to decrypt the secrets, and we never send your secrets
+                  anywhere.
                 </Text>
               </Box>
 
               <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-                {API_OPTIONS.map((api) => (
-                  <Tooltip
-                    key={api.id}
-                    isDisabled={!api.proEnabled || !address}
-                    label="Congratulations! As a pro user, you have access to these advanced agents."
-                  >
+                {API_OPTIONS.map((api) => {
+                  const isDisabled = api.proEnabled && address;
+
+                  const apiBox = (
                     <Box
                       p={4}
                       bg="rgba(255, 255, 255, 0.02)"
                       border="1px solid rgba(255, 255, 255, 0.1)"
                       borderRadius="8px"
-                      cursor={api.proEnabled && address ? "default" : "pointer"}
-                      onClick={() => !api.proEnabled && setSelectedApi(api.id)}
+                      cursor={isDisabled ? "default" : "pointer"}
+                      onClick={() => !isDisabled && setSelectedApi(api.id)}
                       _hover={{
-                        bg:
-                          api.proEnabled && address
-                            ? "none"
-                            : "rgba(255, 255, 255, 0.05)",
+                        bg: isDisabled ? "none" : "rgba(255, 255, 255, 0.05)",
                       }}
                       transition="background-color 0.2s"
                       className={styles.apiOption}
-                      opacity={api.proEnabled && address ? 0.5 : 1}
+                      opacity={isDisabled ? 0.5 : 1}
                     >
                       <VStack spacing={3}>
                         <Box
@@ -213,8 +208,20 @@ export const ApiCredentialsModal: React.FC<ApiCredentialsModalProps> = ({
                         </Text>
                       </VStack>
                     </Box>
-                  </Tooltip>
-                ))}
+                  );
+
+                  return isDisabled ? (
+                    <StyledTooltip
+                      key={api.id}
+                      label="Congratulations! As a pro user, you have access to these advanced agents."
+                      placement="bottom"
+                    >
+                      {apiBox}
+                    </StyledTooltip>
+                  ) : (
+                    <Box key={api.id}>{apiBox}</Box>
+                  );
+                })}
               </Grid>
 
               <VStack spacing={2} align="center" pt={4}>

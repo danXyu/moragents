@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 class CryptoDataAgent(AgentCore):
     """Agent for handling cryptocurrency-related queries and data retrieval."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any, embeddings: Any) -> None:
-        super().__init__(config, llm, embeddings)
+    def __init__(self, config: Dict[str, Any], llm: Any) -> None:
+        super().__init__(config, llm)
         self.tools_provided = Config.tools
         self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
 

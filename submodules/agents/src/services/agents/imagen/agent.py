@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 class ImagenAgent(AgentCore):
     """Agent for handling image generation requests."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any, embeddings: Any):
-        super().__init__(config, llm, embeddings)
+    def __init__(self, config: Dict[str, Any], llm: Any):
+        super().__init__(config, llm)
         self.tools_provided: List[str] = []  # No tools needed for image generation
         self.tool_bound_llm = self.llm
 

@@ -38,6 +38,7 @@ const Home = () => {
               ? `translateX(${isSidebarOpen ? "0" : "-100%"})`
               : "none",
           }}
+          zIndex="1337"
         >
           <LeftSidebar
             isSidebarOpen={isSidebarOpen}

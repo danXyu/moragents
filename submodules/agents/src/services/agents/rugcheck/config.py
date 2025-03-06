@@ -94,7 +94,7 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.rugcheck.agent",
+        path="services.agents.rugcheck.agent",
         class_name="RugcheckAgent",
         description="Analyzes tokens for potential risks and scams",
         delegator_description="Performs comprehensive security analysis on cryptocurrency tokens and projects to identify "

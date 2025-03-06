@@ -131,7 +131,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose }) => {
         left="16px"
         top="70px"
         margin={0}
-        width="388px"
+        width="344px"
         maxHeight="calc(100vh - 86px)"
         bg="#080808"
         borderRadius="12px"

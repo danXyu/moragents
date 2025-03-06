@@ -1,0 +1,175 @@
+/* ElfaMentionsMessage.module.css */
+
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.mentionCard {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.accountInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.accountDetails {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profileImage {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profilePlaceholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.accountName {
+  font-weight: 500;
+  color: #e4e4e4;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(29, 155, 240);
+}
+
+.username {
+  color: #888;
+  font-size: 12px;
+}
+
+.followInfo {
+  color: #888;
+  font-size: 12px;
+}
+
+.content {
+  color: #e4e4e4;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.metricsList {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #888;
+  font-size: 13px;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timestamp {
+  color: #666;
+  font-size: 12px;
+}
+
+.viewOriginal {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: rgb(29, 155, 240);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.viewOriginal:hover {
+  text-decoration: underline;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #e4e4e4;
+}
+
+.total {
+  color: #888;
+  font-size: 12px;
+}
+
+.showMoreButton {
+  width: 100%;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-top: 16px;
+}
+
+.showMoreButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #aaa;
+}
+
+@media (max-width: 640px) {
+  .mentionCard {
+    padding: 12px;
+  }
+
+  .metricsList {
+    gap: 12px;
+  }
+
+  .accountDetails {
+    gap: 8px;
+  }
+
+  .profileImage,
+  .profilePlaceholder {
+    width: 32px;
+    height: 32px;
+  }
+}

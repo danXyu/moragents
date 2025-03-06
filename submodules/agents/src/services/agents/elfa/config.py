@@ -14,7 +14,7 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.elfa.agent",
+        path="services.agents.elfa.agent",
         class_name="ElfaAgent",
         description="Fetches and analyzes social media data related to cryptocurrency from Elfa.",
         delegator_description="Monitors and analyzes social sentiment and engagement metrics across crypto communities, "
@@ -29,42 +29,21 @@ class Config:
     # SYSTEM MESSAGE
     # *************
 
-    system_message = (
-        SystemMessage(
-            content=(
-                "You are an agent that can fetch and analyze social media data "
-                "from Elfa. You can get trending tokens, mentions, and smart account "
-                "statistics. The data is focused on cryptocurrency and blockchain "
-                "related social media activity."
-            )
-        ),
+    system_message = SystemMessage(
+        content=(
+            "You are an agent that can fetch and analyze social media data "
+            "from Elfa. You can get trending tokens, mentions, and smart account "
+            "statistics. The data is focused on cryptocurrency and blockchain "
+            "related social media activity."
+        )
     )
 
     # *************
 
     tools = [
         {
-            "name": ElfaToolType.GET_MENTIONS.value,
-            "description": "Get tweets by smart accounts with at least 10 other smart interactions",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "limit": {
-                        "type": "number",
-                        "description": "Number of mentions to return (default: 100)",
-                        "required": False,
-                    },
-                    "offset": {
-                        "type": "number",
-                        "description": "Offset for pagination (default: 0)",
-                        "required": False,
-                    },
-                },
-            },
-        },
-        {
             "name": ElfaToolType.GET_TOP_MENTIONS.value,
-            "description": "Get top mentions for a specific ticker, ranked by view count",
+            "description": "Get the most viewed and engaged-with social media posts mentioning a specific cryptocurrency ticker symbol, sorted by total view count",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -88,7 +67,7 @@ class Config:
         },
         {
             "name": ElfaToolType.SEARCH_MENTIONS.value,
-            "description": "Search for mentions by keywords within a time range",
+            "description": "Search through all social media posts using custom keywords and date filters to find relevant cryptocurrency discussions and trends",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -168,7 +147,6 @@ class Config:
     API_KEY_HEADER = "x-elfa-api-key"  # Updated header name for API key
 
     ENDPOINTS = {
-        ElfaToolType.GET_MENTIONS.value: f"/{API_VERSION}/mentions",
         ElfaToolType.GET_TOP_MENTIONS.value: f"/{API_VERSION}/top-mentions",
         ElfaToolType.SEARCH_MENTIONS.value: f"/{API_VERSION}/mentions/search",
         ElfaToolType.GET_TRENDING_TOKENS.value: f"/{API_VERSION}/trending-tokens",

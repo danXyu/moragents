@@ -9,8 +9,8 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.mor_claims.agent",
-        class_name="MORClaimsAgent",
+        path="services.agents.mor_claims.agent",
+        class_name="MorClaimsAgent",
         description="Handles MOR token claims and rewards distribution",
         delegator_description="Handles the technical process of claiming MOR tokens, including wallet connection "
         "troubleshooting, transaction confirmation, gas optimization, and claim verification. "

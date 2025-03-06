@@ -28,7 +28,6 @@ interface TwitterCredentials {
   apiSecret: string;
   accessToken: string;
   accessTokenSecret: string;
-  bearerToken: string;
 }
 
 interface TwitterConfigProps {
@@ -40,7 +39,6 @@ const CREDENTIAL_LABELS: Record<keyof TwitterCredentials, string> = {
   apiSecret: "API Secret",
   accessToken: "Access Token",
   accessTokenSecret: "Access Token Secret",
-  bearerToken: "Bearer Token",
 };
 
 export const TwitterConfig: React.FC<TwitterConfigProps> = ({ onSave }) => {
@@ -49,7 +47,6 @@ export const TwitterConfig: React.FC<TwitterConfigProps> = ({ onSave }) => {
     apiSecret: "",
     accessToken: "",
     accessTokenSecret: "",
-    bearerToken: "",
   });
   const [irysUrl, setIrysUrl] = useState<string>("");
   const [decryptedSecrets, setDecryptedSecrets] =
@@ -92,7 +89,6 @@ export const TwitterConfig: React.FC<TwitterConfigProps> = ({ onSave }) => {
         apiSecret: "",
         accessToken: "",
         accessTokenSecret: "",
-        bearerToken: "",
       });
       onSave();
     } catch (error) {

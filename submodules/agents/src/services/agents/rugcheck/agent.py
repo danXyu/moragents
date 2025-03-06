@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 class RugcheckAgent(AgentCore):
     """Agent for analyzing token safety and trends using the Rugcheck API."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any, embeddings: Any):
-        super().__init__(config, llm, embeddings)
+    def __init__(self, config: Dict[str, Any], llm: Any):
+        super().__init__(config, llm)
         self.tools_provided = Config.tools
         self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
         self.api_base_url = "https://api.rugcheck.xyz/v1"
@@ -53,6 +53,7 @@ class RugcheckAgent(AgentCore):
                     return AgentResponse.success(
                         content=report_response.formatted_response,
                         metadata=report_response.model_dump(),
+                        action_type=RugcheckToolType.GET_TOKEN_REPORT.value,
                     )
 
                 except Exception as e:
@@ -62,7 +63,9 @@ class RugcheckAgent(AgentCore):
                 try:
                     viewed_response = await fetch_most_viewed(self.api_base_url)
                     return AgentResponse.success(
-                        content=viewed_response.formatted_response, metadata=viewed_response.model_dump()
+                        content=viewed_response.formatted_response,
+                        metadata=viewed_response.model_dump(),
+                        action_type=RugcheckToolType.GET_MOST_VIEWED.value,
                     )
 
                 except Exception as e:
@@ -72,7 +75,9 @@ class RugcheckAgent(AgentCore):
                 try:
                     voted_response = await fetch_most_voted(self.api_base_url)
                     return AgentResponse.success(
-                        content=voted_response.formatted_response, metadata=voted_response.model_dump()
+                        content=voted_response.formatted_response,
+                        metadata=voted_response.model_dump(),
+                        action_type=RugcheckToolType.GET_MOST_VOTED.value,
                     )
 
                 except Exception as e:

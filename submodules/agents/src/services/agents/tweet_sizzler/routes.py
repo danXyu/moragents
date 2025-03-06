@@ -1,7 +1,9 @@
 import logging
-from fastapi import APIRouter, Request
+import tweepy
+
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from models.service.chat_models import AgentResponse
+from pydantic import BaseModel
 from stores import agent_manager_instance
 
 
@@ -32,30 +34,36 @@ async def regenerate_tweet():
         )
 
 
+class TweetRequest(BaseModel):
+    """Request body for posting a tweet"""
+
+    post_content: str
+    api_key: str
+    api_secret: str
+    access_token: str
+    access_token_secret: str
+
+
 @router.post("/post")
-async def post_tweet(request: Request):
+async def post_tweet(request: TweetRequest):
     """Post a tweet"""
     logger.info("Received post tweet request")
     try:
-        tweet_agent = agent_manager_instance.get_agent("tweet sizzler")
-        if not tweet_agent:
-            return JSONResponse(
-                status_code=400,
-                content={"status": "error", "message": "Tweet sizzler agent not found"},
-            )
-        request_body = await request.json()
-        tweet_response = await tweet_agent.post_tweet(request_body["post_content"])
-        if "error" in tweet_response:
-            agent_response = AgentResponse.error(error_message=tweet_response["error"])
-        else:
-            agent_response = AgentResponse.success(
-                content=f"Tweet posted successfully: {tweet_response['tweet']}",
-                metadata={"tweet_id": tweet_response["tweet_id"]},
-            )
+        client = tweepy.Client(
+            consumer_key=request.api_key,
+            consumer_secret=request.api_secret,
+            access_token=request.access_token,
+            access_token_secret=request.access_token_secret,
+        )
+
+        response = client.create_tweet(text=request.post_content)
+        logger.info(f"Tweet posted successfully: {response}")
+
         return JSONResponse(
             status_code=200,
-            content={"status": "success", "tweet": tweet_response["tweet"], "tweet_id": tweet_response["tweet_id"]},
+            content={"status": "success", "tweet": response.data["text"], "tweet_id": response.data["id"]},
         )
+
     except Exception as e:
         logger.error(f"Failed to post tweet: {str(e)}")
         return JSONResponse(

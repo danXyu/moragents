@@ -48,7 +48,7 @@ export const SettingsButton: React.FC = () => {
           left="16px"
           top="70px"
           margin={0}
-          width="388px"
+          width="344px"
           maxHeight="calc(100vh - 86px)"
           bg="#080808"
           borderRadius="12px"
@@ -87,7 +87,8 @@ export const SettingsButton: React.FC = () => {
                 >
                   General
                 </Tab>
-                <Tab
+                {/* Temporarily disabling the ability to select agents */}
+                {/* <Tab
                   color="white"
                   bg="transparent"
                   _selected={{
@@ -101,7 +102,7 @@ export const SettingsButton: React.FC = () => {
                   fontSize="14px"
                 >
                   Agents
-                </Tab>
+                </Tab> */}
               </TabList>
 
               <TabPanels>

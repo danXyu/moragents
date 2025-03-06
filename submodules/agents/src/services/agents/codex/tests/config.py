@@ -12,7 +12,7 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.elfa.agent",
+        path="services.agents.elfa.agent",
         class_name="ElfaAgent",
         description="Fetches and analyzes social media data related to cryptocurrency from Elfa.",
         human_readable_name="Elfa Social Analyst",

@@ -1,21 +1,17 @@
 import os
 import uvicorn
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from models.config.config import Config
 from config import load_agent_routes, setup_logging
-from stores import workflow_manager_instance
 
 # Configure routes
 from routes import (
     agent_manager_routes,
-    key_manager_routes,
     wallet_manager_routes,
-    workflow_manager_routes,
     delegation_routes,
+    # workflow_manager_routes,
 )
 
 # Configure logging
@@ -43,9 +39,8 @@ logger.info(f"Upload folder created at {UPLOAD_FOLDER}")
 ROUTERS = [
     delegation_routes.router,
     agent_manager_routes.router,
-    key_manager_routes.router,
     wallet_manager_routes.router,
-    workflow_manager_routes.router,
+    # workflow_manager_routes.router,
 ]
 
 # Dynamically load and add agent routers
@@ -57,19 +52,22 @@ for router in routers:
     app.include_router(router)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Lifespan context manager for FastAPI application"""
-    # Startup
-    logger.info("Starting workflow manager initialization")
-    await workflow_manager_instance.initialize()
-    logger.info("Workflow manager initialized successfully")
-    yield
-    # Shutdown
-    # Add any cleanup code here if needed
+# Temporary disable workflow manager
+# TODO: Re-enable workflow manager
+#
+# @asynccontextmanager
+# async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+#     """Lifespan context manager for FastAPI application"""
+#     # Startup
+#     logger.info("Starting workflow manager initialization")
+#     await workflow_manager_instance.initialize()
+#     logger.info("Workflow manager initialized successfully")
+#     yield
+#     # Shutdown
+#     # Add any cleanup code here if needed
 
 
-app.router.lifespan_context = lifespan
+# app.router.lifespan_context = lifespan
 
 
 if __name__ == "__main__":

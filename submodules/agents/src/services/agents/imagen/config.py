@@ -10,9 +10,9 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.imagen.agent",
+        path="services.agents.imagen.agent",
         class_name="ImagenAgent",
-        description="Must only be used for image generation tasks. Use when the query explicitly mentions generating or creating an image.",
+        description="Use your imagination! Create or generate images based on your prompt",
         delegator_description="Specializes EXCLUSIVELY in generating visual content like charts, infographics, token logos, "
         "or explanatory diagrams. ONLY use when the user explicitly requests image creation or visual "
         "representation of data.",
@@ -25,14 +25,12 @@ class Config:
     # SYSTEM MESSAGE
     # *************
 
-    system_message = (
-        SystemMessage(
-            content=(
-                "You are an image generation assistant. "
-                "Help users create images by understanding their prompts "
-                "and generating appropriate images."
-            )
-        ),
+    system_message = SystemMessage(
+        content=(
+            "You are an image generation assistant. "
+            "Help users create images by understanding their prompts "
+            "and generating appropriate images."
+        )
     )
 
     # *************

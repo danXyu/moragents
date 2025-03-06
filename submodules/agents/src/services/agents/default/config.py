@@ -12,13 +12,13 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.default.agent",
+        path="services.agents.default.agent",
         class_name="DefaultAgent",
-        description="Must be used for meta-queries that ask about active Morpheus agents, and also for general, simple questions",
+        description="Ask about active Morpheus agents, and also handles general questions",
         delegator_description="Handles meta-queries about Morpheus itself, available agents, system capabilities, and "
         "general cryptocurrency questions that don't require specialized agents. Use when no other agent is clearly "
         "applicable or for simple informational requests.",
-        human_readable_name="Default General Purpose",
+        human_readable_name="Morpheus Default",
         command="morpheus",
         upload_required=False,
     )

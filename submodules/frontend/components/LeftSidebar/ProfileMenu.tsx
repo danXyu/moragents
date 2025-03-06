@@ -24,6 +24,7 @@ import { CDPWalletsButton } from "@/components/CDPWallets/Button";
 import { SettingsButton } from "@/components/Settings";
 import { SyncButton } from "@/components/Sync/Button";
 import styles from "./ProfileMenu.module.css";
+import { StyledTooltip } from "../Common/StyledTooltip";
 
 const MenuSection = ({
   title,
@@ -149,18 +150,28 @@ export const ProfileMenu = () => {
                     opacity={account ? 1 : 0.5}
                     pl={1}
                   >
-                    <div className={styles.menuItem}>
-                      <Workflows />
-                    </div>
+                    <StyledTooltip
+                      label="Scheduled workflows that handle automated trades, swaps, and more are coming soon. Use cases include automated DCA strategies, signal-driven quant trading, and more"
+                      placement="right"
+                    >
+                      <div className={styles.menuItem}>
+                        <Workflows />
+                      </div>
+                    </StyledTooltip>
                     <div className={styles.menuItem}>
                       <ApiCredentialsButton />
                     </div>
                     <div className={styles.menuItem}>
                       <SyncButton />
                     </div>
-                    <div className={styles.menuItem}>
-                      <CDPWalletsButton />
-                    </div>
+                    <StyledTooltip
+                      label="Coinbase Developer Platform's managed wallets integration coming soon. This will enable secure key management and automated CDP interactions such as trading, borrowing, and more."
+                      placement="right"
+                    >
+                      <div className={styles.menuItem}>
+                        <CDPWalletsButton />
+                      </div>
+                    </StyledTooltip>
                   </Box>
                 </div>
               </Tooltip>

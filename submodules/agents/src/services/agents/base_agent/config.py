@@ -10,10 +10,13 @@ class Config:
     # *************
 
     agent_config = AgentConfig(
-        path="src.services.agents.base_agent.agent",
+        path="services.agents.base_agent.agent",
         class_name="BaseAgent",
-        description="Specializes in transactions and interactions specifically on the Base network, including Base-specific protocols, Coinbase ecosystem integration, and Base network status monitoring. Use ONLY when users explicitly reference Base, base network, or Coinbase.",
-        delegator_description="Handles transactions on the Base crypto network. Use when the user makes any reference to Base, base, the base network, or Coinbase",
+        description="Interact with the Base network and developer-managed wallets",
+        delegator_description=(
+            "Specializes in transactions and interactions specifically on the Base network via developer-managed wallets."
+            "Use ONLY when users explicitly reference Base, base network, or Coinbase."
+        ),
         human_readable_name="Base Transaction Manager",
         command="base",
         upload_required=False,
