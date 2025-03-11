@@ -38,7 +38,7 @@ jobs:
         continue-on-error: true
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.11.1
+        uses: aquasecurity/trivy-action@v0.29.0
         with:
           scan-type: "fs" # filesystem scan
           ignore-unfixed: true
