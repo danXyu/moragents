@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from models.session import DBSessionFactory
 from models.daos.user_dao import UserDAO
-from agents.src.models.service.user_service_models import UserModel, UserSettingModel
+from models.service.user_service_models import UserModel, UserSettingModel
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class UserController:
         user_dao = UserDAO(self._session)
         user = user_dao.get_by_id(user_id)
         if user:
-            return UserModel.model_validate(user)
+            return user.to_service_model()
         return None
 
     def get_user_by_wallet(self, wallet_address: str) -> Optional[UserModel]:
@@ -49,7 +49,7 @@ class UserController:
         user_dao = UserDAO(self._session)
         user = user_dao.get_by_wallet_address(wallet_address)
         if user:
-            return UserModel.model_validate(user)
+            return user.to_service_model()
         return None
 
     def list_users(self) -> List[UserModel]:
@@ -58,7 +58,7 @@ class UserController:
             return []
         user_dao = UserDAO(self._session)
         users = user_dao.list_all()
-        return [UserModel.model_validate(user) for user in users]
+        return [user.to_service_model() for user in users]
 
     def create_user(self, wallet_address: str) -> UserModel:
         """Create a new user."""
@@ -66,7 +66,7 @@ class UserController:
             raise RuntimeError("No database session available")
         user_dao = UserDAO(self._session)
         user = user_dao.create(wallet_address)
-        return UserModel.model_validate(user)
+        return user.to_service_model()
 
     def update_user(self, user_id: int, wallet_address: str) -> Optional[UserModel]:
         """Update an existing user."""
@@ -75,7 +75,7 @@ class UserController:
         user_dao = UserDAO(self._session)
         user = user_dao.update(user_id, wallet_address)
         if user:
-            return UserModel.model_validate(user)
+            return user.to_service_model()
         return None
 
     def delete_user(self, user_id: int) -> bool:
@@ -96,7 +96,7 @@ class UserController:
         user_dao = UserDAO(self._session)
         setting = user_dao.get_setting(user_id, settings_key)
         if setting:
-            return UserSettingModel.model_validate(setting)
+            return setting.to_service_model()
         return None
 
     def list_user_settings(self, user_id: int) -> List[UserSettingModel]:
@@ -105,7 +105,7 @@ class UserController:
             return []
         user_dao = UserDAO(self._session)
         settings = user_dao.get_all_settings(user_id)
-        return [UserSettingModel.model_validate(setting) for setting in settings]
+        return [setting.to_service_model() for setting in settings]
 
     def create_setting(self, user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> UserSettingModel:
         """Create a new setting."""
@@ -113,7 +113,7 @@ class UserController:
             raise RuntimeError("No database session available")
         user_dao = UserDAO(self._session)
         setting = user_dao.create_setting(user_id, settings_key, settings_value)
-        return UserSettingModel.model_validate(setting)
+        return setting.to_service_model()
 
     def update_setting(
         self, user_id: int, settings_key: str, settings_value: Dict[str, Any]
@@ -124,7 +124,7 @@ class UserController:
         user_dao = UserDAO(self._session)
         setting = user_dao.update_setting(user_id, settings_key, settings_value)
         if setting:
-            return UserSettingModel.model_validate(setting)
+            return setting.to_service_model()
         return None
 
     def upsert_setting(self, user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> UserSettingModel:
@@ -133,7 +133,7 @@ class UserController:
             raise RuntimeError("No database session available")
         user_dao = UserDAO(self._session)
         setting = user_dao.upsert_setting(user_id, settings_key, settings_value)
-        return UserSettingModel.model_validate(setting)
+        return setting.to_service_model()
 
     def delete_setting(self, user_id: int, settings_key: str) -> bool:
         """Delete a setting."""

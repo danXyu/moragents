@@ -1,14 +1,18 @@
+import logging
 import pytest
 from unittest.mock import patch
+from typing import Dict, Any
 
 from services.agents.dca_agent.agent import DCAAgent
-from models.service.chat_models import AgentResponse
+from models.service.chat_models import ChatRequest, AgentResponse
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
-def dca_agent(llm, embeddings):
-    config = {"name": "dca", "description": "Agent for DCA strategies"}
-    return DCAAgent(config, llm, embeddings)
+def dca_agent(llm):
+    config: Dict[str, Any] = {"name": "dca", "description": "Agent for DCA strategies"}
+    return DCAAgent(config=config, llm=llm)
 
 
 @pytest.mark.benchmark
@@ -16,7 +20,7 @@ def dca_agent(llm, embeddings):
 async def test_missing_cdp_client(dca_agent, make_chat_request):
     request = make_chat_request(content="Set up DCA strategy", agent_name="dca")
 
-    with patch("src.stores.wallet_manager_instance.configure_cdp_client") as mock_cdp:
+    with patch("stores.wallet_manager_instance.configure_cdp_client") as mock_cdp:
         mock_cdp.return_value = False
 
         response = await dca_agent._process_request(request)
@@ -32,9 +36,9 @@ async def test_missing_cdp_client(dca_agent, make_chat_request):
 async def test_missing_wallet(dca_agent, make_chat_request):
     request = make_chat_request(content="Set up DCA strategy", agent_name="dca")
 
-    with patch("src.stores.wallet_manager_instance.configure_cdp_client") as mock_cdp:
+    with patch("stores.wallet_manager_instance.configure_cdp_client") as mock_cdp:
         mock_cdp.return_value = True
-        with patch("src.stores.wallet_manager_instance.get_active_wallet") as mock_wallet:
+        with patch("stores.wallet_manager_instance.get_active_wallet") as mock_wallet:
             mock_wallet.return_value = None
 
             response = await dca_agent._process_request(request)
@@ -49,9 +53,9 @@ async def test_missing_wallet(dca_agent, make_chat_request):
 async def test_successful_dca_setup(dca_agent, make_chat_request):
     request = make_chat_request(content="Set up DCA strategy", agent_name="dca")
 
-    with patch("src.stores.wallet_manager_instance.configure_cdp_client") as mock_cdp:
+    with patch("stores.wallet_manager_instance.configure_cdp_client") as mock_cdp:
         mock_cdp.return_value = True
-        with patch("src.stores.wallet_manager_instance.get_active_wallet") as mock_wallet:
+        with patch("stores.wallet_manager_instance.get_active_wallet") as mock_wallet:
             mock_wallet.return_value = "mock_wallet"
 
             response = await dca_agent._process_request(request)

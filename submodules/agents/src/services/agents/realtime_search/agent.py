@@ -10,9 +10,9 @@ from selenium.webdriver.common.keys import Keys
 
 from models.service.chat_models import ChatRequest, AgentResponse
 from models.service.agent_core import AgentCore
-from langchain.schema import HumanMessage, SystemMessage
+from langchain.schema import SystemMessage
 from services.agents.realtime_search.config import Config
-from config import LLM
+from config import LLM_AGENT
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ class RealtimeSearchAgent(AgentCore):
         ]
 
         try:
-            result = LLM.invoke(messages)
+            result = LLM_AGENT.invoke(messages)
             if not result.content.strip():
                 return AgentResponse.needs_info(
                     content="I found some results but couldn't understand them well. Could you rephrase your question?"

@@ -1,15 +1,21 @@
 import pytest
+import logging
 from unittest.mock import patch, Mock
 from bs4 import BeautifulSoup
+from langchain.schema import SystemMessage
 
 from services.agents.realtime_search.agent import RealtimeSearchAgent
-from models.service.chat_models import AgentResponse
+from models.service.chat_models import AgentResponse, ChatRequest
+from services.agents.realtime_search.config import Config
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
-def realtime_search_agent(llm, embeddings):
+def realtime_search_agent():
     config = {"name": "realtime_search", "description": "Agent for real-time web searches"}
-    return RealtimeSearchAgent(config, llm, embeddings)
+    llm = Mock()
+    return RealtimeSearchAgent(config=config, llm=llm)
 
 
 @pytest.mark.benchmark
@@ -23,30 +29,39 @@ async def test_web_search_success(realtime_search_agent, make_chat_request):
     Scientists develop new machine learning model
     """
 
-    with patch.object(realtime_search_agent, "_perform_search_with_web_scraping") as mock_search:
-        mock_search.return_value = mock_results
+    with patch.object(realtime_search_agent.tool_bound_llm, "invoke") as mock_invoke:
+        mock_invoke.return_value = "Here are the latest AI developments..."
 
-        with patch.object(realtime_search_agent, "_synthesize_answer") as mock_synthesize:
-            mock_synthesize.return_value = "Here are the latest AI developments..."
+        response = await realtime_search_agent._process_request(request)
 
-            response = await realtime_search_agent._process_request(request)
+        assert isinstance(response, AgentResponse)
+        assert response.response_type.value == "success"
+        assert "latest AI developments" in response.content
 
-            assert isinstance(response, AgentResponse)
-            assert response.response_type.value == "success"
-            assert "latest AI developments" in response.content
+        # Verify correct messages were passed
+        expected_messages = [
+            SystemMessage(
+                content=(
+                    "You are a real-time web search agent that helps find current information. "
+                    "Ask for clarification if a request is ambiguous."
+                )
+            ),
+            *request.messages_for_llm,
+        ]
+        mock_invoke.assert_called_once_with(expected_messages)
 
 
 @pytest.mark.benchmark
 @pytest.mark.asyncio
-async def test_web_search_no_results(realtime_search_agent, make_chat_request):
-    request = make_chat_request(content="Search for nonexistent topic", agent_name="realtime_search")
+async def test_web_search_no_results(realtime_search_agent):
+    search_term = "nonexistent topic"
 
     with patch.object(realtime_search_agent, "_perform_search_with_web_scraping") as mock_search:
         mock_search.return_value = AgentResponse.needs_info(
             content="I couldn't find any results for that search. Could you try rephrasing it?"
         )
 
-        response = await realtime_search_agent._execute_tool("perform_web_search", {"search_term": "nonexistent topic"})
+        response = await realtime_search_agent._execute_tool("perform_web_search", {"search_term": search_term})
 
         assert isinstance(response, AgentResponse)
         assert response.response_type.value == "needs_info"
@@ -55,21 +70,17 @@ async def test_web_search_no_results(realtime_search_agent, make_chat_request):
 
 @pytest.mark.benchmark
 @pytest.mark.asyncio
-async def test_web_search_fallback(realtime_search_agent, make_chat_request):
-    request = make_chat_request(content="Search with fallback", agent_name="realtime_search")
+async def test_web_search_error_handling(realtime_search_agent):
+    search_term = "test search"
 
     with patch.object(realtime_search_agent, "_perform_search_with_web_scraping") as mock_search:
-        mock_search.side_effect = Exception("Primary search failed")
+        mock_search.side_effect = Exception("Search failed")
 
-        with patch.object(realtime_search_agent, "_perform_search_with_headless_browsing") as mock_fallback:
-            mock_fallback.return_value = "Fallback search results"
+        response = await realtime_search_agent._execute_tool("perform_web_search", {"search_term": search_term})
 
-            response = await realtime_search_agent._execute_tool(
-                "perform_web_search", {"search_term": "fallback search"}
-            )
-
-            assert isinstance(response, AgentResponse)
-            assert response.response_type.value == "success"
+        assert isinstance(response, AgentResponse)
+        assert response.response_type.value == "error"
+        assert "Search failed" in response.error_message
 
 
 @pytest.mark.benchmark

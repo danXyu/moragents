@@ -1,6 +1,6 @@
 import pytest
 import logging
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 from typing import Dict, Any
 
 from services.agents.tweet_sizzler.agent import TweetSizzlerAgent
@@ -8,15 +8,14 @@ from models.service.chat_models import ChatRequest, AgentResponse
 from models.service.agent_core import AgentCore
 from services.agents.tweet_sizzler.tools import generate_tweet
 from services.agents.tweet_sizzler.config import Config
-from stores import key_manager_instance
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
-def tweet_sizzler_agent(llm, embeddings):
-    config = {"name": "tweet_sizzler", "description": "Agent for generating and posting tweets"}
-    return TweetSizzlerAgent(config, llm, embeddings)
+def tweet_sizzler_agent(llm):
+    config: Dict[str, Any] = {"name": "tweet_sizzler", "description": "Agent for generating and posting tweets"}
+    return TweetSizzlerAgent(config, llm)
 
 
 @pytest.mark.benchmark
@@ -24,7 +23,7 @@ def tweet_sizzler_agent(llm, embeddings):
 async def test_generate_tweet_success(tweet_sizzler_agent, make_chat_request):
     request = make_chat_request(content="Write a tweet about AI")
 
-    with patch.object(tweet_sizzler_agent.tool_bound_llm, "invoke") as mock_invoke:
+    with patch.object(tweet_sizzler_agent.tool_bound_llm, "ainvoke") as mock_invoke:
         mock_invoke.return_value = {
             "tool_calls": [
                 {
@@ -37,7 +36,7 @@ async def test_generate_tweet_success(tweet_sizzler_agent, make_chat_request):
         }
 
         with patch("services.agents.tweet_sizzler.tools.generate_tweet") as mock_generate:
-            mock_generate.return_value = "Generated tweet: AI is transforming our world! #AI #Technology"
+            mock_generate.return_value = "AI is transforming our world! #AI #Technology"
             response = await tweet_sizzler_agent._process_request(request)
 
             assert isinstance(response, AgentResponse)
@@ -48,21 +47,23 @@ async def test_generate_tweet_success(tweet_sizzler_agent, make_chat_request):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_execute_tool_generate_tweet(tweet_sizzler_agent):
-    args = {"content": "Test tweet content"}
+    args: Dict[str, Any] = {"content": "Test tweet content"}
 
     with patch("services.agents.tweet_sizzler.tools.generate_tweet") as mock_generate:
-        mock_generate.return_value = "Generated: Test tweet content"
+        mock_generate.return_value = (
+            "Just testing the waters with this tweet, stay tuned for more excitement to come #testing"
+        )
         response = await tweet_sizzler_agent._execute_tool("generate_tweet", args)
 
         assert isinstance(response, AgentResponse)
         assert response.response_type.value == "success"
-        assert "Generated: Test tweet content" in response.content
+        assert mock_generate.return_value in response.content
 
 
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_execute_tool_missing_content(tweet_sizzler_agent):
-    args = {}
+    args: Dict[str, Any] = {}
     response = await tweet_sizzler_agent._execute_tool("generate_tweet", args)
 
     assert isinstance(response, AgentResponse)
@@ -85,7 +86,7 @@ async def test_execute_unknown_tool(tweet_sizzler_agent):
 async def test_tweet_generation_error(tweet_sizzler_agent, make_chat_request):
     request = make_chat_request(content="Write a tweet")
 
-    with patch.object(tweet_sizzler_agent.tool_bound_llm, "invoke", side_effect=Exception("LLM Error")):
+    with patch.object(tweet_sizzler_agent.tool_bound_llm, "ainvoke", side_effect=Exception("LLM Error")):
         response = await tweet_sizzler_agent._process_request(request)
 
         assert isinstance(response, AgentResponse)

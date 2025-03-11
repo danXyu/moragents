@@ -1,10 +1,13 @@
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 from fastapi.testclient import TestClient
-from fastapi import FastAPI, HTTPException
-from models.service.chat_models import ChatRequest, AgentResponse, Prompt
-from models.service.service_models import GenerateConversationTitleRequest
-from routes.delegation_routes import router
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from src.models.service.chat_models import ChatRequest, ChatMessage
+from src.models.service.service_models import GenerateConversationTitleRequest
+from src.routes.delegation_routes import router
+from src.services.delegator.delegator import Delegator
+from src.config import LLM_DELEGATOR
 
 app = FastAPI()
 app.include_router(router)
@@ -13,7 +16,12 @@ client = TestClient(app)
 
 @pytest.fixture
 def chat_request():
-    return ChatRequest(conversation_id="test-conv-id", prompt=Prompt(content="test message"))
+    return ChatRequest(
+        conversation_id="test-conv-id",
+        prompt=ChatMessage(role="user", content="test message"),
+        chain_id="1",
+        wallet_address="0x123",
+    )
 
 
 @pytest.fixture
@@ -22,105 +30,157 @@ def title_request():
 
 
 @pytest.fixture
-def mock_controller():
-    return Mock()
+def mock_delegator():
+    return Mock(spec=Delegator)
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_chat_success(chat_request):
-    agent_response = AgentResponse(content="test response", metadata={})
+    response_content = {"content": "test response"}
+    mock_response = JSONResponse(content=response_content)
 
-    with patch("routes.delegation_routes.DelegationController") as mock_controller_class:
+    with patch("src.routes.delegation_routes.Delegator") as mock_delegator_class, patch(
+        "src.routes.delegation_routes.DelegationController"
+    ) as mock_controller_class, patch("src.routes.delegation_routes.logger") as mock_logger:
+
         mock_controller = mock_controller_class.return_value
-        mock_controller.handle_chat.return_value = JSONResponse(content={"content": "test response"})
+        mock_controller.handle_chat = AsyncMock(return_value=mock_response)
 
         response = client.post("/api/v1/chat", json=chat_request.model_dump())
 
         assert response.status_code == 200
-        assert "test response" in response.json()["content"]
-        mock_controller.handle_chat.assert_called_once()
+        assert response.json() == response_content
+
+        mock_logger.info.assert_called_once_with(
+            f"Received chat request for conversation {chat_request.conversation_id}"
+        )
+        mock_controller_class.assert_called_once()
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_chat_timeout(chat_request):
-    with patch("routes.delegation_routes.DelegationController") as mock_controller_class:
+    with patch("src.routes.delegation_routes.Delegator"), patch(
+        "src.routes.delegation_routes.DelegationController"
+    ) as mock_controller_class, patch("src.routes.delegation_routes.logger") as mock_logger:
+
         mock_controller = mock_controller_class.return_value
-        mock_controller.handle_chat.side_effect = TimeoutError()
+        mock_controller.handle_chat = AsyncMock(side_effect=TimeoutError())
 
         response = client.post("/api/v1/chat", json=chat_request.model_dump())
 
         assert response.status_code == 504
         assert response.json()["detail"] == "Request timed out"
+        mock_logger.error.assert_called_once_with("Chat request timed out")
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_chat_value_error(chat_request):
-    with patch("routes.delegation_routes.DelegationController") as mock_controller_class:
+    error_msg = "Invalid input"
+    with patch("src.routes.delegation_routes.Delegator"), patch(
+        "src.routes.delegation_routes.DelegationController"
+    ) as mock_controller_class, patch("src.routes.delegation_routes.logger") as mock_logger:
+
         mock_controller = mock_controller_class.return_value
-        mock_controller.handle_chat.side_effect = ValueError("Invalid input")
+        mock_controller.handle_chat = AsyncMock(side_effect=ValueError(error_msg))
 
         response = client.post("/api/v1/chat", json=chat_request.model_dump())
 
         assert response.status_code == 400
-        assert response.json()["detail"] == "Invalid input"
+        assert response.json()["detail"] == error_msg
+        mock_logger.error.assert_called_once_with(f"Input formatting error: {error_msg}")
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_chat_generic_error(chat_request):
-    with patch("routes.delegation_routes.DelegationController") as mock_controller_class:
+    error_msg = "Something went wrong"
+    with patch("src.routes.delegation_routes.Delegator"), patch(
+        "src.routes.delegation_routes.DelegationController"
+    ) as mock_controller_class, patch("src.routes.delegation_routes.logger") as mock_logger:
+
         mock_controller = mock_controller_class.return_value
-        mock_controller.handle_chat.side_effect = Exception("Something went wrong")
+        mock_controller.handle_chat = AsyncMock(side_effect=Exception(error_msg))
 
         response = client.post("/api/v1/chat", json=chat_request.model_dump())
 
         assert response.status_code == 500
-        assert response.json()["detail"] == "Something went wrong"
+        assert response.json()["detail"] == error_msg
+        mock_logger.error.assert_called_once_with(f"Error in chat route: {error_msg}", exc_info=True)
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_generate_title_success(title_request):
-    with patch("routes.delegation_routes.DelegationController") as mock_controller_class:
+    title = "Test Title"
+    with patch("src.routes.delegation_routes.DelegationController") as mock_controller_class, patch(
+        "src.routes.delegation_routes.logger"
+    ) as mock_logger:
+
         mock_controller = mock_controller_class.return_value
-        mock_controller.generate_conversation_title.return_value = "Test Title"
+        mock_controller.generate_conversation_title = AsyncMock(return_value=title)
 
         response = client.post("/api/v1/generate-title", json=title_request.model_dump())
 
         assert response.status_code == 200
-        assert response.json()["title"] == "Test Title"
-        mock_controller.generate_conversation_title.assert_called_once()
+        assert response.json()["title"] == title
+
+        mock_logger.info.assert_called_once_with(
+            f"Received title generation request for conversation {title_request.conversation_id}"
+        )
+        mock_controller_class.assert_called_once_with()
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_generate_title_timeout(title_request):
-    with patch("routes.delegation_routes.DelegationController") as mock_controller_class:
+    with patch("src.routes.delegation_routes.DelegationController") as mock_controller_class, patch(
+        "src.routes.delegation_routes.logger"
+    ) as mock_logger:
+
         mock_controller = mock_controller_class.return_value
-        mock_controller.generate_conversation_title.side_effect = TimeoutError()
+        mock_controller.generate_conversation_title = AsyncMock(side_effect=TimeoutError())
 
         response = client.post("/api/v1/generate-title", json=title_request.model_dump())
 
         assert response.status_code == 504
         assert response.json()["detail"] == "Request timed out"
+        mock_logger.error.assert_called_once_with("Title generation request timed out")
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_generate_title_value_error(title_request):
-    with patch("routes.delegation_routes.DelegationController") as mock_controller_class:
+    error_msg = "Invalid input"
+    with patch("src.routes.delegation_routes.DelegationController") as mock_controller_class, patch(
+        "src.routes.delegation_routes.logger"
+    ) as mock_logger:
+
         mock_controller = mock_controller_class.return_value
-        mock_controller.generate_conversation_title.side_effect = ValueError("Invalid input")
+        mock_controller.generate_conversation_title = AsyncMock(side_effect=ValueError(error_msg))
 
         response = client.post("/api/v1/generate-title", json=title_request.model_dump())
 
         assert response.status_code == 400
-        assert response.json()["detail"] == "Invalid input"
+        assert response.json()["detail"] == error_msg
+        mock_logger.error.assert_called_once_with(f"Input formatting error: {error_msg}")
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_generate_title_generic_error(title_request):
-    with patch("routes.delegation_routes.DelegationController") as mock_controller_class:
+    error_msg = "Something went wrong"
+    with patch("src.routes.delegation_routes.DelegationController") as mock_controller_class, patch(
+        "src.routes.delegation_routes.logger"
+    ) as mock_logger:
+
         mock_controller = mock_controller_class.return_value
-        mock_controller.generate_conversation_title.side_effect = Exception("Something went wrong")
+        mock_controller.generate_conversation_title = AsyncMock(side_effect=Exception(error_msg))
 
         response = client.post("/api/v1/generate-title", json=title_request.model_dump())
 
         assert response.status_code == 500
-        assert response.json()["detail"] == "Something went wrong"
+        assert response.json()["detail"] == error_msg
+        mock_logger.error.assert_called_once_with(f"Error in generate title route: {error_msg}", exc_info=True)
