@@ -1,0 +1,44 @@
+name: Python Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "submodules/agents/**" # Only run when changes in this path
+  pull_request:
+    branches: [main]
+    paths:
+      - "submodules/agents/**" # Only run when changes in this path
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive # Make sure we get the submodules too
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10" # Adjust version as needed for your project
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.5.1 # Specify Poetry version
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: |
+          cd submodules/agents
+          poetry install --no-interaction
+
+      - name: Run tests
+        run: |
+          cd submodules/agents
+          poetry run python -m pytest

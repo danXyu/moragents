@@ -2,7 +2,7 @@
 
 # MySuperAgent
 
-## A Web-Based Platform for Building and Deploying AI Agents
+## A Platform for Building, Deploying, and Leveraging AI Agents
 
 A developer-focused platform that enables building, testing, and deploying AI agents. Powered by Python and React, with seamless integration of LLMs and Web3 capabilities.
 
@@ -96,22 +96,85 @@ A developer-focused platform that enables building, testing, and deploying AI ag
 
 ## Getting Started
 
-Visit [https://mysuperagent.io](https://mysuperagent.io) to access the platform.
+### Using the Platform
 
-### Requirements
+Visit [https://mysuperagent.io](https://mysuperagent.io) to access the hosted platform.
+
+#### Requirements
 
 - Modern web browser (Chrome, Firefox, Safari)
 - Web3 wallet for blockchain interactions
 - API keys for specific agent integrations (Coinbase, Twitter, etc)
 
+### Local Development
+
+To run MySuperAgent locally:
+
+#### Running with Docker
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/mysuperagent/mysuperagent.git
+   cd mysuperagent
+   ```
+
+2. Start the Docker environment:
+
+   ```bash
+   docker compose -p mysuperagent -f build/docker-compose.yml up
+   ```
+
+3. Access the application:
+   - Frontend: http://localhost:3333
+   - Server API: http://localhost:8888
+
+#### Running Services Independently
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/mysuperagent/mysuperagent.git
+   cd mysuperagent
+   ```
+
+2. Start PostgreSQL:
+
+   ```bash
+   docker run -d \
+     -p 5678:5678 \
+     -e POSTGRES_USER=neo \
+     -e POSTGRES_PASSWORD=trinity \
+     -e POSTGRES_DB=morpheus_db \
+     postgres:16-bullseye -p 5678
+   ```
+
+3. Start the Frontend:
+
+   ```bash
+   cd submodules/frontend
+   docker build -t frontend .
+   docker run -d -p 3333:80 frontend
+   ```
+
+4. Start the Agents API:
+   ```bash
+   cd submodules/agents
+   docker build -t agents -f build/Dockerfile .
+   docker run -d \
+     -p 8888:5000 \
+     -e DATABASE_URL=postgresql://neo:trinity@localhost:5678/morpheus_db \
+     agents
+   ```
+
 ### Developer Documentation
 
 For developers looking to build and deploy their own agents:
 
-1. [Agent Development Guide](docs/agent-development.md)
-2. [API Documentation](docs/api-docs.md)
-3. [Testing Framework](docs/testing.md)
-4. [Deployment Guide](docs/deployment.md)
+1. [Agent Development Guide](docs/agent-development-guide.md)
+2. [API Documentation](docs/available-apis-guide.md)
+3. [Testing Framework](docs/testing-framework-guide.md)
+4. [Deployment Guide](docs/deployment-guide.md)
 
 # Contributing
 

@@ -54,8 +54,10 @@ yarn-error.log*
 resources/*
 
 
-## app
+## app related items
 app.log
+submodules/agents/data/vector_store
+uploads/*
 
 ## lint
 .pytest_cache/
