@@ -20,10 +20,10 @@ A typical flow looks like this:
 
 Docker compose will build and run two containers. One will be for the agents, the other will be for the UI.
 
-1. Ensure you're in the submodules/moragents_dockers folder
+1. Ensure you're in the submodules folder
 
    ```sh
-   $ cd submodules/moragents_dockers
+   $ cd submodules
    ```
 
 2. Build Images and Launch Containers:

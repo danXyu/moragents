@@ -294,9 +294,9 @@ export const LeftSidebar: FC<LeftSidebarProps> = ({
               >
                 <PopoverArrow bg="#080808" />
                 <PopoverBody p={4}>
-                  All of the functionality in moragents can be leveraged in your
-                  own custom agents that can trade for you, post on X, and more.
-                  Agent tokenization is coming soon.
+                  All of the functionality in MySuperAgent can be leveraged in
+                  your own custom agents that can trade for you, post on X, and
+                  more. Agent tokenization is coming soon.
                 </PopoverBody>
               </PopoverContent>
             </Popover>

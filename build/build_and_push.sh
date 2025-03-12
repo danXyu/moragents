@@ -8,7 +8,7 @@ AWS_ACCOUNT_ID="586794444026"
 ECR_URL="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 
 # Define image names and their corresponding directories
-IMAGE_NAMES=("agents" "moragents-frontend")
+IMAGE_NAMES=("agents" "mysuperagent-frontend")
 IMAGE_DIRS=("../agents" "../frontend")
 
 # Authenticate with AWS ECR

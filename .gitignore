@@ -53,13 +53,8 @@ yarn-error.log*
 ## resource files
 resources/*
 
-## installer
-MORagentsWindowsInstaller
-MORagentsWindowsInstaller.zip
-build_assets/macOS/MORAgentsInstaller.pkg
 
 ## app
-MORagents.app
 app.log
 
 ## lint

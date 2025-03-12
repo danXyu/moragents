@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "MorAgents Infrastructure - HTTPS enabled with ALB and ACM"
+Description: "MySuperAgent Infrastructure - HTTPS enabled with ALB and ACM"
 
 Resources:
   # Security Group for EC2
@@ -60,19 +60,19 @@ Resources:
 
           # Pull and run the containers
           docker pull 586794444026.dkr.ecr.us-west-1.amazonaws.com/agents:latest
-          docker pull 586794444026.dkr.ecr.us-west-1.amazonaws.com/moragents-frontend:latest
+          docker pull 586794444026.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
 
           docker run -d --restart always -p 8888:5000 586794444026.dkr.ecr.us-west-1.amazonaws.com/agents:latest
-          docker run -d --restart always -p 3333:80 586794444026.dkr.ecr.us-west-1.amazonaws.com/moragents-frontend:latest
+          docker run -d --restart always -p 3333:80 586794444026.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
 
   # Application Load Balancer (ALB)
   ApplicationLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: MorAgentsALB
+      Name: mysuperagentALB
       Scheme: internet-facing
       SecurityGroups:
-        - sg-0ab173f93f4f06ac1 # ✅ This is the correct security group (moragents-alb-sg)
+        - sg-0ab173f93f4f06ac1 # ✅ This is the correct security group (mysuperagent-alb-sg)
       Subnets:
         - subnet-01abb34d1b3a008ac
         - subnet-0a852de834c421b24
