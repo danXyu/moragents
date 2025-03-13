@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   agents:
     image: lachsbagel/mysuperagent_dockers-agents:0.3.0
@@ -23,15 +21,19 @@ services:
     networks:
       - mor_network
 
-  nginx:
-    image: lachsbagel/mysuperagent_dockers-nginx:0.3.0
+  frontend:
+    image: lachsbagel/mysuperagent_dockers-frontend:0.3.0
     build:
       context: ../submodules/frontend
-      dockerfile: Dockerfile
-      target: nginx
+      dockerfile: Dockerfile.dev
     platform: ${PLATFORM:-linux/arm64}
     ports:
       - "3333:80"
+    volumes:
+      - ../submodules/frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
     networks:
       - mor_network
 

@@ -6,6 +6,7 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter
 from langchain_together import ChatTogether
 from langchain_cerebras import ChatCerebras
+from langchain_ollama import ChatOllama, OllamaEmbeddings
 
 from services.vectorstore.together_embeddings import TogetherEmbeddings
 from services.vectorstore.vector_store_service import VectorStoreService
@@ -150,31 +151,52 @@ class AppConfig:
     LLM_DELEGATOR_MODEL = "llama-3.3-70b"  # Cerebras
 
 
-LLM_AGENT = ChatTogether(
-    api_key=get_secret("TogetherApiKey"),
-    model=AppConfig.LLM_AGENT_MODEL,
-    temperature=0.7,
-)
+# Get environment
+env = os.environ.get("ENV", "dev")
 
-LLM_DELEGATOR = ChatCerebras(
-    api_key=get_secret("CerebrasApiKey"),
-    model=AppConfig.LLM_DELEGATOR_MODEL,
-)
+if env == "dev":
+    LLM_AGENT = ChatOllama(
+        model=AppConfig.OLLAMA_MODEL,
+        base_url=AppConfig.OLLAMA_URL,
+        temperature=0.7,
+    )
+
+    LLM_DELEGATOR = ChatOllama(
+        model=AppConfig.OLLAMA_MODEL,
+        base_url=AppConfig.OLLAMA_URL,
+    )
+
+    embeddings = OllamaEmbeddings(
+        model=AppConfig.OLLAMA_EMBEDDING_MODEL,
+        base_url=AppConfig.OLLAMA_URL,
+    )
+else:
+    LLM_AGENT = ChatTogether(
+        api_key=get_secret("TogetherApiKey"),
+        model=AppConfig.LLM_AGENT_MODEL,
+        temperature=0.7,
+    )
+
+    LLM_DELEGATOR = ChatCerebras(
+        api_key=get_secret("CerebrasApiKey"),
+        model=AppConfig.LLM_DELEGATOR_MODEL,
+    )
+
+    embeddings = TogetherEmbeddings(
+        model_name="togethercomputer/m2-bert-80M-8k-retrieval",
+        api_key=get_secret("TogetherApiKey"),
+    )
+
 # Vector store path for persistence
 VECTOR_STORE_PATH = os.path.join(os.getcwd(), "data", "vector_store")
 
-together_embeddings = TogetherEmbeddings(
-    model_name="togethercomputer/m2-bert-80M-8k-retrieval",
-    api_key=get_secret("TogetherApiKey"),
-)
-
 # Initialize vector store service and load existing store if it exists
-RAG_VECTOR_STORE = VectorStoreService(together_embeddings)
+RAG_VECTOR_STORE = VectorStoreService(embeddings)
 if os.path.exists(VECTOR_STORE_PATH):
     logger.info(f"Loading existing vector store from {VECTOR_STORE_PATH}")
     try:
-        RAG_VECTOR_STORE = VectorStoreService.load(VECTOR_STORE_PATH, together_embeddings)
+        RAG_VECTOR_STORE = VectorStoreService.load(VECTOR_STORE_PATH, embeddings)
     except Exception as e:
         logger.error(f"Failed to load vector store: {str(e)}")
         # Continue with empty vector store if load fails
-        RAG_VECTOR_STORE = VectorStoreService(together_embeddings)
+        RAG_VECTOR_STORE = VectorStoreService(embeddings)

@@ -19,6 +19,7 @@ class Config:
         human_readable_name="MOR Claims Manager",
         command="morclaims",
         upload_required=False,
+        is_enabled=False,
     )
 
     # *************

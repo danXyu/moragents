@@ -108,7 +108,16 @@ Visit [https://mysuperagent.io](https://mysuperagent.io) to access the hosted pl
 
 ### Local Development
 
-To run MySuperAgent locally:
+To run MySuperAgent locally, follow these comprehensive setup instructions:
+
+#### Prerequisites
+
+1. Install Ollama:
+   ```bash
+   # Install Ollama following instructions at https://ollama.ai
+   ollama pull 3.2:3b
+   ollama serve
+   ```
 
 #### Running with Docker
 
@@ -166,6 +175,17 @@ To run MySuperAgent locally:
      -e DATABASE_URL=postgresql://neo:trinity@localhost:5678/morpheus_db \
      agents
    ```
+
+#### Simulating Production Environment
+
+To test features that require external API integrations, you'll need to export the following environment variables:
+
+```
+export TOGETHER_API_KEY="mock-key"
+export CEREBRAS_API_KEY="mock-key"
+export CODEX_API_KEY="mock-key"
+export ELFA_API_KEY="mock-key"
+```
 
 ### Developer Documentation
 

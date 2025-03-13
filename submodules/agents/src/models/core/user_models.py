@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from sqlalchemy import JSON, DateTime, String, Integer, ForeignKey, func
+from sqlalchemy import JSON, DateTime, String, Integer, ForeignKey, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models import Base
@@ -52,10 +52,7 @@ class UserSetting(Base):
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="settings")
 
-    __table_args__ = (
-        # Ensure unique key per user
-        {"unique_constraints": [("user_id", "settings_key")]}
-    )
+    __table_args__ = (UniqueConstraint("user_id", "settings_key", name="uix_user_settings"),)
 
     def to_service_model(self) -> UserSettingModel:
         """Convert to service model"""
