@@ -6,7 +6,7 @@ on:
     branches:
       - main # Only on the main branch
     paths:
-      - "infrastructure/moragents-stack.yml" # Only when this file changes
+      - "infrastructure/mysuperagent-stack.yml" # Only when this file changes
 
   # Allow manual triggering through GitHub UI
   workflow_dispatch:
@@ -41,7 +41,7 @@ jobs:
       - name: Deploy CloudFormation stack
         run: |
           aws cloudformation deploy \
-            --template-file infrastructure/moragents-stack.yml \
-            --stack-name moragents-stack-${{ github.event.inputs.environment || 'staging' }} \
+            --template-file infrastructure/mysuperagent-stack.yml \
+            --stack-name mysuperagent-stack-${{ github.event.inputs.environment || 'staging' }} \
             --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset

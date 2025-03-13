@@ -1,4 +1,4 @@
-![morpheus ecosystem](images/morpheus-ecosystem@3x_green.png)
+![morpheus ecosystem](static/morpheus-ecosystem@3x_green.png)
 
 # MySuperAgent
 
@@ -8,89 +8,89 @@ A developer-focused platform that enables building, testing, and deploying AI ag
 
 **Note:** MySuperAgent serves as both a development sandbox and production platform for AI agent builders. The platform enables rapid prototyping and deployment of agents that can be automatically invoked based on user intent. For detailed documentation on specific agents, see the agent READMEs in the `/agents` directory.
 
-![UI 1](images/mysuperagent-UI.png)
-
-![UI 2](images/gasless-usdc-base-agent.png)
-
-![UI 3](images/dca-strategy-agent.png)
-
-![UI 4](images/image-generator.png)
-
-![UI 5](images/tweet_sizzler.png)
-
-![UI 6](images/real-time-info.png)
-
-![UI 7](images/mor_rewards.png)
-
-![UI 8](images/price-fetcher-realtime-news.png)
-
-![UI 9](images/mysuperagent_chatpdf.png)
+![UI](static/demo.gif)
 
 ---
 
 ### Available Agents & Features
 
-#### Generate Images with Stable Diffusion 🏞️
+#### Generate Images (Imagen) 💫
 
-- "Generate an image of a cryptographically secure doggo"
-- Powered by Stable Diffusion XL
+- Generate AI images using Stable Diffusion XL
+- Example: "Generate an image of Donald Trump"
+- Example: "Create a cyberpunk style portrait of Elon Musk"
 
-#### Web3 Transaction Agents
+#### Document Analysis 📄
 
-##### Send Gasless USDC with Coinbase 🚚
+- Upload and analyze documents with natural language querying
+- Example: "Summarize the uploaded document"
+- Example: "What are the key points in this uploaded document?"
 
-- "Send USDC on Base"
-  _- Note: Requires Coinbase API integration. See [setup instructions](submodules/agents/src/agents/base_agent/README.md)_
+#### Crypto Market Data 📈
 
-##### Dollar Cost Averaging (DCA) with Coinbase
+- Real-time price, market cap and TVL data
+- Example: "What's the price of ETH?"
+- Example: "What's the FDV of USDC?"
 
-- "DCA Strategy on Base"
-- Automated trading strategies with comprehensive safety checks
-- [Full Documentation](submodules/agents/src/agents/dca_agent/README.md)
+#### Token Swaps 🔄
 
-#### Content Generation
+- Swap tokens across multiple chains
+- Example: "Swap 0.2 ETH for USDC"
+- Example: "Exchange my BTC for ETH"
 
-##### AI-Powered Tweet Generator 🌶
+#### Tweet Generator 🔥
 
-- "Write a based tweet about Crypto and AI"
-- Direct X/Twitter integration
-- [Integration Guide](submodules/agents/src/agents/tweet_sizzler/README.md)
+- AI-powered viral tweet generation
+- Example: "Create a viral tweet about Web3"
+- Example: "Create a spicy crypto market tweet about Gary Gensler"
 
-#### Market Intelligence
+#### Base Transactions ⚡
 
-##### Real-time Company Analysis 🕸️
+- Send and swap tokens on Base
+- Example: "Send USDC on Base"
+- Example: "Swap USDC for ETH on Base"
 
-- "Real-time info about Company XYZ"
+#### MOR Claims Manager 🎁
 
-##### Crypto Market News
+- Manage and claim MOR token rewards
+- Example: "Claim my MOR rewards"
+- Example: "Help me claim my pending MOR tokens"
 
-- "Latest news for USDC"
+#### MOR Rewards Tracking 🏆
 
-##### MOR Token Analytics 🏆
+- Track and analyze MOR rewards
+- Example: "Show my MOR rewards balance"
+- Example: "Calculate my pending MOR rewards"
 
-- "How many MOR rewards do I have?"
+#### Crypto News Analysis 📰
 
-##### CoinGecko Price Integration 📈
+- Get latest crypto market news and analysis
+- Example: "Analyze recent crypto market news for ETH"
+- Example: "What's the latest news impact on BTC?"
 
-- Real-time price, market cap, and TVL data
-- "What's the price of ETH?"
-- "What's the market cap of BTC?"
+#### DexScreener 📊
 
-#### Document Analysis
+- Monitor DEX activity and token metrics
+- Example: "Scan Dexscreener for the most active tokens on solana"
+- Example: "Show me DEX activity for ETH as reported by Dexscreener"
 
-##### PDF Analysis Engine 📄
+#### Elfa Social Search 🔍
 
-- Upload and analyze documents
-- Natural language querying
-- "Can you give me a summary?"
-- "What's the main point of the document?"
+- Search social media for crypto mentions
+- Example: "Search for mentions of MOR on social media"
+- Example: "What are the top trending tokens on social media?"
 
-#### Token Research
+#### Solana Token Safety 🛡️
 
-##### Token Analytics Platform 🍿
+- Check token safety and rugpull risks
+- Example: "Check token safety for SAMO"
+- Example: "Show me the most viewed tokens on rugcheck"
 
-- Chain-specific token activity monitoring
-- "What are the most active tokens on Solana?"
+#### Codex Agent 🗄️
+
+- Advanced token analytics and insights
+- Example: "What are the top trending tokens on Ethereum?"
+- Example: "Who are the top holders of $TRUMP on Solana?"
 
 ---
 
@@ -181,10 +181,10 @@ To run MySuperAgent locally, follow these comprehensive setup instructions:
 To test features that require external API integrations, you'll need to export the following environment variables:
 
 ```
-export TOGETHER_API_KEY="mock-key"
-export CEREBRAS_API_KEY="mock-key"
-export CODEX_API_KEY="mock-key"
-export ELFA_API_KEY="mock-key"
+export TogetherApiKey="mock-key"
+export CerebrasApiKey="mock-key"
+export CodexApiKey="mock-key"
+export ElfaApiKey="mock-key"
 ```
 
 ### Developer Documentation

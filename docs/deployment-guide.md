@@ -56,7 +56,7 @@ To deploy or update the infrastructure, use the existing GitHub Actions workflow
 5. Choose the environment (staging/production)
 6. Click "Run workflow" to execute
 
-This workflow will deploy the CloudFormation stack defined in `infrastructure/moragents-stack.yml`.
+This workflow will deploy the CloudFormation stack defined in `infrastructure/mysuperagent-stack.yml`.
 
 ### Agent Deployment
 

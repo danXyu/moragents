@@ -47,8 +47,6 @@ The DCA agent allows you to set up a recurring workflow to swap from one currenc
    Note that your app needs to be running for the executions to occur at the specified time.
 4. You can verify your DCA strategies by clicking "Workflows" at the top
 
-![workflowsview](../../../../../../images/dca-workflows-view.png)
-
 ## Community Development
 
 All agents, including the Gasless Send and DCA agents are provided under the MIT license for the community to build and explore. They are references for the community to build and eventually ship to the decentralized inference of Morpheus in early 2025, where these agents can live and function for long periods of time without needing local compute.

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "moragents"
-version = "0.1.0"
+version = "0.3.0"
 description = "Server for moragents"
 authors = ["Neo, Morpheus, and Trinity <neo@morpheus.com>"]
 readme = "README.md"
