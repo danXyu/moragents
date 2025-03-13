@@ -1,124 +1,203 @@
-![morpheus ecosystem](images/morpheus-ecosystem@3x_green.png)
-# MORagents
+![morpheus ecosystem](static/morpheus-ecosystem@3x_green.png)
 
-## Local Agents Built with the Friendliest of Dev Tooling
-Python for AI Agents, JS for UI. Runs in your favorite browser. Made possible by Docker.
-Fully Extensible! Add your own agents and have them automatically invoked based on user intent.
+# MySuperAgent
 
-**Note:** This repository is meant to act as a sandbox for Smart Agent developers to explore existing agents and to build their own. It is not designed to be a production-ready application or consumer-based product. Please set your expectations accordingly. For additional information about a specific agent, browse to the submodules/moragents_dockers/agents/src/agents/ directory in the repo and view the README file for the agent you are interested in.
+## A Platform for Building, Deploying, and Leveraging AI Agents
 
-![UI 1](images/MORagents-UI.png)
+A developer-focused platform that enables building, testing, and deploying AI agents. Powered by Python and React, with seamless integration of LLMs and Web3 capabilities.
 
-![UI 2](images/gasless-usdc-base-agent.png)
+**Note:** MySuperAgent serves as both a development sandbox and production platform for AI agent builders. The platform enables rapid prototyping and deployment of agents that can be automatically invoked based on user intent. For detailed documentation on specific agents, see the agent READMEs in the `/agents` directory.
 
-![UI 3](images/dca-strategy-agent.png)
-
-![UI 4](images/image-generator.png)
-
-![UI 5](images/tweet_sizzler.png)
-
-![UI 6](images/real-time-info.png)
-
-![UI 7](images/mor_rewards.png)
-
-![UI 8](images/price-fetcher-realtime-news.png)
-
-![UI 9](images/moragents_chatpdf.png)
+![UI](static/demo.gif)
 
 ---
 
-### Features
+### Available Agents & Features
 
-#### Generate Images 🏞️
-   - "Generate an image of a cryptographically secure doggo"
-#### Send Gasless USDC with Coinbase 🚚
-   - "Send USDC on Base"
-   _- WARNING: Highly experimental. Please backup your wallet file by downloading from wallet selector._
-   - [INSTRUCTIONS](submodules/moragents_dockers/agents/src/agents/base_agent/README.md)
-#### Dollar Cost Averaging (DCA) with Coinbase
-   - "DCA Strategy on Base"
-   _- WARNING: Highly experimental. Please backup your wallet file by downloading from wallet selector._
-   - [INSTRUCTIONS](submodules/moragents_dockers/agents/src/agents/dca_agent/README.md)
-#### Write Sizzling Tweets 🌶No Content Moderation 😅
-  - "Write a based tweet about Crypto and AI"
-  - [INSTRUCTIONS](submodules/moragents_dockers/agents/src/agents/tweet_sizzler/README.md)
-#### Real-time Info 🕸️
-  - "Real-time info about Company XYZ"
-#### Trending Crypto News
-  - "Latest news for USDC"
-#### Check MOR rewards 🏆
-  - "How many MOR rewards do I have?"
-#### Fetch Price, Market Cap, and TVL of coins and tokens supported on CoinGecko 📈
-  - "What's the price of ETH?"
-  - "What's the market cap of BTC?"
-#### Upload a PDF with paperclip icon, then ask questions about the PDF 📄
-  - "Can you give me a summary?"
-  - "What's the main point of the document?"
-#### Ask about popular tokens and summary reports for tokens 🍿
-  - "What are the most active tokens on Solana?"
+#### Generate Images (Imagen) 💫
+
+- Generate AI images using Stable Diffusion XL
+- Example: "Generate an image of Donald Trump"
+- Example: "Create a cyberpunk style portrait of Elon Musk"
+
+#### Document Analysis 📄
+
+- Upload and analyze documents with natural language querying
+- Example: "Summarize the uploaded document"
+- Example: "What are the key points in this uploaded document?"
+
+#### Crypto Market Data 📈
+
+- Real-time price, market cap and TVL data
+- Example: "What's the price of ETH?"
+- Example: "What's the FDV of USDC?"
+
+#### Token Swaps 🔄
+
+- Swap tokens across multiple chains
+- Example: "Swap 0.2 ETH for USDC"
+- Example: "Exchange my BTC for ETH"
+
+#### Tweet Generator 🔥
+
+- AI-powered viral tweet generation
+- Example: "Create a viral tweet about Web3"
+- Example: "Create a spicy crypto market tweet about Gary Gensler"
+
+#### Base Transactions ⚡
+
+- Send and swap tokens on Base
+- Example: "Send USDC on Base"
+- Example: "Swap USDC for ETH on Base"
+
+#### MOR Claims Manager 🎁
+
+- Manage and claim MOR token rewards
+- Example: "Claim my MOR rewards"
+- Example: "Help me claim my pending MOR tokens"
+
+#### MOR Rewards Tracking 🏆
+
+- Track and analyze MOR rewards
+- Example: "Show my MOR rewards balance"
+- Example: "Calculate my pending MOR rewards"
+
+#### Crypto News Analysis 📰
+
+- Get latest crypto market news and analysis
+- Example: "Analyze recent crypto market news for ETH"
+- Example: "What's the latest news impact on BTC?"
+
+#### DexScreener 📊
+
+- Monitor DEX activity and token metrics
+- Example: "Scan Dexscreener for the most active tokens on solana"
+- Example: "Show me DEX activity for ETH as reported by Dexscreener"
+
+#### Elfa Social Search 🔍
+
+- Search social media for crypto mentions
+- Example: "Search for mentions of MOR on social media"
+- Example: "What are the top trending tokens on social media?"
+
+#### Solana Token Safety 🛡️
+
+- Check token safety and rugpull risks
+- Example: "Check token safety for SAMO"
+- Example: "Show me the most viewed tokens on rugcheck"
+
+#### Codex Agent 🗄️
+
+- Advanced token analytics and insights
+- Example: "What are the top trending tokens on Ethereum?"
+- Example: "Who are the top holders of $TRUMP on Solana?"
 
 ---
 
-## Easy Install
-### macOS
->Best performance when >=16GB RAM
+## Getting Started
 
-#### Steps to Install
-1. Download Installer
-   1. For Mac on Apple Silicon M1, M2, M3, M4 (arm64)
-      1. Download and run MORagents installer [MORagents022-apple.pkg](https://drive.proton.me/urls/YA24T6MMT0#iCrO2BCuVZff)
-      > SHA256 3f51ce7cb5a81903f1cc612901c5c63cacc106e83e14c5ca791ddd6b5e71e883 MORagents022-apple.pkg
-2. Wait several minutes for background files to download and then your browser should automatically open to http://localhost:3333
-    > Note: After installation is complete, the MORagents app icon will bounce for several minutes on your dock, and then stop. This is normal behavior as it's downloading <7GB of files in the background. You can open "Activity Monitor" and in the Network tab see that it's downloading.
+### Using the Platform
 
-#### Future Usage
-- Open the "MORagents" app from Mac search bar.
-  - For easier access: Right-click MORagents icon on dock -> Options -> Keep in Dock
+Visit [https://mysuperagent.io](https://mysuperagent.io) to access the hosted platform.
 
-#### Troubleshooting
-- If the app shows connections errors in connecting to agents. Please ensure Docker Desktop is running, then close and reopen **MORagents** from desktop.
-- If installation is unsuccessful, run the following in your Terminal and open the MORagents....pkg again
-   ```shell
-      $ xcode-select --install
+#### Requirements
+
+- Modern web browser (Chrome, Firefox, Safari)
+- Web3 wallet for blockchain interactions
+- API keys for specific agent integrations (Coinbase, Twitter, etc)
+
+### Local Development
+
+To run MySuperAgent locally, follow these comprehensive setup instructions:
+
+#### Prerequisites
+
+1. Install Ollama:
+   ```bash
+   # Install Ollama following instructions at https://ollama.ai
+   ollama pull 3.2:3b
+   ollama serve
    ```
-- If you don't already have Docker installed, the installation may fail the first time. Simply run Docker, grant permissions as needed, and ensure you are logged in with a Docker account. Then run the installation a second time and it should work.
----
 
-### Windows (x86_64)
->Best performance when >=16GB RAM
+#### Running with Docker
 
-#### Steps
-1. Download [MORagentsSetupWindows022.zip](https://drive.proton.me/urls/MGNQ086Y2G#1cVhZOkkY1TU)
-    > SHA256 823790f9c2e2a1db7071012ad720e21a446d2fa86a58ac100cff134a107e7a3d MORagentsSetupWindows022.zip
-2. Go to downloaded **MORagentsSetupWindows022(.zip)** file and double click to open
-3. Double click **MORagentsSetup.exe**
-   1. You may need to click "More info" -> "Run anyway"
-   2. If that still doesn't work, try temporarily disabling your antivirus and open the .exe again
-4. Click and Run **MORagentsSetup.exe**
-   1. This will auto-install Docker and Ollama dependencies. Those will ask you for confirmation.
-5. Open **MORagents** from Desktop
-   1. Wait for Docker engine to start...
-   2. If you see any errors or if anything hangs for >10min, please try opening the MORagents app again from the Desktop
+1. Clone the repository:
 
-#### Troubleshooting
-If the app shows connections errors in connecting to agents. Please ensure Docker Desktop is running, then close and reopen **MORagents** from desktop.
+   ```bash
+   git clone https://github.com/mysuperagent/mysuperagent.git
+   cd mysuperagent
+   ```
 
----
+2. Start the Docker environment:
 
-#### Linux
-*Coming soon*
+   ```bash
+   docker compose -p mysuperagent -f build/docker-compose.yml up
+   ```
 
----
-# Adding a New Agent
+3. Access the application:
+   - Frontend: http://localhost:3333
+   - Server API: http://localhost:8888
 
-See [Agents README](submodules/moragents_dockers/README.md) section: "Steps to Add a New Agent".
+#### Running Services Independently
 
-This will allow you to add custom agents which will be automatically invoked based on relevant user queries.
+1. Clone the repository:
 
----
+   ```bash
+   git clone https://github.com/mysuperagent/mysuperagent.git
+   cd mysuperagent
+   ```
 
-### Build it Yourself
+2. Start PostgreSQL:
 
-#### Build instructions:
-1. [macOS](build_assets/macOS/README_MACOS_DEV_BUILD.md)
-2. [Windows](build_assets/windows/README_WINDOWS_DEV_BUILD.md)
+   ```bash
+   docker run -d \
+     -p 5678:5678 \
+     -e POSTGRES_USER=neo \
+     -e POSTGRES_PASSWORD=trinity \
+     -e POSTGRES_DB=morpheus_db \
+     postgres:16-bullseye -p 5678
+   ```
+
+3. Start the Frontend:
+
+   ```bash
+   cd submodules/frontend
+   docker build -t frontend .
+   docker run -d -p 3333:80 frontend
+   ```
+
+4. Start the Agents API:
+   ```bash
+   cd submodules/agents
+   docker build -t agents -f build/Dockerfile .
+   docker run -d \
+     -p 8888:5000 \
+     -e DATABASE_URL=postgresql://neo:trinity@localhost:5678/morpheus_db \
+     agents
+   ```
+
+#### Simulating Production Environment
+
+To test features that require external API integrations, you'll need to export the following environment variables:
+
+```
+export TogetherApiKey="mock-key"
+export CerebrasApiKey="mock-key"
+export CodexApiKey="mock-key"
+export ElfaApiKey="mock-key"
+```
+
+### Developer Documentation
+
+For developers looking to build and deploy their own agents:
+
+1. [Agent Development Guide](docs/agent-development-guide.md)
+2. [API Documentation](docs/available-apis-guide.md)
+3. [Testing Framework](docs/testing-framework-guide.md)
+4. [Deployment Guide](docs/deployment-guide.md)
+
+# Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on adding new agents and contributing to the platform.
+
+Your agents will be automatically invoked based on user intent through our advanced routing system.

@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "MySuperAgent Infrastructure - HTTPS enabled with ALB and ACM"
+
+Resources:
+  # Security Group for EC2
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Enable SSH, HTTP, and backend services"
+      VpcId: vpc-0e17a977e38b866c1 # ✅ Ensure the security group is in the correct VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3333
+          ToPort: 3333
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8888
+          ToPort: 8888
+          CidrIp: 0.0.0.0/0
+
+  # Instance Profile (Reusing Existing IAM Role)
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - cdk-hnb659fds-cfn-exec-role-586794444026-us-east-1 # ✅ Keep this
+      Path: "/"
+
+  # EC2 Instance (Ensure Correct VPC & Subnet)
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t4g.small
+      SubnetId: subnet-01abb34d1b3a008ac
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      KeyName: agents-key
+      IamInstanceProfile: !Ref InstanceProfile # ✅ Correctly references the profile
+      ImageId: ami-06114d52c0976a495
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp2
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          sudo yum install -y docker jq aws-cli
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          sudo usermod -aG docker ec2-user
+
+          # Get ECR auth token
+          aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 586794444026.dkr.ecr.us-west-1.amazonaws.com
+
+          # Pull and run the containers
+          docker pull 586794444026.dkr.ecr.us-west-1.amazonaws.com/agents:latest
+          docker pull 586794444026.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
+
+          docker run -d --restart always -p 8888:5000 586794444026.dkr.ecr.us-west-1.amazonaws.com/agents:latest
+          docker run -d --restart always -p 3333:80 586794444026.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
+
+  # Application Load Balancer (ALB)
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: mysuperagentALB
+      Scheme: internet-facing
+      SecurityGroups:
+        - sg-0ab173f93f4f06ac1 # ✅ This is the correct security group (mysuperagent-alb-sg)
+      Subnets:
+        - subnet-01abb34d1b3a008ac
+        - subnet-0a852de834c421b24
+      Type: application
+
+  # ALB Target Group for Backend API
+  BackendTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: BackendTargetGroup
+      Port: 8888
+      Protocol: HTTP
+      VpcId: vpc-0e17a977e38b866c1 # ✅ Ensures correct VPC association
+      TargetType: instance
+      Targets:
+        - Id: !Ref EC2Instance
+
+  # ALB Target Group for Frontend
+  FrontendTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: FrontendTargetGroup
+      Port: 3333
+      Protocol: HTTP
+      VpcId: vpc-0e17a977e38b866c1 # ✅ Ensures correct VPC association
+      TargetType: instance
+      Targets:
+        - Id: !Ref EC2Instance
+
+  # Create ACM Certificate
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: mysuperagent.io
+      SubjectAlternativeNames:
+        - "*.mysuperagent.io"
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: mysuperagent.io
+          HostedZoneId: Z08521642MAYLL3XZZMIN
+
+  # HTTPS Listener for ALB - Make FrontendTargetGroup the default
+  HTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: Certificate
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-2016-08
+      Certificates:
+        - CertificateArn: !Ref Certificate
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref FrontendTargetGroup
+
+  # API Path Listener Rule - Forward /api/* to BackendTargetGroup
+  APIListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 10
+      Conditions:
+        - Field: host-header
+          Values:
+            - api.mysuperagent.io
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref BackendTargetGroup
+
+  # HTTP Listener (Redirects to HTTPS)
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: "443"
+            StatusCode: HTTP_301
+
+  # Route 53 DNS for Main Domain
+  DNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: Z08521642MAYLL3XZZMIN
+      Name: mysuperagent.io.
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ApplicationLoadBalancer.DNSName
+        HostedZoneId: !GetAtt ApplicationLoadBalancer.CanonicalHostedZoneID
+
+  # Route 53 DNS for API Subdomain
+  ApiDNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: Z08521642MAYLL3XZZMIN
+      Name: api.mysuperagent.io.
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ApplicationLoadBalancer.DNSName
+        HostedZoneId: !GetAtt ApplicationLoadBalancer.CanonicalHostedZoneID
+
+Outputs:
+  InstanceId:
+    Description: ID of the EC2 instance
+    Value: !Ref EC2Instance
+  LoadBalancerDNS:
+    Description: DNS of the ALB
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+  FrontendURL:
+    Description: Frontend URL
+    Value: https://mysuperagent.io
+  ApiURL:
+    Description: API URL
+    Value: https://api.mysuperagent.io
+  CertificateARN:
+    Description: The ARN of the created certificate
+    Value: !Ref Certificate
+  SSHCommand:
+    Description: SSH Command
+    Value: !Sub ssh -i agents-key.pem ec2-user@${EC2Instance.PublicIp}

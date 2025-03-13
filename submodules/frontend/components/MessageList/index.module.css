@@ -1,0 +1,19 @@
+.messageList {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+  overscroll-behavior: contain; /* Prevent scroll chaining */
+}
+
+/* Make sure content doesn't overflow horizontally */
+.messageList > div {
+  width: 100%;
+}
+
+.messageList::-webkit-scrollbar {
+  display: none;
+}
+
+.messageList::-webkit-scrollbar-thumb {
+  display: none;
+}
