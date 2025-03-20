@@ -19,7 +19,7 @@ CONF = Config.get_instance()
 def get_secret(secret_name: str, region_name: str = "us-west-1") -> str:
     """Get a secret from AWS Secrets Manager"""
 
-    # Check if secret exists in config first
+    # Check if secret exists in config first (for local development)
     if CONF.has(secret_name, "integrations"):
         logger.info(f"Returning secret value for '{secret_name}' from config")
         return CONF.get(secret_name, "integrations")
@@ -33,14 +33,20 @@ def get_secret(secret_name: str, region_name: str = "us-west-1") -> str:
         get_secret_value_response = client.get_secret_value(SecretId=secret_name)
         logger.info(f"Successfully retrieved secret '{secret_name}'")
     except ClientError as e:
-        # For a list of exceptions thrown, see
-        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
         logger.error(f"Failed to retrieve secret '{secret_name}': {str(e)}")
         raise e
 
+    # Get the secret string
     secret = get_secret_value_response["SecretString"]
-    logger.info(f"Returning secret value for '{secret_name}'")
 
-    # Parse the JSON string into a dictionary and get the value
-    secret_dict = json.loads(secret)
-    return secret_dict.get(secret_name)
+    # Try to parse as JSON first (for secrets that contain multiple key-value pairs)
+    try:
+        secret_dict = json.loads(secret)
+        # If the secret_name is a key in the dictionary, return its value
+        if secret_name in secret_dict:
+            return secret_dict.get(secret_name)
+        # Otherwise return the entire dictionary or a specific value
+        return secret_dict
+    except json.JSONDecodeError:
+        # If it's not JSON, return the raw string
+        return secret
