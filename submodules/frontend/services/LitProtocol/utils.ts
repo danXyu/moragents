@@ -10,6 +10,32 @@ import {
   createSiweMessage,
   generateAuthSig,
 } from "@lit-protocol/auth-helpers";
+import { SecretsManager } from "@aws-sdk/client-secrets-manager";
+
+// Get secrets from AWS Secrets Manager
+const secretsManager = new SecretsManager({
+  region: process.env.AWS_REGION || "us-west-1",
+});
+
+const getSecrets = async () => {
+  const response = await secretsManager.getSecretValue({
+    SecretId: process.env.LIT_PROTOCOL_SECRET_NAME,
+  });
+  const secrets = JSON.parse(response.SecretString || "{}");
+  return {
+    CAPACITY_CREDIT_TOKEN_ID: secrets.CAPACITY_CREDIT_TOKEN_ID,
+    CREDIT_OWNER_PRIVATE_KEY: secrets.CREDIT_OWNER_PRIVATE_KEY,
+  };
+};
+
+let CAPACITY_CREDIT_TOKEN_ID: string;
+let CREDIT_OWNER_PRIVATE_KEY: string;
+
+// Initialize secrets
+getSecrets().then((secrets) => {
+  CAPACITY_CREDIT_TOKEN_ID = secrets.CAPACITY_CREDIT_TOKEN_ID;
+  CREDIT_OWNER_PRIVATE_KEY = secrets.CREDIT_OWNER_PRIVATE_KEY;
+});
 
 // Choose network based on environment
 const getLitNetwork = () => {
@@ -50,6 +76,43 @@ const getAccessControlConditions = () => {
       },
     },
   ];
+};
+
+/**
+ * Creates capacity delegation auth signature for the current user
+ */
+export const createCapacityDelegation = async (): Promise<any> => {
+  // Initialize the Lit client
+  const localLitClient = new LitNodeClient({
+    litNetwork: getLitNetwork(),
+    checkNodeAttestation: true,
+  });
+
+  await localLitClient.connect();
+
+  // Create wallet instance for the credit owner using the hardcoded private key
+  const creditOwnerWallet = new ethers.Wallet(CREDIT_OWNER_PRIVATE_KEY);
+
+  // Get the user's address from browser ethereum provider
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  const userWalletAddress = await signer.getAddress();
+
+  console.log(
+    `Creating capacity delegation from owner to current user: ${userWalletAddress}`
+  );
+
+  // Create the capacity delegation auth signature
+  const { capacityDelegationAuthSig } =
+    await localLitClient.createCapacityDelegationAuthSig({
+      uses: "100", // Number of uses for this delegation
+      dAppOwnerWallet: creditOwnerWallet,
+      capacityTokenId: CAPACITY_CREDIT_TOKEN_ID,
+      delegateeAddresses: [userWalletAddress], // Delegate to the current user
+    });
+
+  console.log("Capacity delegation created successfully");
+  return capacityDelegationAuthSig;
 };
 
 export const encryptSecret = async (
@@ -145,7 +208,10 @@ export const decryptData = async (
 
   const latestBlockhash = await litClient.getLatestBlockhash();
 
-  // Get session signatures
+  // Get capacity delegation for the current user
+  const capacityDelegationAuthSig = await createCapacityDelegation();
+
+  // Get session signatures with capacity delegation
   const sessionSigs = await litClient.getSessionSigs({
     chain: "ethereum",
     expiration: new Date(Date.now() + 1000 * 60 * 10).toISOString(), // 10 minutes
@@ -175,6 +241,7 @@ export const decryptData = async (
         toSign,
       });
     },
+    capacityDelegationAuthSig, // Include capacity delegation
   });
 
   // Decrypt using sessionSigs
