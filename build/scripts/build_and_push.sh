@@ -14,7 +14,7 @@ ECR_URL="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 
 # Define image names and their corresponding directories
 IMAGE_NAMES=("mysuperagent-agents" "mysuperagent-frontend")
-IMAGE_DIRS=("$ROOT_DIR/submodules/agents" "$ROOT_DIR/submodules/frontend")
+IMAGE_DIRS=("$ROOT_DIR/../submodules/agents" "$ROOT_DIR/../submodules/frontend")
 
 # Authenticate with AWS ECR
 echo "Logging into AWS ECR..."

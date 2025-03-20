@@ -12,6 +12,9 @@ import {
 } from "@lit-protocol/auth-helpers";
 import { SecretsManager } from "@aws-sdk/client-secrets-manager";
 
+// Hardcoded secret name for Lit Protocol secrets
+const LIT_PROTOCOL_SECRET_NAME = "LitProtocolCapacityCreditsSecrets";
+
 // Get secrets from AWS Secrets Manager
 const secretsManager = new SecretsManager({
   region: process.env.AWS_REGION || "us-west-1",
@@ -19,7 +22,7 @@ const secretsManager = new SecretsManager({
 
 const getSecrets = async () => {
   const response = await secretsManager.getSecretValue({
-    SecretId: process.env.LIT_PROTOCOL_SECRET_NAME,
+    SecretId: LIT_PROTOCOL_SECRET_NAME,
   });
   const secrets = JSON.parse(response.SecretString || "{}");
   return {
