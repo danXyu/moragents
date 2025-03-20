@@ -7,6 +7,7 @@
   overflow: visible;
   transition: transform 0.3s ease;
   z-index: 2147483647;
+  pointer-events: none;
 }
 
 .sidebarContainer.collapsed {
@@ -22,6 +23,7 @@
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
   height: 100%;
+  pointer-events: auto;
 }
 
 .container {
@@ -250,6 +252,8 @@
   justify-content: center;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
   transition: background-color 0.2s, transform 0.2s;
+  pointer-events: auto;
+  z-index: 2147483647;
 }
 
 .toggleButton:hover {
