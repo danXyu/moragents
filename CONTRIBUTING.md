@@ -1,6 +1,6 @@
 # Contributing and Future Interoperability of Agents
 
-**For contributors looking to build a local agent** please see [Agents README](submodules/moragents_dockers/README.md) section: "Steps to Add a New Agent".
+**For contributors looking to build a local agent** please see [Agents README](submodules/agents/README.md) section: "Steps to Add a New Agent".
 This will let you experiment with your agent locally.
 
 Later in 2024/5 you will be able to publish your agent to the Morpheus registry.
@@ -9,7 +9,8 @@ There will be a future router which will expand to coordinate the decentralized 
 ---
 
 # Contribution Process:
-1. Prospective contributors can propose an idea or find a relevant issue from [Issues](https://github.com/MorpheusAIs/moragents/issues)
+
+1. Prospective contributors can propose an idea or find a relevant issue from [Issues](https://github.com/MorpheusAIs/mysuperagent/issues)
    1. See what's being worked on here in [AGENTABILITIES](./AGENTABILITIES.md)
 2. Contact lachsbagel on the Morpheus Discord or comment on an issue above
 3. Agree on timeline and weights

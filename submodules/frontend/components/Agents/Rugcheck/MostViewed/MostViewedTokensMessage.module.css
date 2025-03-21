@@ -1,0 +1,181 @@
+/* ViewedTokensMessage.module.css */
+
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #e4e4e4;
+  margin-bottom: 2px;
+}
+
+.subtitle {
+  color: #888;
+  font-size: 12px;
+}
+
+.tokenList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tokenCard {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tokenHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.rankBadge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #aaa;
+}
+
+.tokenInfo {
+  flex: 1;
+}
+
+.tokenName {
+  font-size: 12px;
+  font-weight: 500;
+  color: #e4e4e4;
+  margin-bottom: 2px;
+}
+
+.tokenSymbol {
+  font-size: 12px;
+  color: #888;
+}
+
+.addressWrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.address {
+  font-family: monospace;
+  font-size: 12px;
+  color: #888;
+}
+
+.copyButton {
+  color: #666;
+  background: none;
+  border: none;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.copyButton:hover {
+  color: #888;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+}
+
+.statIcon {
+  color: #666;
+}
+
+.statInfo {
+  flex: 1;
+}
+
+.statValue {
+  font-size: 12px;
+  font-weight: 500;
+  color: #e4e4e4;
+  margin-bottom: 2px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: #888;
+}
+
+.showMoreButton {
+  width: 100%;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.showMoreButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+}
+
+@media (max-width: 640px) {
+  .tokenHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .addressWrapper {
+    align-self: stretch;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .tokenCard {
+    padding: 8px;
+  }
+}
