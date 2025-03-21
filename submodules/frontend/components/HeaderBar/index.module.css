@@ -1,0 +1,28 @@
+.headerBar {
+  background-color: #000;
+  border-bottom: 2px solid gray;
+  padding: 8px 0;
+  width: 100%;
+  z-index: 1401;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.connectButtonWrapper {
+  flex-shrink: 0;
+}
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 480px) {
+  .headerBar {
+    padding: 4px 0;
+  }
+
+  .logo {
+    /* Smaller logo on mobile */
+    transform: scale(0.9);
+  }
+}

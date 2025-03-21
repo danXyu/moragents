@@ -1,0 +1,218 @@
+/* OneInchSwapMessage.module.css */
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.contentRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.messageContent {
+  color: #e4e4e4;
+  font-size: 14px;
+  margin: 0;
+}
+
+.toggleButton {
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.toggleButton:hover {
+  color: #59f886;
+  background: rgba(89, 248, 134, 0.1);
+}
+
+.swapCard {
+  margin-top: 12px;
+  background: rgba(22, 24, 22, 0.7);
+  border-radius: 12px;
+  padding: 2px;
+  border: 1px solid rgba(103, 107, 104, 0.5);
+}
+
+.swapPanel {
+  background: #111613;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.swapGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  border-bottom: 1px solid rgba(204, 206, 205, 0.2);
+  padding-bottom: 16px;
+}
+
+.swapColumn {
+  position: relative;
+}
+
+.swapColumn:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  right: -8px;
+  height: 80%;
+  width: 1px;
+  background-color: rgba(204, 206, 205, 0.2);
+}
+
+.swapSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionTitle {
+  color: #e4e4e4;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tokenAmount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.amountValue {
+  color: #9a9c9b;
+  font-size: 16px;
+}
+
+.tokenSymbol {
+  color: #e4e4e4;
+  font-size: 16px;
+}
+
+.slippageHeader {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.infoButton {
+  background: transparent;
+  border: none;
+  color: #9a9c9b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+.infoButton:hover {
+  color: #e4e4e4;
+}
+
+.inputGroup {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  margin-bottom: 4px;
+}
+
+.slippageInput {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 1px solid #676b68;
+  border-radius: 4px 0 0 4px;
+  color: #e4e4e4;
+  padding: 0 8px;
+  font-size: 14px;
+}
+
+.inputAddon {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  background: transparent;
+  border: 1px solid #676b68;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  color: #9a9c9b;
+}
+
+.poweredBy {
+  color: #676b68;
+  font-size: 10px;
+}
+
+.actionButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.cancelButton {
+  background: transparent;
+  border: none;
+  color: #e4e4e4;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+.cancelButton:hover {
+  color: #59f886;
+}
+
+.swapButton {
+  background: #59f886;
+  color: #0a120d;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.swapButton:hover {
+  background: #4ae977;
+}
+
+.swapButton:disabled {
+  background: #2d7c43;
+  color: #9a9c9b;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .swapGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .swapColumn::after {
+    display: none;
+  }
+
+  .swapColumn:not(:last-child) {
+    border-bottom: 1px solid rgba(204, 206, 205, 0.2);
+    padding-bottom: 12px;
+  }
+}
