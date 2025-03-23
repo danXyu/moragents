@@ -15,30 +15,26 @@ import { SecretsManager } from "@aws-sdk/client-secrets-manager";
 // Hardcoded secret name for Lit Protocol secrets
 const LIT_PROTOCOL_SECRET_NAME = "LitProtocolCapacityCreditsSecrets";
 
-// Get secrets from AWS Secrets Manager
-const secretsManager = new SecretsManager({
-  region: process.env.AWS_REGION || "us-west-1",
-});
+let CAPACITY_CREDIT_TOKEN_ID: string = "";
+let CREDIT_OWNER_PRIVATE_KEY: string = "";
 
-const getSecrets = async () => {
-  const response = await secretsManager.getSecretValue({
-    SecretId: LIT_PROTOCOL_SECRET_NAME,
+// Only fetch secrets in production
+if (process.env.NODE_ENV === "production") {
+  const secretsManager = new SecretsManager({
+    region: process.env.AWS_REGION || "us-west-1",
   });
-  const secrets = JSON.parse(response.SecretString || "{}");
-  return {
-    CAPACITY_CREDIT_TOKEN_ID: secrets.CAPACITY_CREDIT_TOKEN_ID,
-    CREDIT_OWNER_PRIVATE_KEY: secrets.CREDIT_OWNER_PRIVATE_KEY,
-  };
-};
 
-let CAPACITY_CREDIT_TOKEN_ID: string;
-let CREDIT_OWNER_PRIVATE_KEY: string;
-
-// Initialize secrets
-getSecrets().then((secrets) => {
-  CAPACITY_CREDIT_TOKEN_ID = secrets.CAPACITY_CREDIT_TOKEN_ID;
-  CREDIT_OWNER_PRIVATE_KEY = secrets.CREDIT_OWNER_PRIVATE_KEY;
-});
+  // Initialize secrets
+  secretsManager
+    .getSecretValue({
+      SecretId: LIT_PROTOCOL_SECRET_NAME,
+    })
+    .then((response) => {
+      const secrets = JSON.parse(response.SecretString || "{}");
+      CAPACITY_CREDIT_TOKEN_ID = secrets.CAPACITY_CREDIT_TOKEN_ID;
+      CREDIT_OWNER_PRIVATE_KEY = secrets.CREDIT_OWNER_PRIVATE_KEY;
+    });
+}
 
 // Choose network based on environment
 const getLitNetwork = () => {
@@ -85,6 +81,11 @@ const getAccessControlConditions = () => {
  * Creates capacity delegation auth signature for the current user
  */
 export const createCapacityDelegation = async (): Promise<any> => {
+  // Skip capacity delegation in dev environment
+  if (process.env.NODE_ENV !== "production") {
+    return null;
+  }
+
   // Initialize the Lit client
   const localLitClient = new LitNodeClient({
     litNetwork: getLitNetwork(),
@@ -244,7 +245,7 @@ export const decryptData = async (
         toSign,
       });
     },
-    capacityDelegationAuthSig, // Include capacity delegation
+    ...(capacityDelegationAuthSig && { capacityDelegationAuthSig }), // Only include if not null
   });
 
   // Decrypt using sessionSigs
