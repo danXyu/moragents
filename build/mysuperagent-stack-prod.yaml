@@ -175,7 +175,7 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           yum update -y
-          yum install -y docker jq aws-cli ruby wget bind-utils amazon-cloudwatch-agent
+          yum install -y docker jq aws-cli ruby wget bind-utils
 
           # Configure system DNS settings for reliability
           echo "options timeout:2 attempts:5 rotate" >> /etc/resolv.conf
@@ -442,6 +442,8 @@ Outputs:
   InstanceId:
     Description: ID of the EC2 instance
     Value: !Ref EC2Instance
+    Export:
+      Name: !Sub "${AWS::StackName}-InstanceId"
 
   InstancePublicDNS:
     Description: Public DNS of the EC2 instance
