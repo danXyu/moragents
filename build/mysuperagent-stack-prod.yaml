@@ -104,6 +104,7 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
       Policies:
         - PolicyName: ECRAccess
           PolicyDocument:
@@ -174,7 +175,7 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           yum update -y
-          yum install -y docker jq aws-cli ruby wget bind-utils
+          yum install -y docker jq aws-cli ruby wget bind-utils amazon-cloudwatch-agent
 
           # Configure system DNS settings for reliability
           echo "options timeout:2 attempts:5 rotate" >> /etc/resolv.conf
@@ -450,13 +451,23 @@ Outputs:
     Description: DNS of the ALB
     Value: !GetAtt ApplicationLoadBalancer.DNSName
 
+  LoadBalancerName:
+    Description: Name of the Application Load Balancer for CloudWatch metrics
+    Value: !Select [1, !Split ["/", !Ref ApplicationLoadBalancer]]
+    Export:
+      Name: !Sub "${AWS::StackName}-LoadBalancerName"
+
   FrontendURL:
     Description: Frontend URL
     Value: https://mysuperagent.io
+    Export:
+      Name: !Sub "${AWS::StackName}-FrontendURL"
 
   ApiURL:
     Description: API URL
     Value: https://api.mysuperagent.io
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiURL"
 
   CertificateARN:
     Description: The ARN of the created certificate

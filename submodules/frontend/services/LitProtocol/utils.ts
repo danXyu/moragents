@@ -13,7 +13,7 @@ import {
 import { SecretsManager } from "@aws-sdk/client-secrets-manager";
 
 // Hardcoded secret name for Lit Protocol secrets
-const LIT_PROTOCOL_SECRET_NAME = "LitProtocolCapacityCreditsSecrets";
+const LIT_PROTOCOL_SECRET_NAME = "LitProtocolPaymentDelegationSecrets";
 
 // Get secrets from AWS Secrets Manager
 const secretsManager = new SecretsManager({
@@ -26,28 +26,37 @@ const getSecrets = async () => {
   });
   const secrets = JSON.parse(response.SecretString || "{}");
   return {
-    CAPACITY_CREDIT_TOKEN_ID: secrets.CAPACITY_CREDIT_TOKEN_ID,
-    CREDIT_OWNER_PRIVATE_KEY: secrets.CREDIT_OWNER_PRIVATE_KEY,
+    LIT_RELAYER_API_KEY: secrets.LIT_RELAYER_API_KEY,
+    LIT_PAYER_SECRET_KEY: secrets.LIT_PAYER_SECRET_KEY,
   };
 };
 
-let CAPACITY_CREDIT_TOKEN_ID: string;
-let CREDIT_OWNER_PRIVATE_KEY: string;
+let LIT_RELAYER_API_KEY: string;
+let LIT_PAYER_SECRET_KEY: string;
 
 // Initialize secrets
 getSecrets().then((secrets) => {
-  CAPACITY_CREDIT_TOKEN_ID = secrets.CAPACITY_CREDIT_TOKEN_ID;
-  CREDIT_OWNER_PRIVATE_KEY = secrets.CREDIT_OWNER_PRIVATE_KEY;
+  LIT_RELAYER_API_KEY = secrets.LIT_RELAYER_API_KEY;
+  LIT_PAYER_SECRET_KEY = secrets.LIT_PAYER_SECRET_KEY;
 });
 
 // Choose network based on environment
 const getLitNetwork = () => {
   // Check if we're in production
   if (process.env.NODE_ENV === "production") {
-    return LIT_NETWORK.Datil; // Use production network (Manzano)
+    return LIT_NETWORK.Datil; // Use production network
   } else {
-    return LIT_NETWORK.DatilDev; // Use dev network otherwise
+    return LIT_NETWORK.DatilDev; // Use development network for non-production
   }
+};
+
+// Get the appropriate relayer URL based on network
+const getRelayerUrl = (endpoint: string) => {
+  // Payment Delegation Database is only supported on datil and datil-test networks
+  // Even in dev environment, we need to use datil-test for the relayer
+  const network =
+    process.env.NODE_ENV === "production" ? "datil" : "datil-test";
+  return `https://${network}-relayer.getlit.dev/${endpoint}`;
 };
 
 const gatewayAddress = "https://gateway.irys.xyz/";
@@ -60,9 +69,30 @@ const getIrysUploader = async () => {
   return irysUploader;
 };
 
+// Initialize the Lit client immediately
+let litClientInitialized = false;
 const litClient = new LitNodeClient({
   litNetwork: getLitNetwork(),
 });
+
+// Connect to Lit network automatically
+(async () => {
+  try {
+    await litClient.connect();
+    litClientInitialized = true;
+    console.log("Lit client connected automatically");
+  } catch (error) {
+    console.error("Error connecting to Lit network:", error);
+  }
+})();
+
+// Ensure Lit client is connected before operations
+const ensureLitClientConnected = async () => {
+  if (!litClientInitialized) {
+    await litClient.connect();
+    litClientInitialized = true;
+  }
+};
 
 const getAccessControlConditions = () => {
   return [
@@ -82,46 +112,96 @@ const getAccessControlConditions = () => {
 };
 
 /**
- * Creates capacity delegation auth signature for the current user
+ * Register a new payer wallet with the Payment Delegation Database
  */
-export const createCapacityDelegation = async (): Promise<any> => {
-  // Initialize the Lit client
-  const localLitClient = new LitNodeClient({
-    litNetwork: getLitNetwork(),
-    checkNodeAttestation: true,
-  });
+export const registerPayer = async (): Promise<{
+  payerWalletAddress: string;
+  payerSecretKey: string;
+}> => {
+  const headers = {
+    "api-key": LIT_RELAYER_API_KEY,
+    "Content-Type": "application/json",
+  };
 
-  await localLitClient.connect();
+  try {
+    console.log("🔄 Registering new payer...");
+    const response = await fetch(getRelayerUrl("register-payer"), {
+      method: "POST",
+      headers: headers,
+    });
 
-  // Create wallet instance for the credit owner using the hardcoded private key
-  const creditOwnerWallet = new ethers.Wallet(CREDIT_OWNER_PRIVATE_KEY);
+    if (!response.ok) {
+      throw new Error(`Error: ${await response.text()}`);
+    }
 
+    const data = await response.json();
+    console.log(`✅ New payer registered: ${data.payerWalletAddress}`);
+
+    return {
+      payerWalletAddress: data.payerWalletAddress,
+      payerSecretKey: data.payerSecretKey,
+    };
+  } catch (error) {
+    console.error("Error registering payer:", error);
+    throw error;
+  }
+};
+
+/**
+ * Add users as payees for the payer wallet
+ */
+export const addUsers = async (users: string[]): Promise<boolean> => {
+  const headers = {
+    "api-key": LIT_RELAYER_API_KEY,
+    "payer-secret-key": LIT_PAYER_SECRET_KEY,
+    "Content-Type": "application/json",
+  };
+
+  try {
+    console.log(`🔄 Adding ${users.length} users as delegatees...`);
+    const response = await fetch(getRelayerUrl("add-users"), {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(users),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${await response.text()}`);
+    }
+
+    const data = await response.json();
+    if (data.success !== true) {
+      throw new Error(`Error: ${data.error}`);
+    }
+    console.log("✅ Added users as delegatees");
+
+    return true;
+  } catch (error) {
+    console.error("Error adding users:", error);
+    throw error;
+  }
+};
+
+/**
+ * Adds the current user to the Payment Delegation Database
+ */
+export const addCurrentUserAsDelegatee = async (): Promise<boolean> => {
   // Get the user's address from browser ethereum provider
   const provider = new ethers.BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
   const userWalletAddress = await signer.getAddress();
 
   console.log(
-    `Creating capacity delegation from owner to current user: ${userWalletAddress}`
+    `Adding current user (${userWalletAddress}) to payment delegation database`
   );
 
-  // Create the capacity delegation auth signature
-  const { capacityDelegationAuthSig } =
-    await localLitClient.createCapacityDelegationAuthSig({
-      uses: "100", // Number of uses for this delegation
-      dAppOwnerWallet: creditOwnerWallet,
-      capacityTokenId: CAPACITY_CREDIT_TOKEN_ID,
-      delegateeAddresses: [userWalletAddress], // Delegate to the current user
-    });
-
-  console.log("Capacity delegation created successfully");
-  return capacityDelegationAuthSig;
+  return await addUsers([userWalletAddress]);
 };
 
 export const encryptSecret = async (
   text: string
 ): Promise<{ ciphertext: string; dataToEncryptHash: string }> => {
-  await litClient.connect();
+  await ensureLitClientConnected();
 
   const { ciphertext, dataToEncryptHash } = await encryptString(
     {
@@ -141,7 +221,7 @@ export const uploadToIrys = async (
   const irysUploader = await getIrysUploader();
 
   const dataToUpload = {
-    ciphertext: cipherText, // Note: using ciphertext (lowercase) consistently
+    ciphertext: cipherText,
     dataToEncryptHash: dataToEncryptHash,
     accessControlConditions: getAccessControlConditions(),
   };
@@ -203,7 +283,7 @@ export const decryptData = async (
     accessControlConditions,
   });
 
-  await litClient.connect();
+  await ensureLitClientConnected();
 
   const provider = new ethers.BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
@@ -211,10 +291,7 @@ export const decryptData = async (
 
   const latestBlockhash = await litClient.getLatestBlockhash();
 
-  // Get capacity delegation for the current user
-  const capacityDelegationAuthSig = await createCapacityDelegation();
-
-  // Get session signatures with capacity delegation
+  // Get session signatures without capacity delegation since it's handled by the Payment Delegation Database
   const sessionSigs = await litClient.getSessionSigs({
     chain: "ethereum",
     expiration: new Date(Date.now() + 1000 * 60 * 10).toISOString(), // 10 minutes
@@ -244,7 +321,7 @@ export const decryptData = async (
         toSign,
       });
     },
-    capacityDelegationAuthSig, // Include capacity delegation
+    // No need to include capacityDelegationAuthSig anymore
   });
 
   // Decrypt using sessionSigs
@@ -263,6 +340,40 @@ export const decryptData = async (
     return decryptedString;
   } catch (error) {
     console.error("Decryption error:", error);
+    throw error;
+  }
+};
+
+// Make sure a specific wallet address is registered in the payment delegation system
+export const ensureUserIsRegistered = async (
+  address: string
+): Promise<boolean> => {
+  try {
+    // First ensure we have the required secrets
+    if (!LIT_RELAYER_API_KEY || !LIT_PAYER_SECRET_KEY) {
+      const secrets = await getSecrets();
+      LIT_RELAYER_API_KEY = secrets.LIT_RELAYER_API_KEY;
+      LIT_PAYER_SECRET_KEY = secrets.LIT_PAYER_SECRET_KEY;
+
+      // If we don't have a payer secret key, we need to register a new payer
+      if (!LIT_PAYER_SECRET_KEY) {
+        const { payerSecretKey } = await registerPayer();
+        LIT_PAYER_SECRET_KEY = payerSecretKey;
+
+        // Here you would need to save this to your secrets manager
+        console.log(
+          "⚠️ New payer registered. Save the payerSecretKey securely!"
+        );
+        console.log(
+          "You need to save this secret key to your secrets manager."
+        );
+      }
+    }
+
+    // Add the user to the payment delegation database
+    return await addUsers([address]);
+  } catch (error) {
+    console.error("Error ensuring user is registered:", error);
     throw error;
   }
 };
