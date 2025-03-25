@@ -1,13 +1,6 @@
 import React, { FC, useState, useEffect, useRef } from "react";
-import {
-  Textarea,
-  IconButton,
-  useMediaQuery,
-  Button,
-  Box,
-  Flex,
-} from "@chakra-ui/react";
-import { AddIcon, SearchIcon, SettingsIcon, LinkIcon } from "@chakra-ui/icons";
+import { Textarea, IconButton, useMediaQuery, Button } from "@chakra-ui/react";
+import { AddIcon, SearchIcon, LinkIcon, SettingsIcon } from "@chakra-ui/icons";
 import { SendIcon } from "../CustomIcon/SendIcon";
 import { Command } from "./Commands";
 import { CommandsPortal } from "./CommandsPortal";
@@ -18,7 +11,8 @@ type ChatInputProps = {
   onSubmit: (
     message: string,
     file: File | null,
-    useMultiagent: boolean
+    useMultiagent: boolean,
+    useRealtimeSearch: boolean
   ) => Promise<void>;
   disabled: boolean;
   isSidebarOpen: boolean;
@@ -37,6 +31,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const [isMobile] = useMediaQuery("(max-width: 768px)");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [useMultiagent, setUseMultiagent] = useState(false);
+  const [useRealtimeSearch, setUseRealtimeSearch] = useState(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -142,8 +137,13 @@ export const ChatInput: FC<ChatInputProps> = ({
       setMessage("");
       setFile(null);
 
-      // Then submit the message with the useMultiagent flag
-      await onSubmit(messageToSend, fileToSend, useMultiagent);
+      // Submit the message with all flags
+      await onSubmit(
+        messageToSend,
+        fileToSend,
+        useMultiagent,
+        useRealtimeSearch
+      );
     } catch (error) {
       console.error("Error submitting message:", error);
     } finally {
@@ -151,8 +151,12 @@ export const ChatInput: FC<ChatInputProps> = ({
     }
   };
 
-  const toggleChaining = () => {
+  const toggleMultiagent = () => {
     setUseMultiagent((prev) => !prev);
+  };
+
+  const toggleRealtimeSearch = () => {
+    setUseRealtimeSearch((prev) => !prev);
   };
 
   return (
@@ -199,39 +203,50 @@ export const ChatInput: FC<ChatInputProps> = ({
             />
           </div>
 
-          {/* Action buttons below */}
+          {/* Action buttons container */}
           <div className={styles.actionsContainer}>
-            <IconButton
-              aria-label="Add"
-              icon={<AddIcon />}
-              className={styles.actionIcon}
-              size="sm"
-              onClick={handleFileUpload}
-            />
-            <Button
-              leftIcon={<SearchIcon />}
-              size="sm"
-              className={styles.actionButton}
-            >
-              Search
-            </Button>
-            <Button
-              leftIcon={<LinkIcon />}
-              size="sm"
-              className={`${styles.actionButton} ${
-                useMultiagent ? styles.activeButton : ""
-              }`}
-              onClick={toggleChaining}
-            >
-              Multi-Agent
-            </Button>
-            <Button
-              leftIcon={<SettingsIcon />}
-              size="sm"
-              className={styles.actionButton}
-            >
-              Tools
-            </Button>
+            {/* Left aligned buttons */}
+            <div className={styles.leftActions}>
+              <IconButton
+                aria-label="Add"
+                icon={<AddIcon />}
+                className={styles.actionIcon}
+                size="xs"
+                onClick={handleFileUpload}
+              />
+              <Button
+                leftIcon={<SearchIcon />}
+                size="xs"
+                className={`${styles.actionButton} ${
+                  useRealtimeSearch ? styles.activeButton : ""
+                }`}
+                onClick={toggleRealtimeSearch}
+              >
+                Search
+              </Button>
+              <Button
+                leftIcon={<LinkIcon />}
+                size="xs"
+                className={`${styles.actionButton} ${
+                  useMultiagent ? styles.activeButton : ""
+                }`}
+                onClick={toggleMultiagent}
+              >
+                Multi-Agent
+              </Button>
+            </div>
+
+            {/* Right aligned tools button */}
+            <div className={styles.rightActions}>
+              <Button
+                leftIcon={<SettingsIcon />}
+                size="xs"
+                className={styles.actionButton}
+                aria-label="Tools"
+              >
+                Tools
+              </Button>
+            </div>
           </div>
         </div>
 

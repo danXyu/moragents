@@ -19,7 +19,7 @@
 .inputWrapper {
   width: 100%;
   border-radius: 8px;
-  background-color: #333;
+  background-color: #222;
   overflow: hidden;
 }
 
@@ -69,16 +69,28 @@
 .actionsContainer {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 8px 16px 12px;
   width: 100%;
+}
+
+.leftActions {
+  display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.rightActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .actionButton {
   background-color: #27292c !important;
   color: #fff !important;
   border-radius: 20px !important;
-  font-size: 14px !important;
+  font-size: 12px !important;
   height: auto !important;
   padding: 4px 12px !important;
   display: flex !important;
@@ -97,8 +109,20 @@
   border: none !important;
 }
 
+.toolsButton {
+  background-color: #27292c !important;
+  color: #fff !important;
+  border-radius: 50% !important;
+  padding: 6px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  border: none !important;
+  margin-right: 3px; /* Align closer to the send button above */
+}
+
 .actionButton:hover,
-.actionIcon:hover {
+.actionIcon:hover,
+.toolsButton:hover {
   background-color: #343639 !important;
 }
 

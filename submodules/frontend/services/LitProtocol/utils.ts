@@ -109,7 +109,7 @@ export const createCapacityDelegation = async (): Promise<any> => {
   // Create the capacity delegation auth signature
   const { capacityDelegationAuthSig } =
     await localLitClient.createCapacityDelegationAuthSig({
-      uses: "100", // Number of uses for this delegation
+      uses: "10000", // Number of uses for this delegation
       dAppOwnerWallet: creditOwnerWallet,
       capacityTokenId: CAPACITY_CREDIT_TOKEN_ID,
       delegateeAddresses: [userWalletAddress], // Delegate to the current user
