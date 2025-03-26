@@ -12,7 +12,7 @@ from stores import agent_manager_instance
 from models.service.chat_models import ChatRequest, AgentResponse, ResponseType
 from config import load_agent_config, LLM_AGENT, LLM_DELEGATOR
 from .system_prompt import get_system_prompt
-from .agent_metrics import AgentMetrics
+from .delegator_metrics import DelegatorMetrics
 
 logger = logging.getLogger(__name__)
 cloudwatch = boto3.client("cloudwatch")
@@ -39,7 +39,7 @@ class Delegator:
             if not agent_config:
                 logger.error(f"Could not load config for agent {agent_name}")
                 duration_ms = int((time.time() - start_time) * 1000)
-                AgentMetrics.emit_agent_invocation(agent_name, duration_ms, False, "ConfigLoadError")
+                DelegatorMetrics.emit_agent_invocation(agent_name, duration_ms, False, "ConfigLoadError")
                 return None
 
             module = importlib.import_module(agent_config["path"])
@@ -52,16 +52,16 @@ class Delegator:
             if result.response_type == ResponseType.ERROR:
                 logger.warning(f"Agent {agent_name} returned error response. You should probably look into this")
                 logger.error(f"Error message: {result.error_message}")
-                AgentMetrics.emit_agent_invocation(agent_name, duration_ms, False, "AgentError")
+                DelegatorMetrics.emit_agent_invocation(agent_name, duration_ms, False, "AgentError")
             else:
-                AgentMetrics.emit_agent_invocation(agent_name, duration_ms, True)
+                DelegatorMetrics.emit_agent_invocation(agent_name, duration_ms, True)
 
             return result
 
         except Exception as e:
             duration_ms = int((time.time() - start_time) * 1000)
             logger.error(f"Error using agent {agent_name}: {str(e)}")
-            AgentMetrics.emit_agent_invocation(agent_name, duration_ms, False, "Exception")
+            DelegatorMetrics.emit_agent_invocation(agent_name, duration_ms, False, "Exception")
             return None
 
     def get_delegator_response(self, prompt: ChatRequest, max_retries: int = 3) -> List[str]:
@@ -124,15 +124,17 @@ class Delegator:
                 if result:
                     logger.info(f"Successfully used agent: {agent_name}")
                     duration_ms = int((time.time() - start_time) * 1000)
-                    AgentMetrics.emit_delegator_metrics(duration_ms, True, self.selected_agents_for_request, attempts)
+                    DelegatorMetrics.emit_delegator_metrics(
+                        duration_ms, True, self.selected_agents_for_request, attempts
+                    )
                     return agent_name, result
 
             duration_ms = int((time.time() - start_time) * 1000)
-            AgentMetrics.emit_delegator_metrics(duration_ms, False, self.selected_agents_for_request, attempts)
+            DelegatorMetrics.emit_delegator_metrics(duration_ms, False, self.selected_agents_for_request, attempts)
             return None, AgentResponse.error(error_message="All agents have been attempted without success")
 
         except ValueError as ve:
             duration_ms = int((time.time() - start_time) * 1000)
             logger.error(f"No available agents: {str(ve)}")
-            AgentMetrics.emit_delegator_metrics(duration_ms, False, self.selected_agents_for_request, attempts)
+            DelegatorMetrics.emit_delegator_metrics(duration_ms, False, self.selected_agents_for_request, attempts)
             return None, AgentResponse.error(error_message="No suitable agents available for the request")

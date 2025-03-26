@@ -6,8 +6,8 @@ logger = logging.getLogger(__name__)
 cloudwatch = boto3.client("cloudwatch")
 
 
-class AgentMetrics:
-    """Handles emitting CloudWatch metrics for agent usage"""
+class DelegatorMetrics:
+    """Handles emitting CloudWatch metrics for delegator usage"""
 
     @staticmethod
     def emit_agent_invocation(agent_name: str, duration_ms: int, success: bool, error_type: Optional[str] = None):
