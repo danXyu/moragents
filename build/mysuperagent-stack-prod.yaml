@@ -226,30 +226,33 @@ Resources:
             fi
           done
 
-          # Initial deployment with docker run - THIS IS THE FIX FOR IMAGE PULLING
-          # Get ECR login token 
-          aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 816069170416.dkr.ecr.us-west-1.amazonaws.com
-
-          # Pull the latest images directly
-          docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:latest
-          docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
-
-          # Force pull with no-cache to ensure fresh images
-          docker pull --no-cache 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:latest
-          docker pull --no-cache 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
-
-          # Add this to your UserData section:
           # Set ENV to prod to ensure we use Together/Cerebras APIs
           cat > /home/ec2-user/mysuperagent/.env << 'EOL'
           ENV=prod
           AWS_DEFAULT_REGION=us-west-1
           EOL
 
-          # Then modify your docker-compose.yml section:
+          # Configure Docker network
+          cat > /home/ec2-user/mysuperagent/docker-network.sh << 'EOL'
+          #!/bin/bash
+          docker network create --driver bridge --subnet 172.28.0.0/16 --gateway 172.28.0.1 --opt "com.docker.network.bridge.name"="docker1" mysuperagent-network
+          EOL
+          chmod +x /home/ec2-user/mysuperagent/docker-network.sh
+          /home/ec2-user/mysuperagent/docker-network.sh
+
+          # Login to ECR once
+          aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 816069170416.dkr.ecr.us-west-1.amazonaws.com
+
+          # Pull the images (normal pull is sufficient)
+          docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:latest
+          docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
+
+          # Create docker-compose.yml with the working config
           cat > /home/ec2-user/mysuperagent/docker-compose.yml << 'EOL'
           version: '3'
           services:
             backend:
+              container_name: backend
               image: 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:latest
               restart: always
               ports:
@@ -261,19 +264,11 @@ Resources:
               dns:
                 - 8.8.8.8
                 - 8.8.4.4
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:5000/health || exit 0"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-                start_period: 40s
-              mem_limit: 2g
-              ulimits:
-                nofile:
-                  soft: 65536
-                  hard: 65536
+              tty: true
+              stdin_open: true
             
             frontend:
+              container_name: frontend
               image: 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
               restart: always
               ports:
@@ -281,26 +276,29 @@ Resources:
               dns:
                 - 8.8.8.8
                 - 8.8.4.4
-          EOL
+              tty: true
+              stdin_open: true
 
-          # Configure Docker network
-          cat > /home/ec2-user/mysuperagent/docker-network.sh << 'EOL'
-          #!/bin/bash
-          docker network create --driver bridge --subnet 172.28.0.0/16 --gateway 172.28.0.1 --opt "com.docker.network.bridge.name"="docker1" mysuperagent-network
-          EOL
-          chmod +x /home/ec2-user/mysuperagent/docker-network.sh
-          /home/ec2-user/mysuperagent/docker-network.sh
-
-          # Update docker-compose with network config
-          cat >> /home/ec2-user/mysuperagent/docker-compose.yml << 'EOL'
           networks:
             default:
               external:
                 name: mysuperagent-network
           EOL
 
+          # Start containers
           cd /home/ec2-user/mysuperagent
           docker-compose up -d
+
+          # Create a simple startup script to run after reboots
+          cat > /home/ec2-user/mysuperagent/startup.sh << 'EOL'
+          #!/bin/bash
+          cd /home/ec2-user/mysuperagent
+          docker-compose up -d
+          EOL
+          chmod +x /home/ec2-user/mysuperagent/startup.sh
+
+          # Set up auto-restart on reboot
+          echo "@reboot /home/ec2-user/mysuperagent/startup.sh" | crontab -u ec2-user -
 
   # Ensure EC2 instance is in public subnet with internet access
   EnsureInternetRoute:
@@ -454,8 +452,8 @@ Outputs:
     Value: !GetAtt ApplicationLoadBalancer.DNSName
 
   LoadBalancerName:
-    Description: Name of the Application Load Balancer for CloudWatch metrics
-    Value: !Select [1, !Split ["/", !Ref ApplicationLoadBalancer]]
+    Description: Name of the ALB for CloudWatch metrics
+    Value: !GetAtt ApplicationLoadBalancer.LoadBalancerFullName
     Export:
       Name: !Sub "${AWS::StackName}-LoadBalancerName"
 
