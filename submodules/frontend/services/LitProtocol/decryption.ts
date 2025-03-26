@@ -6,7 +6,12 @@ import {
   createSiweMessage,
   generateAuthSig,
 } from "@lit-protocol/auth-helpers";
-import { litClient, initializeLitProtocol, gatewayAddress } from "./utils";
+import {
+  litClient,
+  initializeLitProtocol,
+  gatewayAddress,
+  addCurrentUserAsDelegatee,
+} from "./utils";
 
 /**
  * Download encrypted data from Irys network
@@ -54,6 +59,9 @@ export const decryptData = async (
 ): Promise<string> => {
   await initializeLitProtocol();
 
+  // First ensure the current user is registered as a delegatee
+  await addCurrentUserAsDelegatee();
+
   console.log("[LIT] Starting decryption process");
 
   try {
@@ -74,15 +82,11 @@ export const decryptData = async (
           ability: LIT_ABILITY.AccessControlConditionDecryption,
         },
       ],
-      authNeededCallback: async ({
-        uri,
-        expiration,
-        resourceAbilityRequests,
-      }) => {
+      authNeededCallback: async (params) => {
         const toSign = await createSiweMessage({
-          uri,
-          expiration,
-          resources: resourceAbilityRequests,
+          uri: params.uri || "",
+          expiration: params.expiration,
+          resources: params.resourceAbilityRequests,
           walletAddress: walletAddress,
           nonce: latestBlockhash,
           litNodeClient: litClient,
