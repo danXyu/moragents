@@ -6,7 +6,12 @@ import aiohttp
 from services.secrets import get_secret
 
 from .config import Config
-from .models import NftSearchResponse, TokenFilterResult, TopHoldersResponse, TopTokensResponse
+from .models import (
+    NftSearchResponse,
+    TokenFilterResult,
+    TopHoldersResponse,
+    TopTokensResponse,
+)
 from .utils.networks import NETWORK_TO_ID_MAPPING
 
 logger = logging.getLogger(__name__)

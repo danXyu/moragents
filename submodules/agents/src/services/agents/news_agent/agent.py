@@ -6,7 +6,11 @@ from langchain.schema import HumanMessage, SystemMessage
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.news_agent.config import Config
-from services.agents.news_agent.tools import clean_html, fetch_rss_feed, is_within_time_window
+from services.agents.news_agent.tools import (
+    clean_html,
+    fetch_rss_feed,
+    is_within_time_window,
+)
 
 logger = logging.getLogger(__name__)
 

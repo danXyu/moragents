@@ -5,7 +5,11 @@ from unittest.mock import patch
 import pytest
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.codex.agent import CodexAgent
-from services.agents.codex.models import NftSearchResponse, TopHoldersResponse, TopTokensResponse
+from services.agents.codex.models import (
+    NftSearchResponse,
+    TopHoldersResponse,
+    TopTokensResponse,
+)
 from services.agents.codex.utils.tool_types import CodexToolType
 
 logger = logging.getLogger(__name__)

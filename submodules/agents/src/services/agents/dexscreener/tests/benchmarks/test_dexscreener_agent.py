@@ -5,7 +5,11 @@ from unittest.mock import patch
 import pytest
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.dexscreener.agent import DexScreenerAgent
-from services.agents.dexscreener.models import BoostedTokenResponse, DexPairSearchResponse, TokenProfileResponse
+from services.agents.dexscreener.models import (
+    BoostedTokenResponse,
+    DexPairSearchResponse,
+    TokenProfileResponse,
+)
 from services.agents.dexscreener.tool_types import DexScreenerToolType
 
 logger = logging.getLogger(__name__)

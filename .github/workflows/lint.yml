@@ -27,7 +27,7 @@ jobs:
       - name: Install linting tools
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black isort
+          pip install flake8==7.0.0 black==23.12.1 isort==5.13.2
 
       - name: Run Black with diff output
         run: |
@@ -52,7 +52,7 @@ jobs:
       - name: Run flake8
         run: |
           # Run flake8 for other linting checks
-          flake8 .
+          flake8 . --exclude=node_modules
 
       - name: Run JavaScript/TypeScript linters
         run: |

@@ -6,7 +6,11 @@ import pytest
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.rugcheck.agent import RugcheckAgent
 from services.agents.rugcheck.tool_types import RugcheckToolType
-from services.agents.rugcheck.tools import fetch_most_viewed, fetch_most_voted, fetch_token_report
+from services.agents.rugcheck.tools import (
+    fetch_most_viewed,
+    fetch_most_voted,
+    fetch_token_report,
+)
 
 logger = logging.getLogger(__name__)
 
