@@ -18,9 +18,7 @@ logger = logging.getLogger(__name__)
 class RankAgentsOutput(BaseModel):
     """JSON schema for agent ranking output"""
 
-    agents: List[str] = Field(
-        ..., description="List of up to 3 agent names, ordered by relevance"
-    )
+    agents: List[str] = Field(..., description="List of up to 3 agent names, ordered by relevance")
 
 
 class Delegator:
@@ -30,9 +28,7 @@ class Delegator:
         self.selected_agents_for_request: list[str] = []
         self.parser = PydanticOutputParser(pydantic_object=RankAgentsOutput)
 
-    async def _try_agent(
-        self, agent_name: str, chat_request: ChatRequest
-    ) -> Optional[AgentResponse]:
+    async def _try_agent(self, agent_name: str, chat_request: ChatRequest) -> Optional[AgentResponse]:
         """Attempt to use a single agent, with error handling"""
         try:
             agent_config = load_agent_config(agent_name)
@@ -48,9 +44,7 @@ class Delegator:
             result: AgentResponse = await agent.chat(chat_request)
 
             if result.response_type == ResponseType.ERROR:
-                logger.warning(
-                    f"Agent {agent_name} returned error response. You should probably look into this"
-                )
+                logger.warning(f"Agent {agent_name} returned error response. You should probably look into this")
                 logger.error(f"Error message: {result.error_message}")
                 return None
 
@@ -60,9 +54,7 @@ class Delegator:
             logger.error(f"Error using agent {agent_name}: {str(e)}")
             return None
 
-    def get_delegator_response(
-        self, prompt: ChatRequest, max_retries: int = 3
-    ) -> List[str]:
+    def get_delegator_response(self, prompt: ChatRequest, max_retries: int = 3) -> List[str]:
         """Get ranked list of appropriate agents with retry logic"""
         available_agents = agent_manager_instance.get_available_agents()
         logger.info(f"Available agents: {available_agents}")
@@ -86,13 +78,9 @@ class Delegator:
                     json_response = json.loads(response.content)
                     if isinstance(json_response, dict) and "agents" in json_response:
                         agents = json_response["agents"]
-                        if isinstance(agents, list) and all(
-                            isinstance(a, str) for a in agents
-                        ):
+                        if isinstance(agents, list) and all(isinstance(a, str) for a in agents):
                             self.selected_agents_for_request = agents
-                            logger.info(
-                                f"Selected agents (attempt {attempt+1}): {agents}"
-                            )
+                            logger.info(f"Selected agents (attempt {attempt+1}): {agents}")
                             return agents
                 except json.JSONDecodeError:
                     pass
@@ -110,9 +98,7 @@ class Delegator:
                     return ["default"]
         return []
 
-    async def delegate_chat(
-        self, chat_request: ChatRequest
-    ) -> Tuple[Optional[str], AgentResponse]:
+    async def delegate_chat(self, chat_request: ChatRequest) -> Tuple[Optional[str], AgentResponse]:
         """Delegate chat to ranked agents with fallback"""
         attempts = 0
         try:
@@ -128,12 +114,8 @@ class Delegator:
                     logger.info(f"Successfully used agent: {agent_name}")
                     return agent_name, result
 
-            return None, AgentResponse.error(
-                error_message="All agents have been attempted without success"
-            )
+            return None, AgentResponse.error(error_message="All agents have been attempted without success")
 
         except ValueError as ve:
             logger.error(f"No available agents: {str(ve)}")
-            return None, AgentResponse.error(
-                error_message="No suitable agents available for the request"
-            )
+            return None, AgentResponse.error(error_message="No suitable agents available for the request")

@@ -6,10 +6,8 @@ from web3 import Web3
 
 from .config import Config
 from .models import SwapQuoteResponse, TransactionResponse, TransactionStatus
-from .utils.exceptions import (InsufficientFundsError, SwapNotPossibleError,
-                               TokenNotFoundError)
-from .utils.helpers import (convert_to_readable_unit, convert_to_smallest_unit,
-                            get_swap_quote, validate_token_pair)
+from .utils.exceptions import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
+from .utils.helpers import convert_to_readable_unit, convert_to_smallest_unit, get_swap_quote, validate_token_pair
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +57,7 @@ async def swap_coins(
         web3 = Web3(Web3.HTTPProvider(Config.WEB3RPCURL[str(chain_id)]))
 
         if not web3.is_connected():
-            raise SwapNotPossibleError(
-                f"Cannot connect to RPC for chain ID: {chain_id}"
-            )
+            raise SwapNotPossibleError(f"Cannot connect to RPC for chain ID: {chain_id}")
 
         # Validate the swap and get token addresses and symbols
         (
@@ -69,15 +65,11 @@ async def swap_coins(
             source_token_symbol,
             destination_token_address,
             destination_token_symbol,
-        ) = await validate_token_pair(
-            web3, source_token, destination_token, chain_id, amount, wallet_address
-        )
+        ) = await validate_token_pair(web3, source_token, destination_token, chain_id, amount, wallet_address)
 
         # Get quote from exchange API
         time.sleep(1)  # Rate limiting
-        source_amount_in_wei = convert_to_smallest_unit(
-            web3, amount, source_token_address
-        )
+        source_amount_in_wei = convert_to_smallest_unit(web3, amount, source_token_address)
 
         quote_result = await get_swap_quote(
             source_token_address,
@@ -94,9 +86,7 @@ async def swap_coins(
 
         # Extract estimated destination amount from quote
         destination_amount_in_wei = int(quote_result["dstAmount"])
-        destination_amount = convert_to_readable_unit(
-            web3, destination_amount_in_wei, destination_token_address
-        )
+        destination_amount = convert_to_readable_unit(web3, destination_amount_in_wei, destination_token_address)
 
         # Create successful response
         return SwapQuoteResponse(
@@ -141,9 +131,7 @@ async def swap_coins(
         )
 
 
-async def get_transaction_status(
-    tx_hash: str, chain_id: int, wallet_address: str
-) -> TransactionResponse:
+async def get_transaction_status(tx_hash: str, chain_id: int, wallet_address: str) -> TransactionResponse:
     """
     Get the status of a transaction.
 
@@ -222,12 +210,8 @@ async def get_transaction_status(
             gas_price=tx["gasPrice"],
             metadata={
                 "block_number": receipt.blockNumber if receipt else None,
-                "block_hash": receipt.blockHash.hex()
-                if receipt and receipt.blockHash
-                else None,
-                "confirmations": web3.eth.block_number - receipt.blockNumber
-                if receipt and receipt.blockNumber
-                else 0,
+                "block_hash": receipt.blockHash.hex() if receipt and receipt.blockHash else None,
+                "confirmations": web3.eth.block_number - receipt.blockNumber if receipt and receipt.blockNumber else 0,
             },
         )
 

@@ -28,9 +28,7 @@ class ChatMessage(BaseModel):
     action_type: Optional[str] = None
     timestamp: Optional[float] = Field(default_factory=lambda: time.time())
 
-    def from_agent_response(
-        self, response: "AgentResponse", agent_name: str
-    ) -> "ChatMessage":
+    def from_agent_response(self, response: "AgentResponse", agent_name: str) -> "ChatMessage":
         """Create a ChatMessage from an AgentResponse"""
         return ChatMessage(
             role="assistant",
@@ -58,13 +56,9 @@ class ChatRequest(BaseModel):
         # Add chat history messages up to the past 5 messages
         for i, msg in enumerate(reversed(self.chat_history[:5])):
             if msg.role == "user":
-                messages.append(
-                    HumanMessage(content=f"Chat History index {i}: {msg.content}")
-                )
+                messages.append(HumanMessage(content=f"Chat History index {i}: {msg.content}"))
             elif msg.role == "assistant":
-                messages.append(
-                    AIMessage(content=f"Chat History index {i}: {msg.content}")
-                )
+                messages.append(AIMessage(content=f"Chat History index {i}: {msg.content}"))
 
         # Add current prompt
         messages.append(HumanMessage(content=f"Current Prompt: {self.prompt.content}"))
@@ -132,9 +126,7 @@ class AgentResponse(BaseModel):
         )
 
     @classmethod
-    def needs_info(
-        cls, content: str, metadata: Optional[Dict[str, Any]] = None
-    ) -> "AgentResponse":
+    def needs_info(cls, content: str, metadata: Optional[Dict[str, Any]] = None) -> "AgentResponse":
         """Create a response requesting more information from user"""
         return cls(
             response_type=ResponseType.NEEDS_INFO,

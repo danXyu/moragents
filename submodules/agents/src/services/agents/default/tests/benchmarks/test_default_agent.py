@@ -24,15 +24,11 @@ def default_agent(llm):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_general_conversation(default_agent, make_chat_request):
-    request = make_chat_request(
-        content="What is the weather like?", agent_name="default"
-    )
+    request = make_chat_request(content="What is the weather like?", agent_name="default")
 
     with patch("stores.agent_manager_instance.get_available_agents") as mock_available:
         mock_available.return_value = []
-        with patch(
-            "stores.agent_manager_instance.get_selected_agents"
-        ) as mock_selected:
+        with patch("stores.agent_manager_instance.get_selected_agents") as mock_selected:
             mock_selected.return_value = []
 
             response = await default_agent._process_request(request)
@@ -45,9 +41,7 @@ async def test_general_conversation(default_agent, make_chat_request):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_agent_info_request(default_agent, make_chat_request):
-    request = make_chat_request(
-        content="What can Morpheus agents do?", agent_name="default"
-    )
+    request = make_chat_request(content="What can Morpheus agents do?", agent_name="default")
 
     mock_agents = [
         {
@@ -60,9 +54,7 @@ async def test_agent_info_request(default_agent, make_chat_request):
 
     with patch("stores.agent_manager_instance.get_available_agents") as mock_available:
         mock_available.return_value = mock_agents
-        with patch(
-            "stores.agent_manager_instance.get_selected_agents"
-        ) as mock_selected:
+        with patch("stores.agent_manager_instance.get_selected_agents") as mock_selected:
             mock_selected.return_value = ["crypto_data", "dca"]
 
             response = await default_agent._process_request(request)

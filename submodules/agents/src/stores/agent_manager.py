@@ -143,9 +143,7 @@ class AgentManager:
         Returns:
             Optional[Dict]: Agent configuration if found, None otherwise
         """
-        return next(
-            (agent for agent in self.config if agent["name"] == agent_name), None
-        )
+        return next((agent for agent in self.config if agent["name"] == agent_name), None)
 
     def get_agent(self, agent_name: str) -> Optional[Any]:
         """

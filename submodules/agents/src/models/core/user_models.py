@@ -3,8 +3,7 @@ from typing import List
 
 from models import Base
 from models.service.user_service_models import UserModel, UserSettingModel
-from sqlalchemy import (JSON, DateTime, ForeignKey, Integer, String,
-                        UniqueConstraint, func)
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
@@ -14,13 +13,9 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    wallet_address: Mapped[str] = mapped_column(
-        String(255), nullable=False, unique=True
-    )
+    wallet_address: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), onupdate=func.now()
-    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
     # Relationships
     settings: Mapped[List["UserSetting"]] = relationship(
@@ -57,16 +52,12 @@ class UserSetting(Base):
     settings_key: Mapped[str] = mapped_column(String(255), nullable=False)
     settings_value: Mapped[JSON] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), onupdate=func.now()
-    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="settings")
 
-    __table_args__ = (
-        UniqueConstraint("user_id", "settings_key", name="uix_user_settings"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "settings_key", name="uix_user_settings"),)
 
     def to_service_model(self) -> UserSettingModel:
         """Convert to service model"""

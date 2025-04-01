@@ -6,8 +6,7 @@ from models.service.chat_models import AgentResponse, ChatRequest
 
 from . import tools
 from .config import Config
-from .models import (BoostedTokenResponse, DexPairSearchResponse,
-                     TokenProfileResponse)
+from .models import BoostedTokenResponse, DexPairSearchResponse, TokenProfileResponse
 from .tool_types import DexScreenerToolType
 
 logger = logging.getLogger(__name__)
@@ -32,14 +31,10 @@ class DexScreenerAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate DexScreener API tool based on function name."""
         try:
-            api_result: Union[
-                DexPairSearchResponse, TokenProfileResponse, BoostedTokenResponse
-            ]
+            api_result: Union[DexPairSearchResponse, TokenProfileResponse, BoostedTokenResponse]
 
             if func_name == DexScreenerToolType.SEARCH_DEX_PAIRS.value:
                 api_result = await tools.search_dex_pairs(args["query"])

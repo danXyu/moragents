@@ -30,15 +30,11 @@ class DBSessionFactory:
         logging.debug(f"connecting to db: db_url={sanitize_db_url(db_url)}")
 
         if db_url.startswith("sqlite:///:memory:"):
-            engine = create_engine(
-                db_url, connect_args={"check_same_thread": False}, poolclass=StaticPool
-            )
+            engine = create_engine(db_url, connect_args={"check_same_thread": False}, poolclass=StaticPool)
         else:
             engine = create_engine(db_url)
 
-        self._session_factory = sessionmaker(
-            bind=engine, autocommit=False, autoflush=False
-        )
+        self._session_factory = sessionmaker(bind=engine, autocommit=False, autoflush=False)
         self._engine = engine
 
     def new_session(self) -> Session:

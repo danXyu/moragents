@@ -32,18 +32,14 @@ class MorClaimsAgent(AgentCore):
                     0: tools.get_current_user_reward(wallet_address, 0),
                     1: tools.get_current_user_reward(wallet_address, 1),
                 }
-                available_rewards = {
-                    pool: amount for pool, amount in rewards.items() if amount > 0
-                }
+                available_rewards = {pool: amount for pool, amount in rewards.items() if amount > 0}
 
                 if available_rewards:
                     selected_pool = max(available_rewards.keys())
                     return AgentResponse.success(
                         content=f"You have {available_rewards[selected_pool]} MOR rewards available in pool {selected_pool}. Would you like to proceed with claiming these rewards?",
                         metadata={
-                            "available_rewards": {
-                                selected_pool: available_rewards[selected_pool]
-                            },
+                            "available_rewards": {selected_pool: available_rewards[selected_pool]},
                             "receiver_address": wallet_address,
                         },
                     )
@@ -54,18 +50,10 @@ class MorClaimsAgent(AgentCore):
 
             # Check last message for confirmation
             last_message = chat_history[-1]
-            if (
-                last_message.role == "assistant"
-                and "Would you like to proceed" in last_message.content
-            ):
+            if last_message.role == "assistant" and "Would you like to proceed" in last_message.content:
                 user_input = request.prompt.content.lower()
-                if any(
-                    word in user_input
-                    for word in ["yes", "proceed", "confirm", "claim"]
-                ):
-                    return await self._prepare_transactions(
-                        wallet_address, last_message.metadata
-                    )
+                if any(word in user_input for word in ["yes", "proceed", "confirm", "claim"]):
+                    return await self._prepare_transactions(wallet_address, last_message.metadata)
                 else:
                     return AgentResponse.success(
                         content="Please confirm if you want to proceed with the claim by saying 'yes', 'proceed', 'confirm', or 'claim'."
@@ -88,9 +76,7 @@ class MorClaimsAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _prepare_transactions(
-        self, wallet_address: str, metadata: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _prepare_transactions(self, wallet_address: str, metadata: Dict[str, Any]) -> AgentResponse:
         """Prepare claim transactions for the given wallet."""
         try:
             available_rewards = metadata["available_rewards"]
@@ -116,9 +102,7 @@ class MorClaimsAgent(AgentCore):
             logger.error(f"Error preparing transactions: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate MOR claims tool based on function name."""
         try:
             if func_name == "get_claim_status":

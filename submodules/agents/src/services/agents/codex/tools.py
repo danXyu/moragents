@@ -6,16 +6,13 @@ import aiohttp
 from services.secrets import get_secret
 
 from .config import Config
-from .models import (NftSearchResponse, TokenFilterResult, TopHoldersResponse,
-                     TopTokensResponse)
+from .models import NftSearchResponse, TokenFilterResult, TopHoldersResponse, TopTokensResponse
 from .utils.networks import NETWORK_TO_ID_MAPPING
 
 logger = logging.getLogger(__name__)
 
 
-async def _make_graphql_request(
-    query: str, variables: Optional[Dict[str, Any]] = None
-) -> Any:
+async def _make_graphql_request(query: str, variables: Optional[Dict[str, Any]] = None) -> Any:
     """Make a GraphQL request to Codex API."""
     # Get API key from environment
     api_key = get_secret("CodexApiKey")
@@ -28,16 +25,12 @@ async def _make_graphql_request(
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(
-                Config.GRAPHQL_URL, json=data, headers=headers
-            ) as response:
+            async with session.post(Config.GRAPHQL_URL, json=data, headers=headers) as response:
                 result = await response.json()
 
                 if response.status != 200:
                     error_msg = result.get("message", str(result))
-                    raise Exception(
-                        f"API request failed with status {response.status}: {error_msg}"
-                    )
+                    raise Exception(f"API request failed with status {response.status}: {error_msg}")
 
                 if "errors" in result:
                     error = result["errors"][0]
@@ -61,9 +54,7 @@ async def list_top_tokens(
         network_filter = []
         if networks:
             network_filter = [
-                NETWORK_TO_ID_MAPPING[network]
-                for network in networks
-                if network in NETWORK_TO_ID_MAPPING
+                NETWORK_TO_ID_MAPPING[network] for network in networks if network in NETWORK_TO_ID_MAPPING
             ]
 
         variables = {
@@ -171,9 +162,7 @@ async def _filter_tokens(token_name: str, network: str) -> TokenFilterResult:
             }
         }
         """
-        logger.info(
-            f"Making GraphQL request to filter tokens with query: {query} and variables: {variables}"
-        )
+        logger.info(f"Making GraphQL request to filter tokens with query: {query} and variables: {variables}")
         response = await _make_graphql_request(query, variables)
         logger.info(f"Received filter tokens response: {response}")
 
@@ -196,17 +185,13 @@ async def _filter_tokens(token_name: str, network: str) -> TokenFilterResult:
 async def get_top_holders_percent(token_name: str, network: str) -> TopHoldersResponse:
     """Get percentage owned by top 10 holders for a token."""
     try:
-        logger.info(
-            f"Getting top holders percentage for token {token_name} on {network}"
-        )
+        logger.info(f"Getting top holders percentage for token {token_name} on {network}")
         # Strip special characters from token name
         token_name = "".join(c for c in token_name if c.isalnum() or c.isspace())
         token_name = token_name.strip()
 
         if not token_name:
-            raise Exception(
-                "Token name cannot be empty after stripping special characters"
-            )
+            raise Exception("Token name cannot be empty after stripping special characters")
 
         logger.info(f"Sanitized token name: {token_name}")
         # First get the token info by filtering tokens

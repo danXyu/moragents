@@ -71,11 +71,7 @@ class ViewedToken(BaseModel):
     @property
     def formatted_response(self) -> str:
         """Format view statistics for display."""
-        name = (
-            self.metadata.get("name", "Unknown Token")
-            if self.metadata
-            else "Unknown Token"
-        )
+        name = self.metadata.get("name", "Unknown Token") if self.metadata else "Unknown Token"
         symbol = self.metadata.get("symbol", "???") if self.metadata else "???"
         formatted = f"## {name} ({symbol})\n"
         formatted += f"- Mint Address: {self.mint or 'Unknown'}\n"
@@ -115,9 +111,7 @@ class VotedToken(BaseModel):
         formatted += f"- Upvotes: {self.up_count:,}\n"
         formatted += f"- Total Votes: {self.vote_count:,}\n"
         if self.vote_count and self.up_count:
-            formatted += (
-                f"- Approval Rate: {(self.up_count/self.vote_count)*100:.1f}%\n"
-            )
+            formatted += f"- Approval Rate: {(self.up_count/self.vote_count)*100:.1f}%\n"
         else:
             formatted += "- Approval Rate: Unknown\n"
         return formatted

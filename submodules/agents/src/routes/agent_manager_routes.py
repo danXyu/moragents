@@ -27,9 +27,7 @@ async def set_selected_agents(request: Request) -> JSONResponse:
     agent_names = data.get("agents", [])
 
     agent_manager_instance.set_selected_agents(agent_names)
-    logger.info(
-        f"Newly selected agents: {agent_manager_instance.get_selected_agents()}"
-    )
+    logger.info(f"Newly selected agents: {agent_manager_instance.get_selected_agents()}")
 
     return JSONResponse(content={"status": "success", "agents": agent_names})
 

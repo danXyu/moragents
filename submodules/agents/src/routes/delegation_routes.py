@@ -14,9 +14,7 @@ router = APIRouter(prefix="/api/v1", tags=["chat"])
 @router.post("/chat")
 async def chat(chat_request: ChatRequest) -> JSONResponse:
     """Handle chat requests and delegate to appropriate agent"""
-    logger.info(
-        f"Received chat request for conversation {chat_request.conversation_id}"
-    )
+    logger.info(f"Received chat request for conversation {chat_request.conversation_id}")
 
     # Initialize new delegator and controller for each request
     delegator = Delegator(LLM_DELEGATOR)
@@ -44,9 +42,7 @@ async def generate_conversation_title(
     request: GenerateConversationTitleRequest,
 ) -> JSONResponse:
     """Generate a title for a conversation based on chat history"""
-    logger.info(
-        f"Received title generation request for conversation {request.conversation_id}"
-    )
+    logger.info(f"Received title generation request for conversation {request.conversation_id}")
 
     # Initialize new delegator and controller for each request
     controller = DelegationController()

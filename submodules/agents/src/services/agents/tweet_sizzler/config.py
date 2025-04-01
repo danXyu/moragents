@@ -72,9 +72,7 @@ class Config:
 
     # Error messages
     ERROR_NO_TWEET_CONTENT = "No tweet content provided"
-    ERROR_TWITTER_CLIENT_NOT_INITIALIZED = (
-        "Twitter client not initialized. Please set X API credentials first."
-    )
+    ERROR_TWITTER_CLIENT_NOT_INITIALIZED = "Twitter client not initialized. Please set X API credentials first."
     ERROR_MISSING_API_CREDENTIALS = "Missing required X API credentials"
     ERROR_INVALID_ACTION = "Invalid action"
     ERROR_MISSING_PARAMETERS = "Missing required parameters"

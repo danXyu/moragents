@@ -3,8 +3,15 @@ from typing import Optional
 
 from .client import RugcheckClient
 from .config import TokenRegistry
-from .models import (TokenReport, TokenReportResponse, TokenRisk, ViewedToken,
-                     ViewedTokensResponse, VotedToken, VotedTokensResponse)
+from .models import (
+    TokenReport,
+    TokenReportResponse,
+    TokenRisk,
+    ViewedToken,
+    ViewedTokensResponse,
+    VotedToken,
+    VotedTokensResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +57,7 @@ async def fetch_most_voted(api_base_url: str) -> VotedTokensResponse:
         await client.close()
 
 
-async def resolve_token_identifier(
-    token_registry: TokenRegistry, identifier: str
-) -> Optional[str]:
+async def resolve_token_identifier(token_registry: TokenRegistry, identifier: str) -> Optional[str]:
     """
     Resolve a token identifier (name or mint address) to a mint address.
     Returns None if the identifier cannot be resolved.

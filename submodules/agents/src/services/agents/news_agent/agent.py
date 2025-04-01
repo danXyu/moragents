@@ -6,8 +6,7 @@ from langchain.schema import HumanMessage, SystemMessage
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.news_agent.config import Config
-from services.agents.news_agent.tools import (clean_html, fetch_rss_feed,
-                                              is_within_time_window)
+from services.agents.news_agent.tools import clean_html, fetch_rss_feed, is_within_time_window
 
 logger = logging.getLogger(__name__)
 
@@ -76,13 +75,9 @@ class NewsAgent(AgentCore):
 
         except Exception as e:
             logger.error(f"Error executing tool {func_name}: {str(e)}", exc_info=True)
-            return AgentResponse.needs_info(
-                content="I encountered an issue fetching the news. Could you try again?"
-            )
+            return AgentResponse.needs_info(content="I encountered an issue fetching the news. Could you try again?")
 
-    def _check_relevance_and_summarize(
-        self, title: str, content: str, coin: str
-    ) -> str:
+    def _check_relevance_and_summarize(self, title: str, content: str, coin: str) -> str:
         """Check if news is relevant and generate summary."""
         logger.info(f"Checking relevance for {coin}: {title}")
         prompt = Config.RELEVANCE_PROMPT.format(coin=coin, title=title, content=content)
@@ -108,15 +103,11 @@ class NewsAgent(AgentCore):
                 logger.info(f"Checking relevance for article: {title}")
                 result = self._check_relevance_and_summarize(title, content, coin)
                 if not result.upper().startswith("NOT RELEVANT"):
-                    results.append(
-                        {"Title": title, "Summary": result, "Link": entry.link}
-                    )
+                    results.append({"Title": title, "Summary": result, "Link": entry.link})
                 if len(results) >= Config.ARTICLES_PER_TOKEN:
                     break
             else:
-                logger.info(
-                    f"Skipping article: {entry.title} (published: {published_time})"
-                )
+                logger.info(f"Skipping article: {entry.title} (published: {published_time})")
         logger.info(f"Found {len(results)} relevant articles for {coin}")
         return results
 
@@ -129,12 +120,7 @@ class NewsAgent(AgentCore):
             coin_name = Config.CRYPTO_DICT.get(coin.upper(), coin)
             google_news_url = Config.GOOGLE_NEWS_BASE_URL.format(coin_name)
             results = self._process_rss_feed(google_news_url, coin_name)
-            all_news.extend(
-                [
-                    {"Coin": coin, **result}
-                    for result in results[: Config.ARTICLES_PER_TOKEN]
-                ]
-            )
+            all_news.extend([{"Coin": coin, **result} for result in results[: Config.ARTICLES_PER_TOKEN]])
 
         logger.info(f"Total news items fetched: {len(all_news)}")
         return all_news

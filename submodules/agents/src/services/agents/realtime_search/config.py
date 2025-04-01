@@ -60,8 +60,6 @@ class Config:
     ]
 
     # LLM configuration for answer synthesis
-    SYNTHESIS_SYSTEM_PROMPT = (
-        "Synthesize information from web search results into a clear, direct answer."
-    )
+    SYNTHESIS_SYSTEM_PROMPT = "Synthesize information from web search results into a clear, direct answer."
     MAX_TOKENS = 150
     TEMPERATURE = 0.3

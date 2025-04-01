@@ -143,9 +143,7 @@ class ElfaTopMentionsResponse(BaseModel):
             return "No top mentions found for this ticker."
 
         mentions = self.data.data[:5]  # Limit to 5 top mentions
-        formatted = (
-            f"# Top {len(mentions)} Mentions (Total: {self.data.total or 0})\n\n"
-        )
+        formatted = f"# Top {len(mentions)} Mentions (Total: {self.data.total or 0})\n\n"
 
         for mention in mentions:
             if mention.id:
@@ -219,13 +217,7 @@ class ElfaTrendingTokensResponse(BaseModel):
             formatted += f"Previous Period: {token.previous_count or 0:,}\n"
 
             if token.change_percent is not None:
-                emoji = (
-                    "📈"
-                    if token.change_percent > 0
-                    else "📉"
-                    if token.change_percent < 0
-                    else "➡️"
-                )
+                emoji = "📈" if token.change_percent > 0 else "📉" if token.change_percent < 0 else "➡️"
                 formatted += f"Change: {emoji} {token.change_percent:+.2f}%\n\n"
             else:
                 formatted += "Change: Not available\n\n"
@@ -264,9 +256,7 @@ class ElfaAccountSmartStatsResponse(BaseModel):
         formatted += f"Average Engagement: {self.data.averageEngagement or 0:.2f}\n"
 
         if self.data.followerEngagementRatio is not None:
-            formatted += (
-                f"Follower Engagement Ratio: {self.data.followerEngagementRatio:.2%}\n"
-            )
+            formatted += f"Follower Engagement Ratio: {self.data.followerEngagementRatio:.2%}\n"
         else:
             formatted += "Follower Engagement Ratio: Not available\n"
 

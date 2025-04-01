@@ -5,11 +5,14 @@ from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 
 from .config import Config
-from .models import (ElfaAccountSmartStatsResponse, ElfaMentionsResponse,
-                     ElfaTopMentionsResponse, ElfaTrendingTokensResponse)
+from .models import (
+    ElfaAccountSmartStatsResponse,
+    ElfaMentionsResponse,
+    ElfaTopMentionsResponse,
+    ElfaTrendingTokensResponse,
+)
 from .tool_types import ElfaToolType
-from .tools import (get_account_smart_stats, get_top_mentions,
-                    get_trending_tokens, search_mentions)
+from .tools import get_account_smart_stats, get_top_mentions, get_trending_tokens, search_mentions
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +37,7 @@ class ElfaAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate Elfa API tool based on function name."""
         try:
             if func_name == ElfaToolType.GET_TOP_MENTIONS.value:
@@ -56,9 +57,7 @@ class ElfaAgent(AgentCore):
                 if isinstance(keywords, str):
                     keywords = [keywords]
 
-                search_mentions_response: ElfaMentionsResponse = await search_mentions(
-                    keywords=keywords
-                )
+                search_mentions_response: ElfaMentionsResponse = await search_mentions(keywords=keywords)
                 return AgentResponse.success(
                     content=search_mentions_response.formatted_response,
                     metadata=search_mentions_response.model_dump(),
@@ -66,11 +65,9 @@ class ElfaAgent(AgentCore):
                 )
 
             elif func_name == ElfaToolType.GET_TRENDING_TOKENS.value:
-                trending_tokens_response: ElfaTrendingTokensResponse = (
-                    await get_trending_tokens(
-                        time_window=args.get("timeWindow"),
-                        min_mentions=args.get("minMentions"),
-                    )
+                trending_tokens_response: ElfaTrendingTokensResponse = await get_trending_tokens(
+                    time_window=args.get("timeWindow"),
+                    min_mentions=args.get("minMentions"),
                 )
                 return AgentResponse.success(
                     content=trending_tokens_response.formatted_response,
@@ -79,9 +76,7 @@ class ElfaAgent(AgentCore):
                 )
 
             elif func_name == ElfaToolType.GET_ACCOUNT_SMART_STATS.value:
-                smart_stats_response: ElfaAccountSmartStatsResponse = (
-                    await get_account_smart_stats(args["username"])
-                )
+                smart_stats_response: ElfaAccountSmartStatsResponse = await get_account_smart_stats(args["username"])
                 return AgentResponse.success(
                     content=smart_stats_response.formatted_response,
                     metadata=smart_stats_response.model_dump(),

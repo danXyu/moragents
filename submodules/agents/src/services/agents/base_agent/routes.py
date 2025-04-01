@@ -26,9 +26,7 @@ async def swap(data: dict):
             )
 
         logger.info(f"Using wallet address: {wallet.default_address.address_id}")
-        logger.info(
-            f"Attempting swap: {data['amount']} {data['fromAsset']} -> {data['toAsset']}"
-        )
+        logger.info(f"Attempting swap: {data['amount']} {data['fromAsset']} -> {data['toAsset']}")
 
         # Execute swap
         result = swap_assets(
@@ -70,9 +68,7 @@ async def transfer(data: dict):
             )
 
         logger.info(f"Using wallet address: {wallet.default_address.address_id}")
-        logger.info(
-            f"Attempting transfer: {data['amount']} {data['asset']} -> {data['destinationAddress']}"
-        )
+        logger.info(f"Attempting transfer: {data['amount']} {data['asset']} -> {data['destinationAddress']}")
 
         # Execute transfer
         result = transfer_asset(

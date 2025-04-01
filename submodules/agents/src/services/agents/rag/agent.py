@@ -39,8 +39,6 @@ class RagAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """RAG agent doesn't use any tools."""
         return AgentResponse.error(error_message=f"Unknown tool: {func_name}")

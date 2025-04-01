@@ -29,25 +29,19 @@ class TweetSizzlerAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate tool based on function name."""
         try:
             if func_name == "generate_tweet":
                 content = args.get("content")
                 if not content:
-                    return AgentResponse.error(
-                        error_message="Please provide content for tweet generation"
-                    )
+                    return AgentResponse.error(error_message="Please provide content for tweet generation")
 
                 result = await generate_tweet(content)
                 return AgentResponse.success(content=result)
 
             else:
-                return AgentResponse.error(
-                    error_message=f"Unknown tool function: {func_name}"
-                )
+                return AgentResponse.error(error_message=f"Unknown tool function: {func_name}")
 
         except Exception as e:
             logger.error(f"Error executing tool {func_name}: {str(e)}", exc_info=True)

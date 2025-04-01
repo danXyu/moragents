@@ -5,11 +5,8 @@ from unittest.mock import Mock, patch
 import pytest
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.token_swap.agent import TokenSwapAgent
-from services.agents.token_swap.models import (SwapQuoteResponse,
-                                               TransactionResponse)
-from services.agents.token_swap.tools import (InsufficientFundsError,
-                                              SwapNotPossibleError,
-                                              TokenNotFoundError)
+from services.agents.token_swap.models import SwapQuoteResponse, TransactionResponse
+from services.agents.token_swap.tools import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
 from services.agents.token_swap.utils.tool_types import SwapToolType
 
 logger = logging.getLogger(__name__)
@@ -98,9 +95,7 @@ async def test_get_transaction_status(token_swap_agent):
         formatted_response="Transaction 0x123 was successful",
     )
 
-    with patch(
-        "services.agents.token_swap.tools.get_transaction_status"
-    ) as mock_status:
+    with patch("services.agents.token_swap.tools.get_transaction_status") as mock_status:
         mock_status.return_value = mock_tx_response
 
         response = await token_swap_agent._execute_tool(

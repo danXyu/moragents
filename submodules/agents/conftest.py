@@ -59,9 +59,7 @@ def llm():
 @pytest.fixture(scope="session")
 def embeddings():
     """Shared fixture for Ollama embeddings"""
-    return OllamaEmbeddings(
-        model=AppConfig.OLLAMA_EMBEDDING_MODEL, base_url=AppConfig.OLLAMA_URL
-    )
+    return OllamaEmbeddings(model=AppConfig.OLLAMA_EMBEDDING_MODEL, base_url=AppConfig.OLLAMA_URL)
 
 
 @pytest.fixture

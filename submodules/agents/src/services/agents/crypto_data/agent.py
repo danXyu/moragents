@@ -36,13 +36,9 @@ class CryptoDataAgent(AgentCore):
 
             if func_name == CryptoDataToolType.GET_PRICE.value:
                 if "coin_name" not in args:
-                    return AgentResponse.needs_info(
-                        content="Please provide the name of the coin to get its price"
-                    )
+                    return AgentResponse.needs_info(content="Please provide the name of the coin to get its price")
                 content = tools.get_coin_price_tool(args["coin_name"])
-                trading_symbol = tools.get_tradingview_symbol(
-                    tools.get_coingecko_id(args["coin_name"])
-                )
+                trading_symbol = tools.get_tradingview_symbol(tools.get_coingecko_id(args["coin_name"]))
                 if trading_symbol:
                     metadata["coinId"] = trading_symbol
             elif func_name == CryptoDataToolType.GET_FLOOR_PRICE.value:
@@ -62,14 +58,10 @@ class CryptoDataAgent(AgentCore):
                     return AgentResponse.needs_info(
                         content="Please provide the name of the protocol to get its total value locked"
                     )
-                content = tools.get_protocol_total_value_locked_tool(
-                    args["protocol_name"]
-                )
+                content = tools.get_protocol_total_value_locked_tool(args["protocol_name"])
             elif func_name == CryptoDataToolType.GET_MARKET_CAP.value:
                 if "coin_name" not in args:
-                    return AgentResponse.needs_info(
-                        content="Please provide the name of the coin to get its market cap"
-                    )
+                    return AgentResponse.needs_info(content="Please provide the name of the coin to get its market cap")
                 content = tools.get_coin_market_cap_tool(args["coin_name"])
             else:
                 return AgentResponse.needs_info(

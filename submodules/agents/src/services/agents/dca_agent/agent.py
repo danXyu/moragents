@@ -39,9 +39,7 @@ class DCAAgent(AgentCore):
                 content="You'll need to select or create a wallet before I can help with DCA strategies. Please set up a wallet first."
             )
 
-        return AgentResponse.action_required(
-            content="Ready to set up DCA", action_type="dca"
-        )
+        return AgentResponse.action_required(content="Ready to set up DCA", action_type="dca")
         # TODO: Create specialized tools to pull out DCA params from user message
         # For now, we can ignore these tools
         # try:
@@ -63,9 +61,7 @@ class DCAAgent(AgentCore):
         #     logger.error(f"Error processing request: {str(e)}", exc_info=True)
         #     return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate DCA tool based on function name."""
         try:
             # TODO: Implement DCA-specific tools

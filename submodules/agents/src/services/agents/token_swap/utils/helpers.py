@@ -8,8 +8,7 @@ from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 
 from ..config import Config
 from ..models import SwapRoute, TokenInfo
-from .exceptions import (InsufficientFundsError, SwapNotPossibleError,
-                         TokenNotFoundError)
+from .exceptions import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +51,7 @@ async def search_token(
     }
 
     try:
-        response = requests.get(
-            Config.INCH_URL + endpoint, params=params, headers=get_api_headers()
-        )
+        response = requests.get(Config.INCH_URL + endpoint, params=params, headers=get_api_headers())
         logger.info(f"Search token response status: {response.status_code}")
 
         if response.status_code == 200:
@@ -62,18 +59,11 @@ async def search_token(
             logger.info(f"Found token results: {result}")
 
             if not result:
-                raise TokenNotFoundError(
-                    f"Token '{query}' not found on chain {chain_id}."
-                )
+                raise TokenNotFoundError(f"Token '{query}' not found on chain {chain_id}.")
 
-            return [
-                TokenInfo(symbol=token["symbol"], address=token["address"])
-                for token in result
-            ]
+            return [TokenInfo(symbol=token["symbol"], address=token["address"]) for token in result]
         else:
-            error_message = (
-                f"API error searching for token '{query}': {response.status_code}"
-            )
+            error_message = f"API error searching for token '{query}': {response.status_code}"
             try:
                 error_details = response.json()
                 error_message += f" - {error_details.get('description', '')}"
@@ -88,9 +78,7 @@ async def search_token(
         raise TokenNotFoundError(error_message)
 
 
-def get_token_balance(
-    web3: Web3, wallet_address: str, token_address: str, abi: List[Any]
-) -> int:
+def get_token_balance(web3: Web3, wallet_address: str, token_address: str, abi: List[Any]) -> int:
     """
     Get the balance of a token for a given wallet address.
 
@@ -173,9 +161,7 @@ def convert_to_smallest_unit(web3: Web3, amount: float, token_address: str) -> i
         raise SwapNotPossibleError(f"Failed to convert token amount: {str(e)}")
 
 
-def convert_to_readable_unit(
-    web3: Web3, smallest_unit_amount: int, token_address: str
-) -> float:
+def convert_to_readable_unit(web3: Web3, smallest_unit_amount: int, token_address: str) -> float:
     """
     Convert from smallest unit to human-readable amount.
 
@@ -241,20 +227,14 @@ async def validate_token_pair(
                 symbol=native_token_symbol,
                 address=Config.INCH_NATIVE_TOKEN_ADDRESS,
             )
-            source_token_balance = get_token_balance(
-                web3, wallet_address, "", Config.ERC20_ABI
-            )
+            source_token_balance = get_token_balance(web3, wallet_address, "", Config.ERC20_ABI)
             amount_in_wei = Web3.to_wei(amount, "ether")
         else:
             # Source is ERC-20 token
             source_token_results = await search_token(source_token, chain_id)
             source_token_info = source_token_results[0]
-            source_token_balance = get_token_balance(
-                web3, wallet_address, source_token_info.address, Config.ERC20_ABI
-            )
-            amount_in_wei = convert_to_smallest_unit(
-                web3, amount, source_token_info.address
-            )
+            source_token_balance = get_token_balance(web3, wallet_address, source_token_info.address, Config.ERC20_ABI)
+            amount_in_wei = convert_to_smallest_unit(web3, amount, source_token_info.address)
 
         # Get destination token information
         if destination_token.lower() == native_token_symbol.lower():
@@ -273,9 +253,7 @@ async def validate_token_pair(
             readable_balance = (
                 web3.from_wei(source_token_balance, "ether")
                 if source_token.lower() == native_token_symbol.lower()
-                else convert_to_readable_unit(
-                    web3, source_token_balance, source_token_info.address
-                )
+                else convert_to_readable_unit(web3, source_token_balance, source_token_info.address)
             )
 
             raise InsufficientFundsError(
@@ -332,18 +310,12 @@ async def get_swap_quote(
         params = {
             "src": source_token_address,
             "dst": destination_token_address,
-            "amount": str(
-                amount_in_wei
-            ),  # Convert to string to avoid potential overflow
+            "amount": str(amount_in_wei),  # Convert to string to avoid potential overflow
         }
 
-        logger.debug(
-            f"Quote request - URL: {Config.QUOTE_URL + endpoint}, Params: {params}"
-        )
+        logger.debug(f"Quote request - URL: {Config.QUOTE_URL + endpoint}, Params: {params}")
 
-        response = requests.get(
-            Config.QUOTE_URL + endpoint, params=params, headers=get_api_headers()
-        )
+        response = requests.get(Config.QUOTE_URL + endpoint, params=params, headers=get_api_headers())
         logger.info(f"Quote response status: {response.status_code}")
 
         if response.status_code == 200:

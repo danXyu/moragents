@@ -8,8 +8,12 @@ import aiohttp
 from services.secrets import get_secret
 
 from .config import Config
-from .models import (ElfaAccountSmartStatsResponse, ElfaMentionsResponse,
-                     ElfaTopMentionsResponse, ElfaTrendingTokensResponse)
+from .models import (
+    ElfaAccountSmartStatsResponse,
+    ElfaMentionsResponse,
+    ElfaTopMentionsResponse,
+    ElfaTrendingTokensResponse,
+)
 from .tool_types import ElfaToolType
 
 logger = logging.getLogger(__name__)
@@ -33,9 +37,7 @@ async def _make_request(endpoint: str, params: Optional[dict] = None) -> Any:
             async with session.get(url, headers=headers) as response:
                 if response.status != 200:
                     error_data = await response.json()
-                    raise Exception(
-                        f"API request failed with status {response.status}: {error_data}"
-                    )
+                    raise Exception(f"API request failed with status {response.status}: {error_data}")
                 return await response.json()
     except Exception as e:
         logger.error(f"API request failed: {str(e)}", exc_info=True)
@@ -60,9 +62,7 @@ async def get_top_mentions(
         if include_account_details:
             params["includeAccountDetails"] = "true"
 
-        response = await _make_request(
-            Config.ENDPOINTS[ElfaToolType.GET_TOP_MENTIONS.value], params
-        )
+        response = await _make_request(Config.ENDPOINTS[ElfaToolType.GET_TOP_MENTIONS.value], params)
         return ElfaTopMentionsResponse.model_validate(response)
     except Exception as e:
         logger.error(f"Failed to get top mentions: {str(e)}", exc_info=True)
@@ -92,9 +92,7 @@ async def search_mentions(
         if cursor:
             params["cursor"] = cursor
 
-        response = await _make_request(
-            Config.ENDPOINTS[ElfaToolType.SEARCH_MENTIONS.value], params
-        )
+        response = await _make_request(Config.ENDPOINTS[ElfaToolType.SEARCH_MENTIONS.value], params)
         return ElfaMentionsResponse.model_validate(response)
     except Exception as e:
         logger.error(f"Failed to search mentions: {str(e)}", exc_info=True)
@@ -112,9 +110,7 @@ async def get_trending_tokens(
             "pageSize": 50,
             "minMentions": min_mentions or 5,
         }
-        response = await _make_request(
-            Config.ENDPOINTS[ElfaToolType.GET_TRENDING_TOKENS.value], params
-        )
+        response = await _make_request(Config.ENDPOINTS[ElfaToolType.GET_TRENDING_TOKENS.value], params)
         return ElfaTrendingTokensResponse.model_validate(response)
     except Exception as e:
         logger.error(f"Failed to get trending tokens: {str(e)}", exc_info=True)
@@ -125,9 +121,7 @@ async def get_account_smart_stats(username: str) -> ElfaAccountSmartStatsRespons
     """Get smart stats and social metrics for a given username."""
     try:
         params = {"username": username}
-        response = await _make_request(
-            Config.ENDPOINTS[ElfaToolType.GET_ACCOUNT_SMART_STATS.value], params
-        )
+        response = await _make_request(Config.ENDPOINTS[ElfaToolType.GET_ACCOUNT_SMART_STATS.value], params)
         return ElfaAccountSmartStatsResponse.model_validate(response)
     except Exception as e:
         logger.error(f"Failed to get account stats: {str(e)}", exc_info=True)

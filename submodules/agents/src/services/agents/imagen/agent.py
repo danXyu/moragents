@@ -51,9 +51,7 @@ class ImagenAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Image generation agent doesn't use tools."""
         return AgentResponse.error(error_message=f"Unknown tool: {func_name}")
 
@@ -97,9 +95,7 @@ class ImagenAgent(AgentCore):
 
             # Find textarea and enter the prompt
             wait = WebDriverWait(driver, 30)
-            textarea = wait.until(
-                EC.presence_of_element_located((By.TAG_NAME, "textarea"))
-            )
+            textarea = wait.until(EC.presence_of_element_located((By.TAG_NAME, "textarea")))
             textarea.clear()
             textarea.send_keys(prompt)
 
@@ -112,9 +108,7 @@ class ImagenAgent(AgentCore):
 
             # Wait for the generated image
             img_element = WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//img[@alt='Generated' and @loading='lazy']")
-                )
+                EC.presence_of_element_located((By.XPATH, "//img[@alt='Generated' and @loading='lazy']"))
             )
 
             if img_element:
@@ -137,17 +131,11 @@ class ImagenAgent(AgentCore):
                         img_data = response.content
                         return Image.open(BytesIO(img_data))
                     else:
-                        logger.error(
-                            f"Failed to download image. Status code: {response.status_code}"
-                        )
+                        logger.error(f"Failed to download image. Status code: {response.status_code}")
                 else:
-                    logger.warning(
-                        "Image format not supported. Expected a valid imgproxy or replicate URL."
-                    )
+                    logger.warning("Image format not supported. Expected a valid imgproxy or replicate URL.")
             else:
-                logger.warning(
-                    "Image not found or still generating. You may need to increase the wait time."
-                )
+                logger.warning("Image not found or still generating. You may need to increase the wait time.")
 
         except Exception as e:
             logger.error(f"Error in image generation: {str(e)}")

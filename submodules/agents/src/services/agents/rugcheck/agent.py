@@ -6,8 +6,7 @@ from models.service.chat_models import AgentResponse, ChatRequest
 
 from .config import Config, TokenRegistry
 from .tool_types import RugcheckToolType
-from .tools import (fetch_most_viewed, fetch_most_voted, fetch_token_report,
-                    resolve_token_identifier)
+from .tools import fetch_most_viewed, fetch_most_voted, fetch_token_report, resolve_token_identifier
 
 logger = logging.getLogger(__name__)
 
@@ -34,30 +33,20 @@ class RugcheckAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate Rugcheck API tool based on function name."""
         try:
             if func_name == RugcheckToolType.GET_TOKEN_REPORT.value:
                 identifier = args.get("identifier")
                 if not identifier:
-                    return AgentResponse.error(
-                        error_message="Please provide a token name or mint address"
-                    )
+                    return AgentResponse.error(error_message="Please provide a token name or mint address")
 
                 try:
-                    mint_address = await resolve_token_identifier(
-                        self.token_registry, identifier
-                    )
+                    mint_address = await resolve_token_identifier(self.token_registry, identifier)
                     if not mint_address:
-                        return AgentResponse.error(
-                            error_message=f"Could not resolve token identifier: {identifier}"
-                        )
+                        return AgentResponse.error(error_message=f"Could not resolve token identifier: {identifier}")
 
-                    report_response = await fetch_token_report(
-                        self.api_base_url, mint_address
-                    )
+                    report_response = await fetch_token_report(self.api_base_url, mint_address)
                     return AgentResponse.success(
                         content=report_response.formatted_response,
                         metadata=report_response.model_dump(),
@@ -65,9 +54,7 @@ class RugcheckAgent(AgentCore):
                     )
 
                 except Exception as e:
-                    return AgentResponse.error(
-                        error_message=f"Failed to get token report: {str(e)}"
-                    )
+                    return AgentResponse.error(error_message=f"Failed to get token report: {str(e)}")
 
             elif func_name == RugcheckToolType.GET_MOST_VIEWED.value:
                 try:
@@ -79,9 +66,7 @@ class RugcheckAgent(AgentCore):
                     )
 
                 except Exception as e:
-                    return AgentResponse.error(
-                        error_message=f"Failed to get most viewed tokens: {str(e)}"
-                    )
+                    return AgentResponse.error(error_message=f"Failed to get most viewed tokens: {str(e)}")
 
             elif func_name == RugcheckToolType.GET_MOST_VOTED.value:
                 try:
@@ -93,14 +78,10 @@ class RugcheckAgent(AgentCore):
                     )
 
                 except Exception as e:
-                    return AgentResponse.error(
-                        error_message=f"Failed to get most voted tokens: {str(e)}"
-                    )
+                    return AgentResponse.error(error_message=f"Failed to get most voted tokens: {str(e)}")
 
             else:
-                return AgentResponse.error(
-                    error_message=f"Unknown tool function: {func_name}"
-                )
+                return AgentResponse.error(error_message=f"Unknown tool function: {func_name}")
 
         except Exception as e:
             logger.error(f"Error executing tool {func_name}: {str(e)}", exc_info=True)

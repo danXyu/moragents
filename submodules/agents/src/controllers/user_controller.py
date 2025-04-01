@@ -17,9 +17,7 @@ class UserController:
         session: Optional[Session] = None,
         auto_close_session: Optional[bool] = None,
     ):
-        self._auto_close_session = (
-            (session is None) if (auto_close_session is None) else auto_close_session
-        )
+        self._auto_close_session = (session is None) if (auto_close_session is None) else auto_close_session
         self._session: Optional[Session] = session
 
     def __enter__(self) -> Self:
@@ -99,9 +97,7 @@ class UserController:
     # User Settings Methods
     # *********************
 
-    def get_setting(
-        self, user_id: int, settings_key: str
-    ) -> Optional[UserSettingModel]:
+    def get_setting(self, user_id: int, settings_key: str) -> Optional[UserSettingModel]:
         """Get a setting by key for a specific user."""
         if not self._session:
             return None
@@ -119,9 +115,7 @@ class UserController:
         settings = user_dao.get_all_settings(user_id)
         return [setting.to_service_model() for setting in settings]
 
-    def create_setting(
-        self, user_id: int, settings_key: str, settings_value: Dict[str, Any]
-    ) -> UserSettingModel:
+    def create_setting(self, user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> UserSettingModel:
         """Create a new setting."""
         if not self._session:
             raise RuntimeError("No database session available")
@@ -141,9 +135,7 @@ class UserController:
             return setting.to_service_model()
         return None
 
-    def upsert_setting(
-        self, user_id: int, settings_key: str, settings_value: Dict[str, Any]
-    ) -> UserSettingModel:
+    def upsert_setting(self, user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> UserSettingModel:
         """Create or update a setting."""
         if not self._session:
             raise RuntimeError("No database session available")

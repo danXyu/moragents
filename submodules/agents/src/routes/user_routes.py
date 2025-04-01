@@ -1,7 +1,6 @@
 from typing import Any, Dict, List
 
-from agents.src.models.service.user_service_models import (UserModel,
-                                                           UserSettingModel)
+from agents.src.models.service.user_service_models import UserModel, UserSettingModel
 from config import setup_logging
 from controllers.user_controller import UserController
 from fastapi import APIRouter, HTTPException
@@ -159,9 +158,7 @@ async def list_user_settings(user_id: int) -> JSONResponse:
 
 
 @router.post("/users/{user_id}/settings/{settings_key}")
-async def create_user_setting(
-    user_id: int, settings_key: str, settings_value: Dict[str, Any]
-) -> JSONResponse:
+async def create_user_setting(user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> JSONResponse:
     """Create a new user setting"""
     logger.info(f"Received request to create setting {settings_key} for user {user_id}")
 
@@ -176,9 +173,7 @@ async def create_user_setting(
 
 
 @router.put("/users/{user_id}/settings/{settings_key}")
-async def update_user_setting(
-    user_id: int, settings_key: str, settings_value: Dict[str, Any]
-) -> JSONResponse:
+async def update_user_setting(user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> JSONResponse:
     """Update an existing user setting"""
     logger.info(f"Received request to update setting {settings_key} for user {user_id}")
 

@@ -32,17 +32,13 @@ async def test_generate_tweet_success(tweet_sizzler_agent, make_chat_request):
                 {
                     "function": {
                         "name": "generate_tweet",
-                        "arguments": {
-                            "content": "AI is transforming our world! #AI #Technology"
-                        },
+                        "arguments": {"content": "AI is transforming our world! #AI #Technology"},
                     }
                 }
             ]
         }
 
-        with patch(
-            "services.agents.tweet_sizzler.tools.generate_tweet"
-        ) as mock_generate:
+        with patch("services.agents.tweet_sizzler.tools.generate_tweet") as mock_generate:
             mock_generate.return_value = "AI is transforming our world! #AI #Technology"
             response = await tweet_sizzler_agent._process_request(request)
 
@@ -57,7 +53,9 @@ async def test_execute_tool_generate_tweet(tweet_sizzler_agent):
     args: Dict[str, Any] = {"content": "Test tweet content"}
 
     with patch("services.agents.tweet_sizzler.tools.generate_tweet") as mock_generate:
-        mock_generate.return_value = "Just testing the waters with this tweet, stay tuned for more excitement to come #testing"
+        mock_generate.return_value = (
+            "Just testing the waters with this tweet, stay tuned for more excitement to come #testing"
+        )
         response = await tweet_sizzler_agent._execute_tool("generate_tweet", args)
 
         assert isinstance(response, AgentResponse)

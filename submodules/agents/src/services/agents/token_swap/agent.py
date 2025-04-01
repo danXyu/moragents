@@ -6,8 +6,7 @@ from models.service.chat_models import AgentResponse, ChatRequest
 
 from .config import Config
 from .tools import get_transaction_status, swap_coins
-from .utils.exceptions import (InsufficientFundsError, SwapNotPossibleError,
-                               TokenNotFoundError)
+from .utils.exceptions import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
 from .utils.tool_types import SwapToolType
 
 logger = logging.getLogger(__name__)
@@ -22,8 +21,7 @@ from models.service.chat_models import AgentResponse, ChatRequest
 from .config import Config
 from .models import SwapQuoteResponse, TransactionResponse
 from .tools import get_transaction_status, swap_coins
-from .utils.exceptions import (InsufficientFundsError, SwapNotPossibleError,
-                               TokenNotFoundError)
+from .utils.exceptions import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
 from .utils.tool_types import SwapToolType
 
 logger = logging.getLogger(__name__)
@@ -50,22 +48,16 @@ class TokenSwapAgent(AgentCore):
 
             # Validate wallet connection
             if not self.wallet_address or not self.chain_id:
-                return AgentResponse.needs_info(
-                    content="Please connect your wallet to enable swap functionality"
-                )
+                return AgentResponse.needs_info(content="Please connect your wallet to enable swap functionality")
 
             result = self.tool_bound_llm.invoke(messages)
             return await self._handle_llm_response(result)
 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
-            return AgentResponse.error(
-                error_message=f"Failed to process request: {str(e)}"
-            )
+            return AgentResponse.error(error_message=f"Failed to process request: {str(e)}")
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate token swap tool based on function name."""
         try:
             if func_name == SwapToolType.SWAP_TOKENS.value:
@@ -87,17 +79,11 @@ class TokenSwapAgent(AgentCore):
         try:
             # Revalidate wallet connection
             if not self.wallet_address or not self.chain_id:
-                return AgentResponse.needs_info(
-                    content="Please connect your wallet to enable swap functionality"
-                )
+                return AgentResponse.needs_info(content="Please connect your wallet to enable swap functionality")
 
             # Validate required parameters
             required_params = ["source_token", "destination_token", "amount"]
-            missing_params = [
-                param
-                for param in required_params
-                if param not in args or args[param] is None
-            ]
+            missing_params = [param for param in required_params if param not in args or args[param] is None]
 
             if missing_params:
                 return AgentResponse.needs_info(
@@ -108,13 +94,9 @@ class TokenSwapAgent(AgentCore):
             try:
                 amount = float(args["amount"])
                 if amount <= 0:
-                    return AgentResponse.error(
-                        error_message="Swap amount must be greater than zero"
-                    )
+                    return AgentResponse.error(error_message="Swap amount must be greater than zero")
             except ValueError:
-                return AgentResponse.error(
-                    error_message=f"Invalid amount format: {args['amount']}"
-                )
+                return AgentResponse.error(error_message=f"Invalid amount format: {args['amount']}")
 
             # Execute swap operation
             swap_response = await swap_coins(
@@ -148,17 +130,13 @@ class TokenSwapAgent(AgentCore):
             logger.error(f"Error executing swap: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=f"Error executing swap: {str(e)}")
 
-    async def _execute_get_transaction_status(
-        self, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_get_transaction_status(self, args: Dict[str, Any]) -> AgentResponse:
         """Execute the get transaction status operation with comprehensive error handling."""
         try:
             # Extract and validate transaction hash
             tx_hash = args.get("tx_hash")
             if not tx_hash:
-                return AgentResponse.needs_info(
-                    content="Please provide a transaction hash"
-                )
+                return AgentResponse.needs_info(content="Please provide a transaction hash")
 
             # Use provided chain_id and wallet_address from args if available, otherwise use class values
             chain_id = args.get("chainId", self.chain_id)
@@ -166,14 +144,10 @@ class TokenSwapAgent(AgentCore):
 
             # Validate we have the necessary parameters
             if not chain_id:
-                return AgentResponse.needs_info(
-                    content="Please provide a chain ID or connect your wallet"
-                )
+                return AgentResponse.needs_info(content="Please provide a chain ID or connect your wallet")
 
             if not wallet_address:
-                return AgentResponse.needs_info(
-                    content="Please provide a wallet address or connect your wallet"
-                )
+                return AgentResponse.needs_info(content="Please provide a wallet address or connect your wallet")
 
             # Execute transaction status check
             tx_response = await get_transaction_status(
@@ -190,6 +164,4 @@ class TokenSwapAgent(AgentCore):
 
         except Exception as e:
             logger.error(f"Error getting transaction status: {str(e)}", exc_info=True)
-            return AgentResponse.error(
-                error_message=f"Error retrieving transaction status: {str(e)}"
-            )
+            return AgentResponse.error(error_message=f"Error retrieving transaction status: {str(e)}")

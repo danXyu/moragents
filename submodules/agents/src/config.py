@@ -105,9 +105,7 @@ def load_agent_config(agent_name: str) -> Optional[Dict[str, Any]]:
             logger.info(f"Successfully loaded config for {agent_name}")
             return config_dict
         else:
-            logger.warning(
-                f"No Config class or agent_config found in {agent_name}/config.py"
-            )
+            logger.warning(f"No Config class or agent_config found in {agent_name}/config.py")
             return None
 
     except Exception as e:

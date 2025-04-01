@@ -65,9 +65,7 @@ class WalletManager:
             logger.error(f"Failed to configure CDP client: {str(e)}")
             return False
 
-    def create_wallet(
-        self, wallet_id: str, network_id: Optional[str] = None, set_active: bool = True
-    ) -> Wallet:
+    def create_wallet(self, wallet_id: str, network_id: Optional[str] = None, set_active: bool = True) -> Wallet:
         """Create a new CDP wallet and store it"""
         try:
             if not wallet_id:
@@ -105,9 +103,7 @@ class WalletManager:
             logger.error(f"Failed to create wallet: {str(e)}")
             raise
 
-    def restore_wallet(
-        self, wallet_id: str, wallet_data: dict, set_active: bool = True
-    ) -> Optional[Wallet]:
+    def restore_wallet(self, wallet_id: str, wallet_data: dict, set_active: bool = True) -> Optional[Wallet]:
         """Restore a wallet from exported data"""
         try:
             if not wallet_id:
@@ -196,9 +192,7 @@ class WalletManager:
             logger.error(f"Failed to save wallet: {str(e)}")
             return False
 
-    def load_wallet(
-        self, wallet_id: str, filepath: str, set_active: bool = True
-    ) -> Optional[Wallet]:
+    def load_wallet(self, wallet_id: str, filepath: str, set_active: bool = True) -> Optional[Wallet]:
         """Load wallet from saved data"""
         try:
             with open(filepath, "r") as f:
@@ -242,9 +236,7 @@ class WalletManager:
                 "wallet_id": wallet_id,
                 "network_id": wallet.network_id,
                 "is_active": wallet_id == self.active_wallet_id,
-                "address": wallet.default_address.address_id
-                if wallet.default_address
-                else None,
+                "address": wallet.default_address.address_id if wallet.default_address else None,
             }
             for wallet_id, wallet in self.wallets.items()
         ]

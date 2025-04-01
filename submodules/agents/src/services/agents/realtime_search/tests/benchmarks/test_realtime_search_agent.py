@@ -24,9 +24,7 @@ def realtime_search_agent():
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_web_search_success(realtime_search_agent, make_chat_request):
-    request = make_chat_request(
-        content="Search for latest news about AI", agent_name="realtime_search"
-    )
+    request = make_chat_request(content="Search for latest news about AI", agent_name="realtime_search")
 
     mock_results = """
     Result:
@@ -61,16 +59,12 @@ async def test_web_search_success(realtime_search_agent, make_chat_request):
 async def test_web_search_no_results(realtime_search_agent):
     search_term = "nonexistent topic"
 
-    with patch.object(
-        realtime_search_agent, "_perform_search_with_web_scraping"
-    ) as mock_search:
+    with patch.object(realtime_search_agent, "_perform_search_with_web_scraping") as mock_search:
         mock_search.return_value = AgentResponse.needs_info(
             content="I couldn't find any results for that search. Could you try rephrasing it?"
         )
 
-        response = await realtime_search_agent._execute_tool(
-            "perform_web_search", {"search_term": search_term}
-        )
+        response = await realtime_search_agent._execute_tool("perform_web_search", {"search_term": search_term})
 
         assert isinstance(response, AgentResponse)
         assert response.response_type.value == "needs_info"
@@ -82,14 +76,10 @@ async def test_web_search_no_results(realtime_search_agent):
 async def test_web_search_error_handling(realtime_search_agent):
     search_term = "test search"
 
-    with patch.object(
-        realtime_search_agent, "_perform_search_with_web_scraping"
-    ) as mock_search:
+    with patch.object(realtime_search_agent, "_perform_search_with_web_scraping") as mock_search:
         mock_search.side_effect = Exception("Search failed")
 
-        response = await realtime_search_agent._execute_tool(
-            "perform_web_search", {"search_term": search_term}
-        )
+        response = await realtime_search_agent._execute_tool("perform_web_search", {"search_term": search_term})
 
         assert isinstance(response, AgentResponse)
         assert response.response_type.value == "error"
@@ -109,9 +99,7 @@ async def test_unknown_tool(realtime_search_agent):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_empty_search_term(realtime_search_agent):
-    response = await realtime_search_agent._execute_tool(
-        "perform_web_search", {"search_term": ""}
-    )
+    response = await realtime_search_agent._execute_tool("perform_web_search", {"search_term": ""})
 
     assert isinstance(response, AgentResponse)
     assert response.response_type.value == "needs_info"

@@ -11,10 +11,7 @@ def get_system_prompt(available_agents: List[Dict]) -> str:
         str: The formatted system prompt
     """
     # Build agent descriptions section
-    agent_descriptions = "\n".join(
-        f"- {agent['name']}: {agent['delegator_description']}"
-        for agent in available_agents
-    )
+    agent_descriptions = "\n".join(f"- {agent['name']}: {agent['delegator_description']}" for agent in available_agents)
 
     return f"""You are Morpheus, an intelligent agent delegator designed to route user queries to the most appropriate specialized agents.
 

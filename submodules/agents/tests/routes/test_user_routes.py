@@ -1,8 +1,7 @@
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from agents.src.models.service.user_service_models import (UserModel,
-                                                           UserSettingModel)
+from agents.src.models.service.user_service_models import UserModel, UserSettingModel
 from agents.src.routes.user_routes import router
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -25,9 +24,7 @@ def sample_user():
 
 @pytest.fixture
 def sample_setting():
-    return UserSettingModel(
-        id=1, user_id=1, settings_key="test_key", settings_value={"test": "value"}
-    )
+    return UserSettingModel(id=1, user_id=1, settings_key="test_key", settings_value={"test": "value"})
 
 
 @pytest.mark.asyncio
@@ -69,9 +66,7 @@ async def test_get_user_by_wallet_success(mock_user_controller, sample_user):
 
         assert response.status_code == 200
         assert response.json() == sample_user.model_dump()
-        mock_logger.info.assert_called_once_with(
-            "Received request to get user by wallet 0x123"
-        )
+        mock_logger.info.assert_called_once_with("Received request to get user by wallet 0x123")
 
 
 @pytest.mark.asyncio
@@ -99,9 +94,7 @@ async def test_create_user_success(mock_user_controller, sample_user):
 
         assert response.status_code == 201
         assert response.json() == sample_user.model_dump()
-        mock_logger.info.assert_called_once_with(
-            "Received request to create user with wallet 0x123"
-        )
+        mock_logger.info.assert_called_once_with("Received request to create user with wallet 0x123")
 
 
 @pytest.mark.asyncio
@@ -143,9 +136,7 @@ async def test_get_user_setting_success(mock_user_controller, sample_setting):
 
         assert response.status_code == 200
         assert response.json() == sample_setting.model_dump()
-        mock_logger.info.assert_called_once_with(
-            "Received request to get setting test_key for user 1"
-        )
+        mock_logger.info.assert_called_once_with("Received request to get setting test_key for user 1")
 
 
 @pytest.mark.asyncio
@@ -159,9 +150,7 @@ async def test_list_user_settings_success(mock_user_controller, sample_setting):
 
         assert response.status_code == 200
         assert response.json() == [sample_setting.model_dump()]
-        mock_logger.info.assert_called_once_with(
-            "Received request to list settings for user 1"
-        )
+        mock_logger.info.assert_called_once_with("Received request to list settings for user 1")
 
 
 @pytest.mark.asyncio
@@ -171,15 +160,11 @@ async def test_create_user_setting_success(mock_user_controller, sample_setting)
     mock_user_controller.return_value.__enter__.return_value = mock_controller
 
     with patch("agents.src.routes.user_routes.logger") as mock_logger:
-        response = client.post(
-            "/api/v1/users/1/settings/test_key", json={"test": "value"}
-        )
+        response = client.post("/api/v1/users/1/settings/test_key", json={"test": "value"})
 
         assert response.status_code == 201
         assert response.json() == sample_setting.model_dump()
-        mock_logger.info.assert_called_once_with(
-            "Received request to create setting test_key for user 1"
-        )
+        mock_logger.info.assert_called_once_with("Received request to create setting test_key for user 1")
 
 
 @pytest.mark.asyncio
@@ -189,15 +174,11 @@ async def test_update_user_setting_success(mock_user_controller, sample_setting)
     mock_user_controller.return_value.__enter__.return_value = mock_controller
 
     with patch("agents.src.routes.user_routes.logger") as mock_logger:
-        response = client.put(
-            "/api/v1/users/1/settings/test_key", json={"test": "value"}
-        )
+        response = client.put("/api/v1/users/1/settings/test_key", json={"test": "value"})
 
         assert response.status_code == 200
         assert response.json() == sample_setting.model_dump()
-        mock_logger.info.assert_called_once_with(
-            "Received request to update setting test_key for user 1"
-        )
+        mock_logger.info.assert_called_once_with("Received request to update setting test_key for user 1")
 
 
 @pytest.mark.asyncio
@@ -211,9 +192,7 @@ async def test_delete_user_setting_success(mock_user_controller):
 
         assert response.status_code == 200
         assert response.json() == {"status": "success"}
-        mock_logger.info.assert_called_once_with(
-            "Received request to delete setting test_key for user 1"
-        )
+        mock_logger.info.assert_called_once_with("Received request to delete setting test_key for user 1")
 
 
 @pytest.mark.asyncio
@@ -228,6 +207,4 @@ async def test_error_handling(mock_user_controller):
         assert response.status_code == 500
         assert response.json()["detail"] == "Test error"
         mock_logger.info.assert_called_once_with("Received request to get user 1")
-        mock_logger.error.assert_called_once_with(
-            "Error getting user: Test error", exc_info=True
-        )
+        mock_logger.error.assert_called_once_with("Error getting user: Test error", exc_info=True)

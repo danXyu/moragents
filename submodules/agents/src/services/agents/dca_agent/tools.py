@@ -29,18 +29,10 @@ class DCAParams:
             "origin_token": self.origin_token,
             "destination_token": self.destination_token,
             "step_size": str(self.step_size),
-            "total_investment_amount": (
-                str(self.total_investment_amount)
-                if self.total_investment_amount
-                else None
-            ),
+            "total_investment_amount": (str(self.total_investment_amount) if self.total_investment_amount else None),
             "frequency": self.frequency,
-            "max_purchase_amount": (
-                str(self.max_purchase_amount) if self.max_purchase_amount else None
-            ),
-            "price_threshold": str(self.price_threshold)
-            if self.price_threshold
-            else None,
+            "max_purchase_amount": (str(self.max_purchase_amount) if self.max_purchase_amount else None),
+            "price_threshold": str(self.price_threshold) if self.price_threshold else None,
             "pause_on_volatility": self.pause_on_volatility,
             "wallet_id": self.wallet_id,
         }
@@ -52,21 +44,11 @@ class DCAParams:
             destination_token=data["destination_token"].lower(),
             step_size=Decimal(data["step_size"]),
             total_investment_amount=(
-                Decimal(data["total_investment_amount"])
-                if data.get("total_investment_amount")
-                else None
+                Decimal(data["total_investment_amount"]) if data.get("total_investment_amount") else None
             ),
             frequency=data["frequency"],
-            max_purchase_amount=(
-                Decimal(data["max_purchase_amount"])
-                if data.get("max_purchase_amount")
-                else None
-            ),
-            price_threshold=(
-                Decimal(data["price_threshold"])
-                if data.get("price_threshold")
-                else None
-            ),
+            max_purchase_amount=(Decimal(data["max_purchase_amount"]) if data.get("max_purchase_amount") else None),
+            price_threshold=(Decimal(data["price_threshold"]) if data.get("price_threshold") else None),
             pause_on_volatility=data.get("pause_on_volatility", False),
             wallet_id=data.get("wallet_id"),
         )

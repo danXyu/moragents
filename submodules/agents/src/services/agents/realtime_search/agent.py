@@ -44,26 +44,20 @@ class RealtimeSearchAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate search tool based on function name."""
         try:
             if func_name == "perform_web_search":
                 search_term = args.get("search_term")
                 if not search_term:
-                    return AgentResponse.needs_info(
-                        content="Could you please provide a search term?"
-                    )
+                    return AgentResponse.needs_info(content="Could you please provide a search term?")
 
                 search_results = self._perform_search_with_web_scraping(search_term)
                 logger.info(f"Search results: {search_results}")
                 if "Error performing web search" in search_results:
                     return AgentResponse.error(error_message=search_results)
 
-                synthesized_answer = self._synthesize_answer(
-                    search_term, search_results
-                )
+                synthesized_answer = self._synthesize_answer(search_term, search_results)
                 return AgentResponse.success(content=synthesized_answer)
             else:
                 return AgentResponse.error(error_message=f"Unknown tool: {func_name}")

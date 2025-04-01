@@ -4,8 +4,7 @@ import pytest
 from fastapi import HTTPException
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from src.controllers.delegation_controller import DelegationController
-from src.models.service.chat_models import (AgentResponse, ChatMessage,
-                                            ChatRequest, ResponseType)
+from src.models.service.chat_models import AgentResponse, ChatMessage, ChatRequest, ResponseType
 from src.models.service.service_models import GenerateConversationTitleRequest
 from src.services.delegator.delegator import Delegator
 
@@ -57,13 +56,11 @@ async def test_handle_chat_agent_not_found(controller, chat_request):
 @pytest.mark.asyncio
 async def test_handle_chat_invalid_response(controller, chat_request, mock_delegator):
     # Setup
-    mock_delegator.delegate_chat = AsyncMock(
-        return_value=("test_agent", "invalid response type")
-    )
+    mock_delegator.delegate_chat = AsyncMock(return_value=("test_agent", "invalid response type"))
 
-    with patch(
-        "stores.agent_manager_instance.parse_command", return_value=(None, None)
-    ), patch("stores.agent_manager_instance.clear_active_agent"):
+    with patch("stores.agent_manager_instance.parse_command", return_value=(None, None)), patch(
+        "stores.agent_manager_instance.clear_active_agent"
+    ):
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await controller.handle_chat(chat_request)
@@ -76,9 +73,9 @@ async def test_handle_chat_timeout(controller, chat_request, mock_delegator):
     # Setup
     mock_delegator.delegate_chat = AsyncMock(side_effect=TimeoutError())
 
-    with patch(
-        "stores.agent_manager_instance.parse_command", return_value=(None, None)
-    ), patch("stores.agent_manager_instance.clear_active_agent"):
+    with patch("stores.agent_manager_instance.parse_command", return_value=(None, None)), patch(
+        "stores.agent_manager_instance.clear_active_agent"
+    ):
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await controller.handle_chat(chat_request)

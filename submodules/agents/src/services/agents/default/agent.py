@@ -27,9 +27,7 @@ class DefaultAgent(AgentCore):
             for agent in available_agents:
                 if agent["name"] in selected_agent_names and agent["name"] != "default":
                     human_name = agent.get("human_readable_name", agent["name"])
-                    selected_agents_info.append(
-                        f"- {human_name}: {agent['description']}"
-                    )
+                    selected_agents_info.append(f"- {human_name}: {agent['description']}")
 
             system_prompt = (
                 "You are a helpful assistant that can engage in general conversation and provide information about Morpheus agents when specifically asked.\n"
@@ -51,8 +49,6 @@ class DefaultAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(
-        self, func_name: str, args: Dict[str, Any]
-    ) -> AgentResponse:
+    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Default agent doesn't use any tools."""
         return AgentResponse.error(error_message=f"Unknown tool: {func_name}")
