@@ -1,4 +1,10 @@
 import logging
+
+import warnings
+
+# Suppress Tweepy warnings before it is imported. Until maintainers fix the issue.
+warnings.filterwarnings("ignore", message="invalid escape sequence.*", category=SyntaxWarning, module="tweepy")
+
 import tweepy
 
 from fastapi import APIRouter
