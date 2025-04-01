@@ -56,12 +56,14 @@ class CodexAgent(AgentCore):
 
                 if args.get("network") is None:
                     return AgentResponse.needs_info(
-                        content=f"Please specify the network (Ethereum, Solana, etc.) you'd like to search for {args.get('tokenName')}"
+                        content=f"Please specify the network (Ethereum, Solana, etc.) you'd like to search for "
+                        f"{args.get('tokenName')}"
                     )
 
                 if args.get("network") not in NETWORK_TO_ID_MAPPING:
                     return AgentResponse.needs_info(
-                        content=f"Please specify a valid network (Ethereum, Solana, etc.) you'd like to search for {args.get('tokenName')}"
+                        content=f"Please specify a valid network (Ethereum, Solana, etc.) you'd like to search for "
+                        f"{args.get('tokenName')}"
                     )
 
                 holders_response: TopHoldersResponse = await get_top_holders_percent(

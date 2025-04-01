@@ -2,9 +2,9 @@
 
 from sqlalchemy.orm import declarative_base
 
+from models.core.user_models import User, UserSetting
+
 Base = declarative_base()
 metadata = Base.metadata
-
-from models.core.user_models import User, UserSetting
 
 __all__ = ["Base", "User", "UserSetting"]

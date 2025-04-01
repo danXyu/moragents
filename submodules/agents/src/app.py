@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import uvicorn
 from config import load_agent_routes, setup_logging

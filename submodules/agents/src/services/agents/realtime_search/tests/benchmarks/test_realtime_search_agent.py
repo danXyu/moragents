@@ -2,11 +2,9 @@ import logging
 from unittest.mock import Mock, patch
 
 import pytest
-from bs4 import BeautifulSoup
 from langchain.schema import SystemMessage
-from models.service.chat_models import AgentResponse, ChatRequest
+from models.service.chat_models import AgentResponse
 from services.agents.realtime_search.agent import RealtimeSearchAgent
-from services.agents.realtime_search.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +23,6 @@ def realtime_search_agent():
 @pytest.mark.asyncio
 async def test_web_search_success(realtime_search_agent, make_chat_request):
     request = make_chat_request(content="Search for latest news about AI", agent_name="realtime_search")
-
-    mock_results = """
-    Result:
-    Latest breakthrough in AI technology announced
-    Scientists develop new machine learning model
-    """
 
     with patch.object(realtime_search_agent.tool_bound_llm, "invoke") as mock_invoke:
         mock_invoke.return_value = "Here are the latest AI developments..."

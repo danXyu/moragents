@@ -1,14 +1,13 @@
 import logging
 from typing import Any, Dict
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
-from models.service.chat_models import AgentResponse, ChatRequest
+from models.service.chat_models import AgentResponse
 from services.agents.token_swap.agent import TokenSwapAgent
 from services.agents.token_swap.models import SwapQuoteResponse, TransactionResponse
 from services.agents.token_swap.tools import (
     InsufficientFundsError,
-    SwapNotPossibleError,
     TokenNotFoundError,
 )
 from services.agents.token_swap.utils.tool_types import SwapToolType
@@ -28,14 +27,7 @@ def token_swap_agent(llm):
 
 @pytest.mark.benchmark
 @pytest.mark.asyncio
-async def test_swap_success(token_swap_agent, make_chat_request):
-    request = make_chat_request(
-        content="Swap 1 ETH for USDT",
-        agent_name="token_swap",
-        chain_id="1",
-        wallet_address="0x123",
-    )
-
+async def test_swap_success(token_swap_agent):
     mock_swap_result = SwapQuoteResponse(
         fromToken={"symbol": "ETH"},
         toToken={"symbol": "USDT"},

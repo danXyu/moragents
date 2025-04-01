@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class TokenInfo(BaseModel):
@@ -108,7 +108,7 @@ class SwapQuoteResponse(BaseModel):
             response += f"## Estimated Gas\n{self.estimated_gas} units\n\n"
 
         if self.routes and len(self.routes) > 0:
-            response += f"## Routes\n"
+            response += "## Routes\n"
             for idx, route in enumerate(self.routes):
                 response += f"{idx+1}. {route.name} ({route.part * 100:.1f}%)\n"
 

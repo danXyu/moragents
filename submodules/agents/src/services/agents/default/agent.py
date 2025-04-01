@@ -30,11 +30,13 @@ class DefaultAgent(AgentCore):
                     selected_agents_info.append(f"- {human_name}: {agent['description']}")
 
             system_prompt = (
-                "You are a helpful assistant that can engage in general conversation and provide information about Morpheus agents when specifically asked.\n"
+                "You are a helpful assistant that can engage in general conversation and provide information about "
+                "Morpheus agents when specifically asked.\n"
                 "For general questions, respond naturally without mentioning Morpheus or its agents.\n"
                 "Only when explicitly asked about Morpheus or its capabilities, use this list of available agents:\n"
                 f"{chr(10).join(selected_agents_info)}\n"
-                "Remember: Only mention Morpheus agents if directly asked about them. Otherwise, simply answer questions normally as a helpful assistant."
+                "Remember: Only mention Morpheus agents if directly asked about them. Otherwise, simply answer "
+                "questions normally as a helpful assistant."
             )
 
             messages = [

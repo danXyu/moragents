@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Optional
 
 from web3 import Web3
 

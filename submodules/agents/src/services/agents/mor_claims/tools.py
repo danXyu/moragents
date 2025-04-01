@@ -51,7 +51,9 @@ def get_tools():
             "type": "function",
             "function": {
                 "name": "get_current_user_reward",
-                "description": "Fetch the token amount of currently accrued MOR rewards for a user address from a specific pool",
+                "description": "Fetch the token amount of currently accrued MOR \n"
+                "rewards for a user address from a specific pool.\n"
+                "Returns the formatted reward amount in MOR tokens.",
                 "parameters": {
                     "type": "object",
                     "properties": {

@@ -1,5 +1,4 @@
 import logging
-from typing import Dict
 
 from config import LLM_AGENT
 from langchain.schema import HumanMessage

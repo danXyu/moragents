@@ -14,7 +14,7 @@ def swap_assets(agent_wallet: Wallet, amount: str, from_asset_id: str, to_asset_
 
         from_asset_id = from_asset_id.lower()
         to_asset_id = to_asset_id.lower()
-        logger.info(f"Attempting swap on Base Mainnet:")
+        logger.info("Attempting swap on Base Mainnet:")
         logger.info(f"From asset: {from_asset_id}")
         logger.info(f"To asset: {to_asset_id}")
         logger.info(f"Amount: {amount}")
@@ -35,7 +35,7 @@ def swap_assets(agent_wallet: Wallet, amount: str, from_asset_id: str, to_asset_
             raise e
 
         trade.wait()
-        logger.info(f"Trade completed")
+        logger.info("Trade completed")
 
         return {
             "success": True,
@@ -118,7 +118,6 @@ def request_eth_from_faucet(agent_wallet: Wallet) -> Dict[str, Any]:
         if agent_wallet.network_id == "base-mainnet":
             raise Exception("Faucet only available on testnet")
 
-        faucet_tx = agent_wallet.faucet()
         return {
             "success": True,
             "address": agent_wallet.default_address.address_id,

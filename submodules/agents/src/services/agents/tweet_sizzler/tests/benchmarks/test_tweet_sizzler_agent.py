@@ -3,11 +3,8 @@ from typing import Any, Dict
 from unittest.mock import patch
 
 import pytest
-from models.service.agent_core import AgentCore
-from models.service.chat_models import AgentResponse, ChatRequest
+from models.service.chat_models import AgentResponse
 from services.agents.tweet_sizzler.agent import TweetSizzlerAgent
-from services.agents.tweet_sizzler.config import Config
-from services.agents.tweet_sizzler.tools import generate_tweet
 
 logger = logging.getLogger(__name__)
 

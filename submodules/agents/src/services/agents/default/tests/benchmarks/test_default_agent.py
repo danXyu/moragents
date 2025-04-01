@@ -3,11 +3,8 @@ from typing import Any, Dict
 from unittest.mock import patch
 
 import pytest
-from langchain.schema import SystemMessage
-from models.service.agent_core import AgentCore
-from models.service.chat_models import AgentResponse, ChatRequest
+from models.service.chat_models import AgentResponse
 from services.agents.default.agent import DefaultAgent
-from stores import agent_manager_instance
 
 logger = logging.getLogger(__name__)
 

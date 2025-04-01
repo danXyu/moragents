@@ -1,16 +1,11 @@
 import logging
 from typing import Any, Dict
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
-from models.service.chat_models import AgentResponse, ChatRequest
+from models.service.chat_models import AgentResponse
 from services.agents.rugcheck.agent import RugcheckAgent
 from services.agents.rugcheck.tool_types import RugcheckToolType
-from services.agents.rugcheck.tools import (
-    fetch_most_viewed,
-    fetch_most_voted,
-    fetch_token_report,
-)
 
 logger = logging.getLogger(__name__)
 

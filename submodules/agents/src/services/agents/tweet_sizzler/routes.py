@@ -1,6 +1,12 @@
 import logging
 import warnings
 
+import tweepy
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from stores import agent_manager_instance
+
 # Suppress Tweepy warnings before it is imported. Until maintainers fix the issue.
 warnings.filterwarnings(
     "ignore",
@@ -8,12 +14,6 @@ warnings.filterwarnings(
     category=SyntaxWarning,
     module="tweepy",
 )
-
-import tweepy
-from fastapi import APIRouter
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from stores import agent_manager_instance
 
 logger = logging.getLogger(__name__)
 

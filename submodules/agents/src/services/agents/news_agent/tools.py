@@ -1,13 +1,12 @@
 import logging
 import re
 import urllib.parse
-from datetime import datetime, timedelta
-from html import unescape
-
 import feedparser
 import pytz
+
 from dateutil import parser
-from services.agents.news_agent.config import Config
+from datetime import datetime, timedelta
+from html import unescape
 
 logger = logging.getLogger(__name__)
 

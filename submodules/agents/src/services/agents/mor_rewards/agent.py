@@ -25,7 +25,7 @@ class MorRewardsAgent(AgentCore):
                 1: tools.get_current_user_reward(request.wallet_address, 1),
             }
 
-            response = f"Your current MOR rewards:\n"
+            response = "Your current MOR rewards:\n"
             response += f"Capital Providers Pool (Pool 0): {rewards[0]} MOR\n"
             response += f"Code Providers Pool (Pool 1): {rewards[1]} MOR"
 

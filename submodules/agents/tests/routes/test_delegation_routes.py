@@ -4,7 +4,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
-from src.config import LLM_DELEGATOR
 from src.models.service.chat_models import ChatMessage, ChatRequest
 from src.models.service.service_models import GenerateConversationTitleRequest
 from src.routes.delegation_routes import router
@@ -41,9 +40,9 @@ async def test_chat_success(chat_request):
     response_content = {"content": "test response"}
     mock_response = JSONResponse(content=response_content)
 
-    with patch("src.routes.delegation_routes.Delegator") as mock_delegator_class, patch(
-        "src.routes.delegation_routes.DelegationController"
-    ) as mock_controller_class, patch("src.routes.delegation_routes.logger") as mock_logger:
+    with patch("src.routes.delegation_routes.DelegationController") as mock_controller_class, patch(
+        "src.routes.delegation_routes.logger"
+    ) as mock_logger:
         mock_controller = mock_controller_class.return_value
         mock_controller.handle_chat = AsyncMock(return_value=mock_response)
 

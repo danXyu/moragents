@@ -101,7 +101,7 @@ class DCAActionHandler:
                 to_asset_id=dca_params.destination_token,
             )
 
-            logger.info(f"DCA trade executed successfully")
+            logger.info("DCA trade executed successfully")
 
         except Exception as e:
             logger.error(f"DCA execution failed: {e}")

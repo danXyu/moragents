@@ -26,7 +26,8 @@ class BaseAgent(AgentCore):
         if not wallet_manager_instance.configure_cdp_client():
             # Return user-friendly error for missing credentials
             return AgentResponse.success(
-                content="I'm not able to help with transactions right now because the CDP client is not initialized. Please set up your API credentials first."
+                content="I'm not able to help with transactions right now because the CDP client is not initialized. "
+                "Please set up your API credentials first."
             )
 
         # Check for active wallet
@@ -34,7 +35,8 @@ class BaseAgent(AgentCore):
         if not active_wallet:
             # Return user-friendly error for missing wallet
             return AgentResponse.success(
-                content="You'll need to select or create a wallet before I can help with transactions. Please set up a wallet first."
+                content="You'll need to select or create a wallet before I can help with transactions. "
+                "Please set up a wallet first."
             )
 
         try:
@@ -76,7 +78,10 @@ class BaseAgent(AgentCore):
                     )
 
                 tool_result = tools.get_balance(wallet, asset_id=asset_id.lower())
-                content = f"Your wallet {tool_result['address']} has a balance of {tool_result['balance']} {tool_result['asset']}"
+                content = (
+                    f"Your wallet {tool_result['address']} has a balance of {tool_result['balance']} "
+                    f"{tool_result['asset']}"
+                )
                 return AgentResponse.success(content=content)
             else:
                 return AgentResponse.needs_info(

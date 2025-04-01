@@ -3,7 +3,7 @@ from typing import Any, Dict
 from unittest.mock import patch
 
 import pytest
-from models.service.chat_models import AgentResponse, ChatRequest
+from models.service.chat_models import AgentResponse
 from services.agents.dca_agent.agent import DCAAgent
 
 logger = logging.getLogger(__name__)

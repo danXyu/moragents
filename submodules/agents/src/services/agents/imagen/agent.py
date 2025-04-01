@@ -14,8 +14,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from .config import Config
-
 logger = logging.getLogger(__name__)
 
 
@@ -30,8 +28,6 @@ class ImagenAgent(AgentCore):
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for image generation."""
         try:
-            messages = [Config.system_message, *request.messages_for_llm]
-
             # For image generation, we'll directly use the prompt content
             result = self.generate_image(request.prompt.content)
 

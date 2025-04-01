@@ -13,7 +13,8 @@ def get_system_prompt(available_agents: List[Dict]) -> str:
     # Build agent descriptions section
     agent_descriptions = "\n".join(f"- {agent['name']}: {agent['delegator_description']}" for agent in available_agents)
 
-    return f"""You are Morpheus, an intelligent agent delegator designed to route user queries to the most appropriate specialized agents.
+    return f"""
+You are Morpheus, an intelligent delegator designed to route user queries to the most appropriate specialized agents.
 
 RESPONSE FORMAT REQUIREMENTS:
 - You MUST respond ONLY in valid JSON format
@@ -26,8 +27,8 @@ AVAILABLE AGENTS:
 AGENT SELECTION PRIORITIES:
 
 1. QUERY SPECIFICITY: Prioritize agents that specialize in the exact task or data type requested by the user
-   
-2. RECENCY REQUIREMENTS: If the query mentions current events or today's data, prioritize agents with real-time capabilities
+
+2. RECENCY REQUIREMENTS: If the query mentions current events, prioritize agents with real-time capabilities
 
 3. SECURITY CONCERNS: When users express any doubt about security, prioritize security-focused agents
 

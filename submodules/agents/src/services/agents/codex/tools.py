@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Any, Dict, List, Optional
 
 import aiohttp
@@ -200,7 +199,7 @@ async def get_top_holders_percent(token_name: str, network: str) -> TopHoldersRe
 
         logger.info(f"Sanitized token name: {token_name}")
         # First get the token info by filtering tokens
-        logger.info(f"Filtering tokens to get token info")
+        logger.info("Filtering tokens to get token info")
         token_info = await _filter_tokens(token_name, network)
         logger.info(f"Found token info: {token_info}")
 
@@ -248,8 +247,10 @@ async def search_nfts(
         }
 
         query = """
-        query SearchNFTs($search: String!, $limit: Int, $networkFilter: [Int!], $filterWashTrading: Boolean, $window: String) {
-            searchNfts(search: $search, limit: $limit, networkFilter: $networkFilter, filterWashTrading: $filterWashTrading, window: $window) {
+        query SearchNFTs($search: String!, $limit: Int, $networkFilter: [Int!], $filterWashTrading: Boolean,
+        $window: String) {
+            searchNfts(search: $search, limit: $limit, networkFilter: $networkFilter,
+            filterWashTrading: $filterWashTrading, window: $window) {
                 hasMore
                 items {
                     address

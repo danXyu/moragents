@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 from services.agents.crypto_data.config import Config
@@ -168,6 +168,7 @@ def get_protocol_tvl(protocol_name: str) -> Optional[Dict[str, Any]]:
                 return None
             max_key = max(result, key=lambda dct: float(dct[list(dct.keys())[0]]["tvl"]))
             return max_key
+    return None
 
 
 def get_coin_price_tool(coin_name: str) -> str:
@@ -198,7 +199,7 @@ def get_protocol_total_value_locked_tool(protocol_name: str) -> str:
         tvl = get_protocol_tvl(protocol_name)
         if tvl is None:
             return Config.TVL_FAILURE_MESSAGE
-        protocol, tvl_value = list(tvl.items())[0][0], list(tvl.items())[0][1]
+        _, tvl_value = list(tvl.items())[0][0], list(tvl.items())[0][1]
         return Config.TVL_SUCCESS_MESSAGE.format(protocol_name=protocol_name, tvl=tvl_value)
     except requests.exceptions.RequestException:
         return Config.API_ERROR_MESSAGE

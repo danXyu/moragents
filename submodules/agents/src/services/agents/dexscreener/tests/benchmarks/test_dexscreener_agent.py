@@ -3,7 +3,7 @@ from typing import Any, Dict
 from unittest.mock import patch
 
 import pytest
-from models.service.chat_models import AgentResponse, ChatRequest
+from models.service.chat_models import AgentResponse
 from services.agents.dexscreener.agent import DexScreenerAgent
 from services.agents.dexscreener.models import (
     BoostedTokenResponse,
@@ -27,8 +27,6 @@ def dex_agent(llm):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_search_dex_pairs_success(dex_agent, make_chat_request):
-    request = make_chat_request(content="Search for ETH/USDC pairs", agent_name="dexscreener")
-
     mock_response = DexPairSearchResponse(
         pairs=[
             {

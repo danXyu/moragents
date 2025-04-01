@@ -16,25 +16,6 @@ from .utils.tool_types import SwapToolType
 logger = logging.getLogger(__name__)
 
 
-import logging
-from typing import Any, Dict, Optional, Union
-
-from models.service.agent_core import AgentCore
-from models.service.chat_models import AgentResponse, ChatRequest
-
-from .config import Config
-from .models import SwapQuoteResponse, TransactionResponse
-from .tools import get_transaction_status, swap_coins
-from .utils.exceptions import (
-    InsufficientFundsError,
-    SwapNotPossibleError,
-    TokenNotFoundError,
-)
-from .utils.tool_types import SwapToolType
-
-logger = logging.getLogger(__name__)
-
-
 class TokenSwapAgent(AgentCore):
     """Agent for token swapping operations."""
 

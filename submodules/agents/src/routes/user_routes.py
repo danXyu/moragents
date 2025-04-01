@@ -1,6 +1,5 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-from agents.src.models.service.user_service_models import UserModel, UserSettingModel
 from config import setup_logging
 from controllers.user_controller import UserController
 from fastapi import APIRouter, HTTPException

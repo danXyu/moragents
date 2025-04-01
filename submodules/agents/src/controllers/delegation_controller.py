@@ -75,7 +75,7 @@ class DelegationController:
         """Generate a title for a conversation based on chat history"""
         system_prompt = """You are a helpful assistant that generates concise, descriptive titles for conversations.
         Generate a short title (3-6 words) that captures the main topic or theme of the conversation.
-        The title should be clear and informative but not too long. DO NOT SURROUND THE TITLE WITH QUOTES, spaces, 
+        The title should be clear and informative but not too long. DO NOT SURROUND THE TITLE WITH QUOTES, spaces,
         or any other characters. Just return the title as a string."""
 
         messages = [

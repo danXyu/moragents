@@ -1,5 +1,5 @@
 import logging
-import time
+import json
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
@@ -9,6 +9,7 @@ from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 from ..config import Config
 from ..models import SwapRoute, TokenInfo
 from .exceptions import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
+from services.secrets import get_secret
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +68,8 @@ async def search_token(
             try:
                 error_details = response.json()
                 error_message += f" - {error_details.get('description', '')}"
-            except:
-                error_message += f" - {response.text}"
+            except json.JSONDecodeError as json_error:
+                error_message += f" - JSON Error: {str(json_error)} - Response: {response.text}"
 
             logger.error(error_message)
             raise TokenNotFoundError(error_message)
@@ -320,14 +321,14 @@ async def get_swap_quote(
 
         if response.status_code == 200:
             result = response.json()
-            logger.info(f"Quote received successfully")
+            logger.info("Quote received successfully")
             return result
         else:
             error_message = f"Failed to get quote. Status code: {response.status_code}"
             try:
                 error_details = response.json()
                 error_message += f" - {error_details.get('description', '')}"
-            except:
+            except Exception:
                 error_message += f" - {response.text}"
 
             logger.error(error_message)

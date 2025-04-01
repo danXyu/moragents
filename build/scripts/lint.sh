@@ -74,11 +74,11 @@ if [ "$FILE_COUNT" -eq 0 ]; then
     exit 0
 fi
 
-# Black formatting check (with diff)
+# Black formatting check with correct line length (with diff)
 print_header "Checking Python Formatting with Black"
-if black --diff $PYTHON_FILES 2>&1 | tee -a "$LINT_ISSUES" | grep -q "would reformat"; then
+if black --line-length=120 --diff $PYTHON_FILES 2>&1 | tee -a "$LINT_ISSUES" | grep -q "would reformat"; then
     echo -e "\n${YELLOW}Some files need formatting with Black.${NC}"
-    echo -e "Run: ${GREEN}black \"$PROJECT_ROOT\"${NC} to fix formatting issues."
+    echo -e "Run: ${GREEN}black --line-length=120 \"$PROJECT_ROOT\"${NC} to fix formatting issues."
     FORMAT_NEEDED=1
 else
     echo -e "${GREEN}All Python files are properly formatted according to Black.${NC}"
@@ -96,7 +96,7 @@ fi
 
 # flake8 linting check
 print_header "Checking Python Code with flake8"
-if ! flake8 $EXCLUDE_DIRS "$PROJECT_ROOT" 2>&1 | tee -a "$LINT_ISSUES"; then
+if ! flake8 $EXCLUDE_DIRS --max-line-length=120 "$PROJECT_ROOT" 2>&1 | tee -a "$LINT_ISSUES"; then
     echo -e "\n${YELLOW}flake8 found issues that need to be fixed.${NC}"
     LINT_ISSUES_FOUND=1
 else
@@ -114,7 +114,7 @@ if [ -n "$FORMAT_NEEDED" ] || [ -n "$LINT_ISSUES_FOUND" ]; then
         read -r response
         if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
             echo "Formatting Python files with Black..."
-            black $PYTHON_FILES
+            black --line-length=120 $PYTHON_FILES
             
             echo "Sorting imports with isort..."
             isort $PYTHON_FILES

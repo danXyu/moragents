@@ -32,12 +32,14 @@ jobs:
       - name: Run Black with diff output
         run: |
           # Run black on Python files with diff output
-          black --diff .
+          # Use line-length=120 to match pyproject.toml
+          black --diff --line-length=120 .
 
       - name: Check formatting with Black
         run: |
           # Check if files are properly formatted
-          black --check .
+          # Use line-length=120 to match pyproject.toml
+          black --check --line-length=120 .
 
       - name: Run isort with diff output
         run: |
@@ -51,8 +53,8 @@ jobs:
 
       - name: Run flake8
         run: |
-          # Run flake8 for other linting checks
-          flake8 . --exclude=node_modules
+          # Run flake8 for other linting checks with comprehensive exclusions
+          flake8 . --exclude=.git,__pycache__,build,dist,*.egg,*.egg-info,.eggs,.venv,venv,env,.env,ENV,node_modules,*/node_modules/*,*/.venv/*,*/site-packages/*
 
       - name: Run JavaScript/TypeScript linters
         run: |

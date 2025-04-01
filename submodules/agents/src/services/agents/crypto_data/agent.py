@@ -65,7 +65,10 @@ class CryptoDataAgent(AgentCore):
                 content = tools.get_coin_market_cap_tool(args["coin_name"])
             else:
                 return AgentResponse.needs_info(
-                    content=f"I don't know how to handle that type of request. Could you try asking about cryptocurrency news instead?"
+                    content=(
+                        "I don't know how to handle that type of request. "
+                        "Could you try asking about cryptocurrency news instead?"
+                    )
                 )
 
             if "error" in content.lower() or "not found" in content.lower():
