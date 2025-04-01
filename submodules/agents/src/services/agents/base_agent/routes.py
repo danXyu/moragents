@@ -1,9 +1,10 @@
 import logging
 from decimal import Decimal
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from stores import wallet_manager_instance
 from services.agents.base_agent.tools import swap_assets, transfer_asset
+from stores import wallet_manager_instance
 
 router = APIRouter(prefix="/base", tags=["base"])
 logger = logging.getLogger(__name__)
@@ -25,7 +26,9 @@ async def swap(data: dict):
             )
 
         logger.info(f"Using wallet address: {wallet.default_address.address_id}")
-        logger.info(f"Attempting swap: {data['amount']} {data['fromAsset']} -> {data['toAsset']}")
+        logger.info(
+            f"Attempting swap: {data['amount']} {data['fromAsset']} -> {data['toAsset']}"
+        )
 
         # Execute swap
         result = swap_assets(
@@ -67,7 +70,9 @@ async def transfer(data: dict):
             )
 
         logger.info(f"Using wallet address: {wallet.default_address.address_id}")
-        logger.info(f"Attempting transfer: {data['amount']} {data['asset']} -> {data['destinationAddress']}")
+        logger.info(
+            f"Attempting transfer: {data['amount']} {data['asset']} -> {data['destinationAddress']}"
+        )
 
         # Execute transfer
         result = transfer_asset(
@@ -89,5 +94,8 @@ async def transfer(data: dict):
         logger.error(f"Request data that caused error: {data}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to execute transfer: {str(e)}"},
+            content={
+                "status": "error",
+                "message": f"Failed to execute transfer: {str(e)}",
+            },
         )

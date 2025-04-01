@@ -1,12 +1,13 @@
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from fastapi import HTTPException
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
-
-from src.models.service.chat_models import ChatRequest, AgentResponse, ChatMessage, ResponseType
+from src.controllers.delegation_controller import DelegationController
+from src.models.service.chat_models import (AgentResponse, ChatMessage,
+                                            ChatRequest, ResponseType)
 from src.models.service.service_models import GenerateConversationTitleRequest
 from src.services.delegator.delegator import Delegator
-from src.controllers.delegation_controller import DelegationController
 
 
 @pytest.fixture
@@ -41,7 +42,8 @@ async def test_handle_chat_agent_not_found(controller, chat_request):
     chat_request.prompt.content = "/nonexistent_agent test message"
 
     with patch(
-        "stores.agent_manager_instance.parse_command", return_value=("nonexistent_agent", "test message")
+        "stores.agent_manager_instance.parse_command",
+        return_value=("nonexistent_agent", "test message"),
     ), patch("stores.agent_manager_instance.get_agent", return_value=None), patch(
         "stores.agent_manager_instance.set_active_agent"
     ):
@@ -55,11 +57,13 @@ async def test_handle_chat_agent_not_found(controller, chat_request):
 @pytest.mark.asyncio
 async def test_handle_chat_invalid_response(controller, chat_request, mock_delegator):
     # Setup
-    mock_delegator.delegate_chat = AsyncMock(return_value=("test_agent", "invalid response type"))
+    mock_delegator.delegate_chat = AsyncMock(
+        return_value=("test_agent", "invalid response type")
+    )
 
-    with patch("stores.agent_manager_instance.parse_command", return_value=(None, None)), patch(
-        "stores.agent_manager_instance.clear_active_agent"
-    ):
+    with patch(
+        "stores.agent_manager_instance.parse_command", return_value=(None, None)
+    ), patch("stores.agent_manager_instance.clear_active_agent"):
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await controller.handle_chat(chat_request)
@@ -72,9 +76,9 @@ async def test_handle_chat_timeout(controller, chat_request, mock_delegator):
     # Setup
     mock_delegator.delegate_chat = AsyncMock(side_effect=TimeoutError())
 
-    with patch("stores.agent_manager_instance.parse_command", return_value=(None, None)), patch(
-        "stores.agent_manager_instance.clear_active_agent"
-    ):
+    with patch(
+        "stores.agent_manager_instance.parse_command", return_value=(None, None)
+    ), patch("stores.agent_manager_instance.clear_active_agent"):
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await controller.handle_chat(chat_request)

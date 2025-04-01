@@ -1,17 +1,19 @@
 import logging
-
 import warnings
 
 # Suppress Tweepy warnings before it is imported. Until maintainers fix the issue.
-warnings.filterwarnings("ignore", message="invalid escape sequence.*", category=SyntaxWarning, module="tweepy")
+warnings.filterwarnings(
+    "ignore",
+    message="invalid escape sequence.*",
+    category=SyntaxWarning,
+    module="tweepy",
+)
 
 import tweepy
-
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from stores import agent_manager_instance
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,10 @@ async def regenerate_tweet():
         logger.error(f"Failed to regenerate tweet: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to regenerate tweet: {str(e)}"},
+            content={
+                "status": "error",
+                "message": f"Failed to regenerate tweet: {str(e)}",
+            },
         )
 
 
@@ -67,7 +72,11 @@ async def post_tweet(request: TweetRequest):
 
         return JSONResponse(
             status_code=200,
-            content={"status": "success", "tweet": response.data["text"], "tweet_id": response.data["id"]},
+            content={
+                "status": "success",
+                "tweet": response.data["text"],
+                "tweet_id": response.data["id"],
+            },
         )
 
     except Exception as e:

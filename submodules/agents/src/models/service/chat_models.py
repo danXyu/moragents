@@ -1,9 +1,10 @@
 import time
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from fastapi import Query
+from langchain.schema import AIMessage, BaseMessage, HumanMessage
 from pydantic import BaseModel, Field
-from langchain.schema import BaseMessage, HumanMessage, AIMessage
 
 
 class ResponseType(Enum):
@@ -27,7 +28,9 @@ class ChatMessage(BaseModel):
     action_type: Optional[str] = None
     timestamp: Optional[float] = Field(default_factory=lambda: time.time())
 
-    def from_agent_response(self, response: "AgentResponse", agent_name: str) -> "ChatMessage":
+    def from_agent_response(
+        self, response: "AgentResponse", agent_name: str
+    ) -> "ChatMessage":
         """Create a ChatMessage from an AgentResponse"""
         return ChatMessage(
             role="assistant",
@@ -55,9 +58,13 @@ class ChatRequest(BaseModel):
         # Add chat history messages up to the past 5 messages
         for i, msg in enumerate(reversed(self.chat_history[:5])):
             if msg.role == "user":
-                messages.append(HumanMessage(content=f"Chat History index {i}: {msg.content}"))
+                messages.append(
+                    HumanMessage(content=f"Chat History index {i}: {msg.content}")
+                )
             elif msg.role == "assistant":
-                messages.append(AIMessage(content=f"Chat History index {i}: {msg.content}"))
+                messages.append(
+                    AIMessage(content=f"Chat History index {i}: {msg.content}")
+                )
 
         # Add current prompt
         messages.append(HumanMessage(content=f"Current Prompt: {self.prompt.content}"))
@@ -98,11 +105,17 @@ class AgentResponse(BaseModel):
 
     @classmethod
     def success(
-        cls, content: str, metadata: Optional[Dict[str, Any]] = None, action_type: Optional[str] = None
+        cls,
+        content: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        action_type: Optional[str] = None,
     ) -> "AgentResponse":
         """Create a successful response"""
         return cls(
-            response_type=ResponseType.SUCCESS, content=content, metadata=metadata or {}, action_type=action_type
+            response_type=ResponseType.SUCCESS,
+            content=content,
+            metadata=metadata or {},
+            action_type=action_type,
         )
 
     @classmethod
@@ -119,9 +132,15 @@ class AgentResponse(BaseModel):
         )
 
     @classmethod
-    def needs_info(cls, content: str, metadata: Optional[Dict[str, Any]] = None) -> "AgentResponse":
+    def needs_info(
+        cls, content: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> "AgentResponse":
         """Create a response requesting more information from user"""
-        return cls(response_type=ResponseType.NEEDS_INFO, content=content, metadata=metadata or {})
+        return cls(
+            response_type=ResponseType.NEEDS_INFO,
+            content=content,
+            metadata=metadata or {},
+        )
 
     @classmethod
     def action_required(

@@ -1,9 +1,9 @@
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from typing import Any, Dict, List, Optional
 
 from models.core.user_models import User, UserSetting
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 class UserDAO:
@@ -46,20 +46,28 @@ class UserDAO:
 
     # User Settings Methods
     def get_setting(self, user_id: int, settings_key: str) -> Optional[UserSetting]:
-        stmt = select(UserSetting).where(UserSetting.user_id == user_id, UserSetting.settings_key == settings_key)
+        stmt = select(UserSetting).where(
+            UserSetting.user_id == user_id, UserSetting.settings_key == settings_key
+        )
         return self.session.execute(stmt).scalar_one_or_none()
 
     def get_all_settings(self, user_id: int) -> List[UserSetting]:
         stmt = select(UserSetting).where(UserSetting.user_id == user_id)
         return list(self.session.execute(stmt).scalars())
 
-    def create_setting(self, user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> UserSetting:
-        setting = UserSetting(user_id=user_id, settings_key=settings_key, settings_value=settings_value)
+    def create_setting(
+        self, user_id: int, settings_key: str, settings_value: Dict[str, Any]
+    ) -> UserSetting:
+        setting = UserSetting(
+            user_id=user_id, settings_key=settings_key, settings_value=settings_value
+        )
         self.session.add(setting)
         self.session.commit()
         return setting
 
-    def update_setting(self, user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> Optional[UserSetting]:
+    def update_setting(
+        self, user_id: int, settings_key: str, settings_value: Dict[str, Any]
+    ) -> Optional[UserSetting]:
         setting = self.get_setting(user_id, settings_key)
         if setting:
             setting.settings_value = settings_value
@@ -68,13 +76,19 @@ class UserDAO:
             return setting
         return None
 
-    def upsert_setting(self, user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> UserSetting:
+    def upsert_setting(
+        self, user_id: int, settings_key: str, settings_value: Dict[str, Any]
+    ) -> UserSetting:
         setting = self.get_setting(user_id, settings_key)
         if setting:
             setting.settings_value = settings_value
             setting.updated_at = datetime.utcnow()
         else:
-            setting = UserSetting(user_id=user_id, settings_key=settings_key, settings_value=settings_value)
+            setting = UserSetting(
+                user_id=user_id,
+                settings_key=settings_key,
+                settings_value=settings_value,
+            )
             self.session.add(setting)
         self.session.commit()
         return setting

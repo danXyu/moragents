@@ -1,10 +1,12 @@
-import pytest
-import logging
 import json
-from unittest.mock import Mock, patch, AsyncMock
-from src.services.delegator.delegator import Delegator, RankAgentsOutput
-from src.models.service.chat_models import ChatRequest, AgentResponse, ResponseType, ChatMessage
+import logging
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from src.models.service.chat_models import (AgentResponse, ChatMessage,
+                                            ChatRequest, ResponseType)
+from src.services.delegator.delegator import Delegator, RankAgentsOutput
 
 
 @pytest.fixture
@@ -22,7 +24,9 @@ def delegator(mock_llm):
 def sample_chat_request():
     return ChatRequest(
         conversation_id="test_conv",
-        prompt=ChatMessage(role="user", content="What's the weather?", agentName="base"),
+        prompt=ChatMessage(
+            role="user", content="What's the weather?", agentName="base"
+        ),
         chain_id="1",
         wallet_address="0x123",
         chat_history=[
@@ -40,7 +44,9 @@ def test_build_system_prompt(delegator):
     ]
 
     with patch("src.services.delegator.delegator.get_system_prompt") as mock_get_prompt:
-        mock_get_prompt.return_value = "You are Morpheus\n- weather: Gets weather info\n- math: Does calculations"
+        mock_get_prompt.return_value = (
+            "You are Morpheus\n- weather: Gets weather info\n- math: Does calculations"
+        )
         prompt = mock_get_prompt(available_agents)
 
         assert "weather: Gets weather info" in prompt
@@ -50,7 +56,9 @@ def test_build_system_prompt(delegator):
 
 @pytest.mark.unit
 @patch("src.services.delegator.delegator.agent_manager_instance.get_available_agents")
-def test_get_delegator_response_no_agents(mock_get_agents, delegator, sample_chat_request):
+def test_get_delegator_response_no_agents(
+    mock_get_agents, delegator, sample_chat_request
+):
     mock_get_agents.return_value = []
 
     result = delegator.get_delegator_response(sample_chat_request)
@@ -61,7 +69,9 @@ def test_get_delegator_response_no_agents(mock_get_agents, delegator, sample_cha
 
 @pytest.mark.unit
 @patch("src.services.delegator.delegator.agent_manager_instance.get_available_agents")
-def test_get_delegator_response_valid_json(mock_get_agents, delegator, sample_chat_request, mock_llm):
+def test_get_delegator_response_valid_json(
+    mock_get_agents, delegator, sample_chat_request, mock_llm
+):
     mock_get_agents.return_value = [{"name": "agent1", "delegator_description": "test"}]
     mock_llm.return_value = Mock(content='{"agents": ["agent1", "agent2"]}')
 
@@ -73,7 +83,9 @@ def test_get_delegator_response_valid_json(mock_get_agents, delegator, sample_ch
 
 @pytest.mark.unit
 @patch("src.services.delegator.delegator.agent_manager_instance.get_available_agents")
-def test_get_delegator_response_fallback_parser(mock_get_agents, delegator, sample_chat_request, mock_llm):
+def test_get_delegator_response_fallback_parser(
+    mock_get_agents, delegator, sample_chat_request, mock_llm
+):
     mock_get_agents.return_value = [{"name": "agent1", "delegator_description": "test"}]
     mock_llm.return_value = Mock(content='{"agents": ["agent1"]}')
 
@@ -106,7 +118,9 @@ async def test_try_agent_success(mock_load_config, delegator, sample_chat_reques
 @pytest.mark.unit
 @pytest.mark.asyncio
 @patch("src.services.delegator.delegator.load_agent_config")
-async def test_try_agent_error_response(mock_load_config, delegator, sample_chat_request):
+async def test_try_agent_error_response(
+    mock_load_config, delegator, sample_chat_request
+):
     mock_load_config.return_value = {"path": "test.path", "class_name": "TestAgent"}
 
     mock_module = Mock()

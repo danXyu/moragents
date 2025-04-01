@@ -1,10 +1,10 @@
 import logging
-import pytest
+from typing import Any, Dict
 from unittest.mock import patch
-from typing import Dict, Any
 
+import pytest
+from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.dca_agent.agent import DCAAgent
-from models.service.chat_models import ChatRequest, AgentResponse
 
 logger = logging.getLogger(__name__)
 

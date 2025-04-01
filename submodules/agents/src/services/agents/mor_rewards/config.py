@@ -32,8 +32,14 @@ class Config:
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "pool_id": {"type": "string", "description": "Pool ID to check rewards for"},
-                    "user": {"type": "string", "description": "User address to check rewards for"},
+                    "pool_id": {
+                        "type": "string",
+                        "description": "Pool ID to check rewards for",
+                    },
+                    "user": {
+                        "type": "string",
+                        "description": "User address to check rewards for",
+                    },
                 },
                 "required": ["pool_id", "user"],
             },

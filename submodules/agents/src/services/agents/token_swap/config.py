@@ -1,5 +1,6 @@
-from models.service.agent_config import AgentConfig
 from langchain.schema import SystemMessage
+from models.service.agent_config import AgentConfig
+
 from .utils.tool_types import SwapToolType
 
 

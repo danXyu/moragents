@@ -64,7 +64,9 @@ class TokenRegistry:
         }
 
         # Create reverse mapping
-        self._mint_to_name: Dict[str, str] = {v: k for k, v in self._name_to_mint.items()}
+        self._mint_to_name: Dict[str, str] = {
+            v: k for k, v in self._name_to_mint.items()
+        }
 
         # Compile regex pattern for Solana mint addresses (base58 encoded public keys)
         self._mint_pattern: Pattern[str] = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")
@@ -116,7 +118,9 @@ class Config:
             "You can handle both token names (like 'BONK' or 'RAY') and mint addresses. "
             "When you need to perform an analysis, use the appropriate function call. "
             "For token names, you must verify they exist in the supported token list. "
-            "The supported tokens are: " + ", ".join(TokenRegistry().get_all_tokens()) + ". "
+            "The supported tokens are: "
+            + ", ".join(TokenRegistry().get_all_tokens())
+            + ". "
             "If a token name is not in this list, you must find its mint address in the "
             "current chat message or in the conversation history. "
             "Do not make up or hallucinate mint addresses - if you cannot find a valid mint address, "
@@ -135,7 +139,10 @@ class Config:
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "identifier": {"type": "string", "description": "Token name (e.g., 'BONK', 'RAY') or mint address"}
+                    "identifier": {
+                        "type": "string",
+                        "description": "Token name (e.g., 'BONK', 'RAY') or mint address",
+                    }
                 },
                 "required": ["identifier"],
             },

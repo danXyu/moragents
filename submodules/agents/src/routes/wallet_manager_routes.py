@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from stores import wallet_manager_instance
@@ -17,12 +18,18 @@ async def create_wallet(request: Request) -> JSONResponse:
     set_active = data.get("set_active", True)  # Default to True if not specified
 
     try:
-        wallet = wallet_manager_instance.create_wallet(wallet_id, network_id, set_active)
+        wallet = wallet_manager_instance.create_wallet(
+            wallet_id, network_id, set_active
+        )
         address = wallet.default_address.address_id
-        return JSONResponse(content={"status": "success", "wallet_id": wallet_id, "address": address})
+        return JSONResponse(
+            content={"status": "success", "wallet_id": wallet_id, "address": address}
+        )
     except Exception as e:
         logger.error(f"Failed to create wallet: {str(e)}")
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+        return JSONResponse(
+            status_code=500, content={"status": "error", "message": str(e)}
+        )
 
 
 @router.post("/restore")
@@ -40,17 +47,30 @@ async def restore_wallet(request: Request) -> JSONResponse:
         )
 
     try:
-        wallet = wallet_manager_instance.restore_wallet(wallet_id, wallet_data, set_active)
+        wallet = wallet_manager_instance.restore_wallet(
+            wallet_id, wallet_data, set_active
+        )
         if wallet:
             address = wallet.default_address.address_id
-            return JSONResponse(content={"status": "success", "wallet_id": wallet_id, "address": address})
+            return JSONResponse(
+                content={
+                    "status": "success",
+                    "wallet_id": wallet_id,
+                    "address": address,
+                }
+            )
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to restore wallet {wallet_id}"},
+            content={
+                "status": "error",
+                "message": f"Failed to restore wallet {wallet_id}",
+            },
         )
     except Exception as e:
         logger.error(f"Failed to restore wallet: {str(e)}")
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+        return JSONResponse(
+            status_code=500, content={"status": "error", "message": str(e)}
+        )
 
 
 @router.get("/list")
@@ -108,7 +128,9 @@ async def load_wallet(request: Request) -> JSONResponse:
     wallet = wallet_manager_instance.load_wallet(wallet_id, filepath, set_active)
     if wallet:
         address = wallet.default_address.address_id
-        return JSONResponse(content={"status": "success", "wallet_id": wallet_id, "address": address})
+        return JSONResponse(
+            content={"status": "success", "wallet_id": wallet_id, "address": address}
+        )
     return JSONResponse(
         status_code=500,
         content={"status": "error", "message": f"Failed to load wallet {wallet_id}"},
@@ -141,15 +163,22 @@ async def set_active_wallet(request: Request) -> JSONResponse:
     wallet_id = data.get("wallet_id")
 
     if not wallet_id:
-        return JSONResponse(status_code=400, content={"status": "error", "message": "Missing wallet_id"})
+        return JSONResponse(
+            status_code=400, content={"status": "error", "message": "Missing wallet_id"}
+        )
 
     success = wallet_manager_instance.set_active_wallet(wallet_id)
     if success:
         address = wallet_manager_instance.get_wallet_address(wallet_id)
-        return JSONResponse(content={"status": "success", "wallet_id": wallet_id, "address": address})
+        return JSONResponse(
+            content={"status": "success", "wallet_id": wallet_id, "address": address}
+        )
     return JSONResponse(
         status_code=500,
-        content={"status": "error", "message": f"Failed to set wallet {wallet_id} as active"},
+        content={
+            "status": "error",
+            "message": f"Failed to set wallet {wallet_id} as active",
+        },
     )
 
 
@@ -159,7 +188,9 @@ async def get_active_wallet() -> JSONResponse:
     active_wallet_id = wallet_manager_instance.get_active_wallet_id()
     if active_wallet_id:
         address = wallet_manager_instance.get_wallet_address(active_wallet_id)
-        return JSONResponse(content={"active_wallet_id": active_wallet_id, "address": address})
+        return JSONResponse(
+            content={"active_wallet_id": active_wallet_id, "address": address}
+        )
     return JSONResponse(content={"active_wallet_id": None, "address": None})
 
 

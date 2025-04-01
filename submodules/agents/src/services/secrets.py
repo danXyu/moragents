@@ -3,12 +3,13 @@
 # or implementing the sample code, visit the AWS docs:
 # https://aws.amazon.com/developer/language/python/
 
-import boto3
 import json
-from botocore.exceptions import ClientError
-from models.config.config import Config
 from functools import lru_cache
+
+import boto3
+from botocore.exceptions import ClientError
 from logs import setup_logging
+from models.config.config import Config
 
 logger = setup_logging()
 
@@ -29,7 +30,9 @@ def get_secret(secret_name: str, region_name: str = "us-west-1") -> str:
     client = session.client(service_name="secretsmanager", region_name=region_name)
 
     try:
-        logger.info(f"Attempting to retrieve secret '{secret_name}' from region '{region_name}'")
+        logger.info(
+            f"Attempting to retrieve secret '{secret_name}' from region '{region_name}'"
+        )
         get_secret_value_response = client.get_secret_value(SecretId=secret_name)
         logger.info(f"Successfully retrieved secret '{secret_name}'")
     except ClientError as e:

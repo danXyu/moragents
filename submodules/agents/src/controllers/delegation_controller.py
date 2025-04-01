@@ -1,12 +1,13 @@
 from typing import Optional
+
+from config import LLM_DELEGATOR, setup_logging
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from models.service.chat_models import ChatRequest, AgentResponse
-from stores import agent_manager_instance
-from services.delegator.delegator import Delegator
-from config import setup_logging, LLM_DELEGATOR
-from models.service.service_models import GenerateConversationTitleRequest
 from langchain.schema import SystemMessage
+from models.service.chat_models import AgentResponse, ChatRequest
+from models.service.service_models import GenerateConversationTitleRequest
+from services.delegator.delegator import Delegator
+from stores import agent_manager_instance
 
 logger = setup_logging()
 
@@ -17,14 +18,18 @@ class DelegationController:
 
     async def handle_chat(self, chat_request: ChatRequest) -> JSONResponse:
         """Handle chat requests and delegate to appropriate agent"""
-        logger.info(f"Received chat request for conversation {chat_request.conversation_id}")
+        logger.info(
+            f"Received chat request for conversation {chat_request.conversation_id}"
+        )
 
         assert self.delegator is not None
         logger.info(f"Delegator: {self.delegator}")
 
         try:
             # Parse command if present
-            agent_name, message = agent_manager_instance.parse_command(chat_request.prompt.content)
+            agent_name, message = agent_manager_instance.parse_command(
+                chat_request.prompt.content
+            )
 
             if agent_name:
                 agent_manager_instance.set_active_agent(agent_name)
@@ -38,7 +43,9 @@ class DelegationController:
                 agent = agent_manager_instance.get_agent(agent_name)
                 if not agent:
                     logger.error(f"Agent {agent_name} not found")
-                    raise HTTPException(status_code=404, detail=f"Agent {agent_name} not found")
+                    raise HTTPException(
+                        status_code=404, detail=f"Agent {agent_name} not found"
+                    )
 
                 agent_response = await agent.chat(chat_request)
                 current_agent = agent_name
@@ -47,12 +54,18 @@ class DelegationController:
             else:
                 logger.info("Using delegator flow")
                 # self.delegator.reset_attempted_agents()
-                current_agent, agent_response = await self.delegator.delegate_chat(chat_request)
+                current_agent, agent_response = await self.delegator.delegate_chat(
+                    chat_request
+                )
 
             # We only critically fail if we don't get an AgentResponse
             if not isinstance(agent_response, AgentResponse):
-                logger.error(f"Agent {current_agent} returned invalid response type {type(agent_response)}")
-                raise HTTPException(status_code=500, detail="Agent returned invalid response type")
+                logger.error(
+                    f"Agent {current_agent} returned invalid response type {type(agent_response)}"
+                )
+                raise HTTPException(
+                    status_code=500, detail="Agent returned invalid response type"
+                )
 
             response = agent_response.to_chat_message(current_agent).model_dump()
             logger.info(f"Sending response: {response}")
@@ -70,7 +83,9 @@ class DelegationController:
             logger.error(f"Error in chat route: {str(e)}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def generate_conversation_title(self, request: GenerateConversationTitleRequest) -> str:
+    async def generate_conversation_title(
+        self, request: GenerateConversationTitleRequest
+    ) -> str:
         """Generate a title for a conversation based on chat history"""
         system_prompt = """You are a helpful assistant that generates concise, descriptive titles for conversations.
         Generate a short title (3-6 words) that captures the main topic or theme of the conversation.
@@ -99,7 +114,9 @@ class DelegationController:
                     return title
 
                 except Exception as e:
-                    logger.warning(f"Title generation attempt {attempt+1} failed: {str(e)}")
+                    logger.warning(
+                        f"Title generation attempt {attempt+1} failed: {str(e)}"
+                    )
                     if attempt == 2:
                         raise
 
@@ -107,4 +124,6 @@ class DelegationController:
 
         except Exception as e:
             logger.error(f"Error generating title: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Failed to generate title: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to generate title: {str(e)}"
+            )

@@ -1,17 +1,15 @@
-import os
 import importlib.util
-
-from typing import List, Dict, Any, Optional
+import os
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter
-from langchain_together import ChatTogether
 from langchain_cerebras import ChatCerebras
 from langchain_ollama import ChatOllama, OllamaEmbeddings
-
+from langchain_together import ChatTogether
+from logs import setup_logging
+from services.secrets import get_secret
 from services.vectorstore.together_embeddings import TogetherEmbeddings
 from services.vectorstore.vector_store_service import VectorStoreService
-from services.secrets import get_secret
-from logs import setup_logging
 
 logger = setup_logging()
 
@@ -107,7 +105,9 @@ def load_agent_config(agent_name: str) -> Optional[Dict[str, Any]]:
             logger.info(f"Successfully loaded config for {agent_name}")
             return config_dict
         else:
-            logger.warning(f"No Config class or agent_config found in {agent_name}/config.py")
+            logger.warning(
+                f"No Config class or agent_config found in {agent_name}/config.py"
+            )
             return None
 
     except Exception as e:
@@ -139,7 +139,6 @@ def load_agent_configs() -> List[Dict[str, Any]]:
 
 # Configuration object
 class AppConfig:
-
     # Model configuration
     OLLAMA_MODEL = "llama3.2:3b"
     OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"

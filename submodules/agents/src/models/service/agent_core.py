@@ -1,14 +1,16 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, Callable, TypeVar, Awaitable
 from functools import wraps
+from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
 
-from models.service.chat_models import ChatRequest, AgentResponse
+from models.service.chat_models import AgentResponse, ChatRequest
 
 T = TypeVar("T")
 
 
-def handle_exceptions(func: Callable[..., Awaitable[AgentResponse]]) -> Callable[..., Awaitable[AgentResponse]]:
+def handle_exceptions(
+    func: Callable[..., Awaitable[AgentResponse]]
+) -> Callable[..., Awaitable[AgentResponse]]:
     """Decorator to handle exceptions uniformly across agent methods"""
 
     @wraps(func)
@@ -21,8 +23,12 @@ def handle_exceptions(func: Callable[..., Awaitable[AgentResponse]]) -> Callable
             return AgentResponse.error(error_message=str(e))
         except Exception as e:
             # Handle unexpected errors - these are breaking errors
-            self.logger.error(f"Unexpected error in {func.__name__}: {str(e)}", exc_info=True)
-            return AgentResponse.error(error_message="An unexpected error occurred. Please try again later.")
+            self.logger.error(
+                f"Unexpected error in {func.__name__}: {str(e)}", exc_info=True
+            )
+            return AgentResponse.error(
+                error_message="An unexpected error occurred. Please try again later."
+            )
 
     return wrapper
 
@@ -42,7 +48,9 @@ class AgentCore(ABC):
     async def _validate_request(self, request: ChatRequest) -> Optional[AgentResponse]:
         """Validate common request parameters and return appropriate response type"""
         if not request.prompt:
-            return AgentResponse.error(error_message="Please provide a prompt to process your request")
+            return AgentResponse.error(
+                error_message="Please provide a prompt to process your request"
+            )
 
         return None
 
@@ -99,7 +107,9 @@ class AgentCore(ABC):
                 return AgentResponse.success(content=content)
             else:
                 self.logger.warning("Received invalid response format from LLM")
-                return AgentResponse.error(error_message="Received invalid response format from LLM")
+                return AgentResponse.error(
+                    error_message="Received invalid response format from LLM"
+                )
 
         except Exception as e:
             self.logger.error(f"Error processing LLM response: {str(e)}", exc_info=True)
@@ -113,7 +123,9 @@ class AgentCore(ABC):
             args = tool_call.get("args", {})
 
             if not func_name:
-                return AgentResponse.error(error_message="Invalid tool call format - no function name provided")
+                return AgentResponse.error(
+                    error_message="Invalid tool call format - no function name provided"
+                )
 
             # Execute tool and handle response
             # This should be implemented by subclasses based on their specific tools
@@ -121,9 +133,13 @@ class AgentCore(ABC):
 
         except Exception as e:
             self.logger.error(f"Error processing tool calls: {str(e)}", exc_info=True)
-            return AgentResponse.error(error_message="Error executing the requested action")
+            return AgentResponse.error(
+                error_message="Error executing the requested action"
+            )
 
     @abstractmethod
-    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
+    async def _execute_tool(
+        self, func_name: str, args: Dict[str, Any]
+    ) -> AgentResponse:
         """Execute a tool with given arguments. Must be implemented by subclasses."""
         raise NotImplementedError("Subclasses must implement _execute_tool")

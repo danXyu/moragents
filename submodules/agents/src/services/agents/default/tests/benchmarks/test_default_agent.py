@@ -1,31 +1,38 @@
 import logging
-import pytest
+from typing import Any, Dict
 from unittest.mock import patch
-from typing import Dict, Any
 
-from services.agents.default.agent import DefaultAgent
-from models.service.chat_models import ChatRequest, AgentResponse
-from models.service.agent_core import AgentCore
-from stores import agent_manager_instance
+import pytest
 from langchain.schema import SystemMessage
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
+from services.agents.default.agent import DefaultAgent
+from stores import agent_manager_instance
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
 def default_agent(llm):
-    config: Dict[str, Any] = {"name": "default", "description": "Agent for general conversation"}
+    config: Dict[str, Any] = {
+        "name": "default",
+        "description": "Agent for general conversation",
+    }
     return DefaultAgent(config=config, llm=llm)
 
 
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_general_conversation(default_agent, make_chat_request):
-    request = make_chat_request(content="What is the weather like?", agent_name="default")
+    request = make_chat_request(
+        content="What is the weather like?", agent_name="default"
+    )
 
     with patch("stores.agent_manager_instance.get_available_agents") as mock_available:
         mock_available.return_value = []
-        with patch("stores.agent_manager_instance.get_selected_agents") as mock_selected:
+        with patch(
+            "stores.agent_manager_instance.get_selected_agents"
+        ) as mock_selected:
             mock_selected.return_value = []
 
             response = await default_agent._process_request(request)
@@ -38,16 +45,24 @@ async def test_general_conversation(default_agent, make_chat_request):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_agent_info_request(default_agent, make_chat_request):
-    request = make_chat_request(content="What can Morpheus agents do?", agent_name="default")
+    request = make_chat_request(
+        content="What can Morpheus agents do?", agent_name="default"
+    )
 
     mock_agents = [
-        {"name": "crypto_data", "human_readable_name": "Crypto Data", "description": "Crypto data queries"},
+        {
+            "name": "crypto_data",
+            "human_readable_name": "Crypto Data",
+            "description": "Crypto data queries",
+        },
         {"name": "dca", "human_readable_name": "DCA", "description": "DCA strategies"},
     ]
 
     with patch("stores.agent_manager_instance.get_available_agents") as mock_available:
         mock_available.return_value = mock_agents
-        with patch("stores.agent_manager_instance.get_selected_agents") as mock_selected:
+        with patch(
+            "stores.agent_manager_instance.get_selected_agents"
+        ) as mock_selected:
             mock_selected.return_value = ["crypto_data", "dca"]
 
             response = await default_agent._process_request(request)

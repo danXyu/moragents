@@ -1,4 +1,5 @@
 from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -80,7 +81,9 @@ class BoostedTokenResponse(BaseModel):
     @property
     def formatted_response(self) -> str:
         """Format boosted token data into a readable markdown string."""
-        return TokenProfileResponse(tokens=self.tokens, chain_id=self.chain_id).formatted_response
+        return TokenProfileResponse(
+            tokens=self.tokens, chain_id=self.chain_id
+        ).formatted_response
 
 
 class DexPair(BaseModel):
@@ -145,7 +148,9 @@ class DexPairSearchResponse(BaseModel):
 
             if pair.info:
                 for website in pair.info.get("websites", []):
-                    link_parts.append(f"[{website.get('label', 'Website')}]({website.get('url')})")
+                    link_parts.append(
+                        f"[{website.get('label', 'Website')}]({website.get('url')})"
+                    )
 
                 for social in pair.info.get("socials", []):
                     social_type = social.get("type", "").title()

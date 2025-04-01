@@ -1,9 +1,9 @@
 import logging
 import os
-from fastapi import APIRouter, File, UploadFile
-from fastapi.responses import JSONResponse
 
 from config import RAG_VECTOR_STORE
+from fastapi import APIRouter, File, UploadFile
+from fastapi.responses import JSONResponse
 from models.service.chat_models import AgentResponse
 
 logger = logging.getLogger(__name__)
@@ -28,19 +28,27 @@ async def upload_file(file: UploadFile = File(...)):
         RAG_VECTOR_STORE.save(VECTOR_STORE_PATH)
         logger.info(f"Vector store saved to {VECTOR_STORE_PATH}")
 
-        response = AgentResponse.success(content=result).to_chat_message("rag").model_dump()
+        response = (
+            AgentResponse.success(content=result).to_chat_message("rag").model_dump()
+        )
         return JSONResponse(content=response)
 
     except ValueError as ve:
         # Handle validation errors
         logger.warning(f"Validation error: {str(ve)}")
-        response = AgentResponse.error(error_message=str(ve)).to_chat_message("rag").model_dump()
+        response = (
+            AgentResponse.error(error_message=str(ve))
+            .to_chat_message("rag")
+            .model_dump()
+        )
         return JSONResponse(content=response)
     except Exception as e:
         # Handle other errors
         logger.error(f"Failed to upload file: {str(e)}")
         response = (
-            AgentResponse.error(error_message=f"Failed to upload file: {str(e)}").to_chat_message("rag").model_dump()
+            AgentResponse.error(error_message=f"Failed to upload file: {str(e)}")
+            .to_chat_message("rag")
+            .model_dump()
         )
         return JSONResponse(content=response)
 
@@ -61,7 +69,9 @@ async def delete_documents():
             logger.info(f"Removed vector store at {VECTOR_STORE_PATH}")
 
         response = (
-            AgentResponse.success(content="All documents have been removed from the vector store")
+            AgentResponse.success(
+                content="All documents have been removed from the vector store"
+            )
             .to_chat_message("rag")
             .model_dump()
         )

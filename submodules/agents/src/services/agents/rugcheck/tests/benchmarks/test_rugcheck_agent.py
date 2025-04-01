@@ -1,19 +1,24 @@
-import pytest
 import logging
-from unittest.mock import patch, Mock
-from typing import Dict, Any
+from typing import Any, Dict
+from unittest.mock import Mock, patch
 
-from services.agents.rugcheck.agent import RugcheckAgent
+import pytest
 from models.service.chat_models import AgentResponse, ChatRequest
+from services.agents.rugcheck.agent import RugcheckAgent
 from services.agents.rugcheck.tool_types import RugcheckToolType
-from services.agents.rugcheck.tools import fetch_token_report, fetch_most_viewed, fetch_most_voted
+from services.agents.rugcheck.tools import (fetch_most_viewed,
+                                            fetch_most_voted,
+                                            fetch_token_report)
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
 def rugcheck_agent(llm):
-    config: Dict[str, Any] = {"name": "rugcheck", "description": "Agent for analyzing token safety"}
+    config: Dict[str, Any] = {
+        "name": "rugcheck",
+        "description": "Agent for analyzing token safety",
+    }
     return RugcheckAgent(config, llm)
 
 
@@ -25,18 +30,35 @@ async def test_token_report_success(rugcheck_agent, make_chat_request):
     with patch.object(rugcheck_agent.tool_bound_llm, "invoke") as mock_invoke:
         mock_invoke.return_value = {
             "tool_calls": [
-                {"function": {"name": RugcheckToolType.GET_TOKEN_REPORT.value, "arguments": {"identifier": "BONK"}}}
+                {
+                    "function": {
+                        "name": RugcheckToolType.GET_TOKEN_REPORT.value,
+                        "arguments": {"identifier": "BONK"},
+                    }
+                }
             ]
         }
 
-        with patch("services.agents.rugcheck.tools.resolve_token_identifier") as mock_resolve:
+        with patch(
+            "services.agents.rugcheck.tools.resolve_token_identifier"
+        ) as mock_resolve:
             mock_resolve.return_value = "BONK123"
 
-            with patch("services.agents.rugcheck.tools.fetch_token_report") as mock_fetch:
-                mock_fetch.return_value.formatted_response = "Token Analysis Report\nOverall Risk Score: 85"
+            with patch(
+                "services.agents.rugcheck.tools.fetch_token_report"
+            ) as mock_fetch:
+                mock_fetch.return_value.formatted_response = (
+                    "Token Analysis Report\nOverall Risk Score: 85"
+                )
                 mock_fetch.return_value.model_dump.return_value = {
                     "score": 85,
-                    "risks": [{"name": "Liquidity Risk", "description": "Low liquidity detected", "score": 60}],
+                    "risks": [
+                        {
+                            "name": "Liquidity Risk",
+                            "description": "Low liquidity detected",
+                            "score": 60,
+                        }
+                    ],
                 }
 
                 response = await rugcheck_agent._process_request(request)
@@ -51,14 +73,23 @@ async def test_token_report_success(rugcheck_agent, make_chat_request):
 @pytest.mark.asyncio
 async def test_most_viewed_success(rugcheck_agent):
     with patch("services.agents.rugcheck.tools.fetch_most_viewed") as mock_fetch:
-        mock_fetch.return_value.formatted_response = "Most Viewed Tokens\nToken1: 1000 visits"
+        mock_fetch.return_value.formatted_response = (
+            "Most Viewed Tokens\nToken1: 1000 visits"
+        )
         mock_fetch.return_value.model_dump.return_value = {
             "tokens": [
-                {"mint": "mint123", "metadata": {"name": "Token1", "symbol": "TK1"}, "visits": 1000, "user_visits": 500}
+                {
+                    "mint": "mint123",
+                    "metadata": {"name": "Token1", "symbol": "TK1"},
+                    "visits": 1000,
+                    "user_visits": 500,
+                }
             ]
         }
 
-        response = await rugcheck_agent._execute_tool(RugcheckToolType.GET_MOST_VIEWED.value, {})
+        response = await rugcheck_agent._execute_tool(
+            RugcheckToolType.GET_MOST_VIEWED.value, {}
+        )
 
         assert isinstance(response, AgentResponse)
         assert response.response_type.value == "success"
@@ -70,12 +101,16 @@ async def test_most_viewed_success(rugcheck_agent):
 @pytest.mark.asyncio
 async def test_most_voted_success(rugcheck_agent):
     with patch("services.agents.rugcheck.tools.fetch_most_voted") as mock_fetch:
-        mock_fetch.return_value.formatted_response = "Most Voted Tokens\nToken1: 100 upvotes"
+        mock_fetch.return_value.formatted_response = (
+            "Most Voted Tokens\nToken1: 100 upvotes"
+        )
         mock_fetch.return_value.model_dump.return_value = {
             "tokens": [{"mint": "mint123", "up_count": 100, "vote_count": 150}]
         }
 
-        response = await rugcheck_agent._execute_tool(RugcheckToolType.GET_MOST_VOTED.value, {})
+        response = await rugcheck_agent._execute_tool(
+            RugcheckToolType.GET_MOST_VOTED.value, {}
+        )
 
         assert isinstance(response, AgentResponse)
         assert response.response_type.value == "success"
@@ -85,7 +120,9 @@ async def test_most_voted_success(rugcheck_agent):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_invalid_token_identifier(rugcheck_agent):
-    with patch("services.agents.rugcheck.tools.resolve_token_identifier") as mock_resolve:
+    with patch(
+        "services.agents.rugcheck.tools.resolve_token_identifier"
+    ) as mock_resolve:
         mock_resolve.return_value = None
 
         response = await rugcheck_agent._execute_tool(
@@ -110,7 +147,9 @@ async def test_unknown_tool(rugcheck_agent):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_api_error_handling(rugcheck_agent):
-    with patch("services.agents.rugcheck.tools.resolve_token_identifier") as mock_resolve:
+    with patch(
+        "services.agents.rugcheck.tools.resolve_token_identifier"
+    ) as mock_resolve:
         mock_resolve.return_value = "mint123"
 
         with patch("services.agents.rugcheck.tools.fetch_token_report") as mock_fetch:

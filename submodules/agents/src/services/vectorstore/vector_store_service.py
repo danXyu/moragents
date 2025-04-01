@@ -2,12 +2,12 @@ import logging
 import os
 from typing import Any, List
 
+from fastapi import UploadFile
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_text_splitters.character import RecursiveCharacterTextSplitter
 from werkzeug.utils import secure_filename
-from fastapi import UploadFile
 
 logger = logging.getLogger(__name__)
 

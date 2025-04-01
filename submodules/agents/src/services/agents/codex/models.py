@@ -1,5 +1,6 @@
+from typing import List, Optional
+
 from pydantic import BaseModel
-from typing import Optional, List
 
 
 class TokenMetadata(BaseModel):
@@ -131,13 +132,21 @@ class TopHoldersResponse(BaseModel):
         if not self.success:
             return "Failed to get top holders data."
 
-        risk = "High Risk" if self.data > 80 else "Medium Risk" if self.data > 50 else "Low Risk"
+        risk = (
+            "High Risk"
+            if self.data > 80
+            else "Medium Risk"
+            if self.data > 50
+            else "Low Risk"
+        )
 
         response = f"Top 10 holders own {self.data:.2f}% of supply. {risk}\n\n"
 
         if self.token_info and self.token_info.token:
             response += f"Token Info:\n"
-            response += f"Name: {self.token_info.token.name} ({self.token_info.token.symbol})\n"
+            response += (
+                f"Name: {self.token_info.token.name} ({self.token_info.token.symbol})\n"
+            )
 
             if self.token_info.priceUSD:
                 response += f"Price: ${float(self.token_info.priceUSD):,.6f}\n"
@@ -150,7 +159,9 @@ class TopHoldersResponse(BaseModel):
             if self.token_info.txnCount1:
                 response += f"24h Transactions: {self.token_info.txnCount1:,}\n"
             if self.token_info.uniqueTransactions1:
-                response += f"Unique Transactions: {self.token_info.uniqueTransactions1:,}\n"
+                response += (
+                    f"Unique Transactions: {self.token_info.uniqueTransactions1:,}\n"
+                )
             if self.token_info.exchanges:
                 exchange_names = [ex.name for ex in self.token_info.exchanges]
                 response += f"Available on: {', '.join(exchange_names)}\n"

@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from stores import workflow_manager_instance
@@ -22,10 +23,14 @@ async def create_workflow(request: Request) -> JSONResponse:
             interval=timedelta(seconds=data["interval"]),
             metadata=data.get("metadata"),
         )
-        return JSONResponse(content={"status": "success", "workflow": workflow.to_dict()})
+        return JSONResponse(
+            content={"status": "success", "workflow": workflow.to_dict()}
+        )
     except Exception as e:
         logger.error(f"Failed to create workflow: {str(e)}")
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+        return JSONResponse(
+            status_code=500, content={"status": "error", "message": str(e)}
+        )
 
 
 @router.get("/list")
@@ -36,7 +41,9 @@ async def list_workflows() -> JSONResponse:
         return JSONResponse(content={"workflows": [w.to_dict() for w in workflows]})
     except Exception as e:
         logger.error(f"Failed to list workflows: {str(e)}")
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+        return JSONResponse(
+            status_code=500, content={"status": "error", "message": str(e)}
+        )
 
 
 @router.get("/{workflow_id}")
@@ -52,7 +59,9 @@ async def get_workflow(workflow_id: str) -> JSONResponse:
         )
     except Exception as e:
         logger.error(f"Failed to get workflow: {str(e)}")
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+        return JSONResponse(
+            status_code=500, content={"status": "error", "message": str(e)}
+        )
 
 
 @router.put("/{workflow_id}")
@@ -60,16 +69,22 @@ async def update_workflow(workflow_id: str, request: Request) -> JSONResponse:
     """Update workflow properties"""
     try:
         updates = await request.json()
-        workflow = await workflow_manager_instance.update_workflow(workflow_id, **updates)
+        workflow = await workflow_manager_instance.update_workflow(
+            workflow_id, **updates
+        )
         if workflow:
-            return JSONResponse(content={"status": "success", "workflow": workflow.to_dict()})
+            return JSONResponse(
+                content={"status": "success", "workflow": workflow.to_dict()}
+            )
         return JSONResponse(
             status_code=404,
             content={"status": "error", "message": f"Workflow {workflow_id} not found"},
         )
     except Exception as e:
         logger.error(f"Failed to update workflow: {str(e)}")
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+        return JSONResponse(
+            status_code=500, content={"status": "error", "message": str(e)}
+        )
 
 
 @router.delete("/{workflow_id}")
@@ -85,4 +100,6 @@ async def delete_workflow(workflow_id: str) -> JSONResponse:
         )
     except Exception as e:
         logger.error(f"Failed to delete workflow: {str(e)}")
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+        return JSONResponse(
+            status_code=500, content={"status": "error", "message": str(e)}
+        )

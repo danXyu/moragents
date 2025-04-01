@@ -1,10 +1,10 @@
 import logging
-import pytest
+from typing import Any, Dict
 from unittest.mock import Mock, patch
-from typing import Dict, Any
 
+import pytest
+from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.base_agent.agent import BaseAgent
-from models.service.chat_models import ChatRequest, AgentResponse
 from stores import wallet_manager_instance
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,10 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def base_agent(llm):
-    config: Dict[str, Any] = {"name": "base", "description": "Agent for Base blockchain transactions"}
+    config: Dict[str, Any] = {
+        "name": "base",
+        "description": "Agent for Base blockchain transactions",
+    }
     return BaseAgent(config=config, llm=llm)
 
 
@@ -25,7 +28,11 @@ async def test_get_balance_success(base_agent, mock_wallet, make_chat_request):
     request = make_chat_request(content="What's my ETH balance?", agent_name="base")
 
     with patch("services.agents.base_agent.tools.get_balance") as mock_get_balance:
-        mock_get_balance.return_value = {"address": "0x123", "balance": "1.5", "asset": "ETH"}
+        mock_get_balance.return_value = {
+            "address": "0x123",
+            "balance": "1.5",
+            "asset": "ETH",
+        }
 
         response = await base_agent._process_request(request)
 

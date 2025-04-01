@@ -1,11 +1,11 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
-from langchain.schema import HumanMessage
-
-from models.service.agent_core import AgentCore
-from models.service.chat_models import ChatRequest, AgentResponse
 from config import RAG_VECTOR_STORE
+from langchain.schema import HumanMessage
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
+
 from .config import Config
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,8 @@ class RagAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
+    async def _execute_tool(
+        self, func_name: str, args: Dict[str, Any]
+    ) -> AgentResponse:
         """RAG agent doesn't use any tools."""
         return AgentResponse.error(error_message=f"Unknown tool: {func_name}")

@@ -1,11 +1,13 @@
 import logging
-import pytest
+from typing import Any, Dict
 from unittest.mock import patch
-from typing import Dict, Any
 
+import pytest
+from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.codex.agent import CodexAgent
-from models.service.chat_models import ChatRequest, AgentResponse
-from services.agents.codex.models import TopTokensResponse, TopHoldersResponse, NftSearchResponse
+from services.agents.codex.models import (NftSearchResponse,
+                                          TopHoldersResponse,
+                                          TopTokensResponse)
 from services.agents.codex.utils.tool_types import CodexToolType
 
 logger = logging.getLogger(__name__)
@@ -37,7 +39,9 @@ async def test_list_top_tokens_success(codex_agent, make_chat_request):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_get_top_holders_success(codex_agent, make_chat_request):
-    request = make_chat_request(content="Get top holders for Bitcoin on Ethereum", agent_name="codex")
+    request = make_chat_request(
+        content="Get top holders for Bitcoin on Ethereum", agent_name="codex"
+    )
 
     with patch("services.agents.codex.tools.get_top_holders_percent") as mock_holders:
         mock_response = TopHoldersResponse(formatted_response="Top holders data")
@@ -71,7 +75,9 @@ async def test_search_nfts_success(codex_agent, make_chat_request):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_top_holders_missing_token(codex_agent, make_chat_request):
-    request = make_chat_request(content="Get top holders on Ethereum", agent_name="codex")
+    request = make_chat_request(
+        content="Get top holders on Ethereum", agent_name="codex"
+    )
 
     response = await codex_agent._process_request(request)
 
@@ -83,7 +89,9 @@ async def test_top_holders_missing_token(codex_agent, make_chat_request):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_top_holders_missing_network(codex_agent, make_chat_request):
-    request = make_chat_request(content="Get top holders for Bitcoin", agent_name="codex")
+    request = make_chat_request(
+        content="Get top holders for Bitcoin", agent_name="codex"
+    )
 
     response = await codex_agent._process_request(request)
 
@@ -95,7 +103,9 @@ async def test_top_holders_missing_network(codex_agent, make_chat_request):
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_top_holders_invalid_network(codex_agent, make_chat_request):
-    request = make_chat_request(content="Get top holders for Bitcoin on InvalidNetwork", agent_name="codex")
+    request = make_chat_request(
+        content="Get top holders for Bitcoin on InvalidNetwork", agent_name="codex"
+    )
 
     response = await codex_agent._process_request(request)
 

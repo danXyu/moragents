@@ -1,10 +1,10 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
-from models.service.chat_models import ChatRequest, AgentResponse
-from models.service.agent_core import AgentCore
-from stores import agent_manager_instance
 from langchain.schema import SystemMessage
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
+from stores import agent_manager_instance
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,9 @@ class DefaultAgent(AgentCore):
             for agent in available_agents:
                 if agent["name"] in selected_agent_names and agent["name"] != "default":
                     human_name = agent.get("human_readable_name", agent["name"])
-                    selected_agents_info.append(f"- {human_name}: {agent['description']}")
+                    selected_agents_info.append(
+                        f"- {human_name}: {agent['description']}"
+                    )
 
             system_prompt = (
                 "You are a helpful assistant that can engage in general conversation and provide information about Morpheus agents when specifically asked.\n"
@@ -49,6 +51,8 @@ class DefaultAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
+    async def _execute_tool(
+        self, func_name: str, args: Dict[str, Any]
+    ) -> AgentResponse:
         """Default agent doesn't use any tools."""
         return AgentResponse.error(error_message=f"Unknown tool: {func_name}")

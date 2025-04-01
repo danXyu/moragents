@@ -1,12 +1,14 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from models.service.agent_core import AgentCore
-from models.service.chat_models import ChatRequest, AgentResponse
+from models.service.chat_models import AgentResponse, ChatRequest
+
 from .config import Config
-from .tools import list_top_tokens, get_top_holders_percent, search_nfts
-from .models import TopTokensResponse, TopHoldersResponse, NftSearchResponse
-from .utils.tool_types import CodexToolType
+from .models import NftSearchResponse, TopHoldersResponse, TopTokensResponse
+from .tools import get_top_holders_percent, list_top_tokens, search_nfts
 from .utils.networks import NETWORK_TO_ID_MAPPING
+from .utils.tool_types import CodexToolType
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,9 @@ class CodexAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
+    async def _execute_tool(
+        self, func_name: str, args: Dict[str, Any]
+    ) -> AgentResponse:
         """Execute the appropriate Codex API tool based on function name."""
         try:
             if func_name == CodexToolType.LIST_TOP_TOKENS.value:

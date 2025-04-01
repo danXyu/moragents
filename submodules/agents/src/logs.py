@@ -7,7 +7,9 @@ def setup_logging() -> logging.Logger:
     Setup logging for the application.
     """
     # Create formatter
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
     # Setup console handler
     console_handler = logging.StreamHandler(sys.stdout)

@@ -1,5 +1,5 @@
-from models.service.agent_config import AgentConfig
 from langchain.schema import SystemMessage
+from models.service.agent_config import AgentConfig
 
 
 class Config:
@@ -48,7 +48,12 @@ class Config:
             "description": "Generate an engaging tweet based on provided content",
             "parameters": {
                 "type": "object",
-                "properties": {"content": {"type": "string", "description": "Content to base the tweet on"}},
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "description": "Content to base the tweet on",
+                    }
+                },
                 "required": ["content"],
             },
         }
@@ -67,7 +72,9 @@ class Config:
 
     # Error messages
     ERROR_NO_TWEET_CONTENT = "No tweet content provided"
-    ERROR_TWITTER_CLIENT_NOT_INITIALIZED = "Twitter client not initialized. Please set X API credentials first."
+    ERROR_TWITTER_CLIENT_NOT_INITIALIZED = (
+        "Twitter client not initialized. Please set X API credentials first."
+    )
     ERROR_MISSING_API_CREDENTIALS = "Missing required X API credentials"
     ERROR_INVALID_ACTION = "Invalid action"
     ERROR_MISSING_PARAMETERS = "Missing required parameters"

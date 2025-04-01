@@ -1,11 +1,10 @@
 import logging
-from typing import Optional, List, Dict, Any, Self
+from typing import Any, Dict, List, Optional, Self
 
-from sqlalchemy.orm import Session
-
-from models.session import DBSessionFactory
 from models.daos.user_dao import UserDAO
 from models.service.user_service_models import UserModel, UserSettingModel
+from models.session import DBSessionFactory
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +12,14 @@ logger = logging.getLogger(__name__)
 class UserController:
     """Controller for managing users and user settings."""
 
-    def __init__(self, session: Optional[Session] = None, auto_close_session: Optional[bool] = None):
-        self._auto_close_session = (session is None) if (auto_close_session is None) else auto_close_session
+    def __init__(
+        self,
+        session: Optional[Session] = None,
+        auto_close_session: Optional[bool] = None,
+    ):
+        self._auto_close_session = (
+            (session is None) if (auto_close_session is None) else auto_close_session
+        )
         self._session: Optional[Session] = session
 
     def __enter__(self) -> Self:
@@ -23,7 +28,12 @@ class UserController:
             self._session = DBSessionFactory.get_instance().new_session()
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_value: Optional[Exception], traceback: Optional[Any]) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_value: Optional[Exception],
+        traceback: Optional[Any],
+    ) -> None:
         """Context manager exit point."""
         if self._auto_close_session and self._session:
             self._session.close()
@@ -89,7 +99,9 @@ class UserController:
     # User Settings Methods
     # *********************
 
-    def get_setting(self, user_id: int, settings_key: str) -> Optional[UserSettingModel]:
+    def get_setting(
+        self, user_id: int, settings_key: str
+    ) -> Optional[UserSettingModel]:
         """Get a setting by key for a specific user."""
         if not self._session:
             return None
@@ -107,7 +119,9 @@ class UserController:
         settings = user_dao.get_all_settings(user_id)
         return [setting.to_service_model() for setting in settings]
 
-    def create_setting(self, user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> UserSettingModel:
+    def create_setting(
+        self, user_id: int, settings_key: str, settings_value: Dict[str, Any]
+    ) -> UserSettingModel:
         """Create a new setting."""
         if not self._session:
             raise RuntimeError("No database session available")
@@ -127,7 +141,9 @@ class UserController:
             return setting.to_service_model()
         return None
 
-    def upsert_setting(self, user_id: int, settings_key: str, settings_value: Dict[str, Any]) -> UserSettingModel:
+    def upsert_setting(
+        self, user_id: int, settings_key: str, settings_value: Dict[str, Any]
+    ) -> UserSettingModel:
         """Create or update a setting."""
         if not self._session:
             raise RuntimeError("No database session available")

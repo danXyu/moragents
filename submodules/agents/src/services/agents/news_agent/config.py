@@ -46,7 +46,9 @@ class Config:
     # NEWS CONFIG
     # *************
 
-    GOOGLE_NEWS_BASE_URL = "https://news.google.com/rss/search?q={}&hl=en-US&gl=US&ceid=US:en"
+    GOOGLE_NEWS_BASE_URL = (
+        "https://news.google.com/rss/search?q={}&hl=en-US&gl=US&ceid=US:en"
+    )
     NEWS_TIME_WINDOW = 24  # Time window for news (in hours)
     ARTICLES_PER_TOKEN = 1  # Number of articles to show per token
 

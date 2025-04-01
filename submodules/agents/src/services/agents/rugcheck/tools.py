@@ -1,16 +1,10 @@
 import logging
 from typing import Optional
+
 from .client import RugcheckClient
 from .config import TokenRegistry
-from .models import (
-    TokenReportResponse,
-    ViewedTokensResponse,
-    VotedTokensResponse,
-    TokenReport,
-    ViewedToken,
-    VotedToken,
-    TokenRisk,
-)
+from .models import (TokenReport, TokenReportResponse, TokenRisk, ViewedToken,
+                     ViewedTokensResponse, VotedToken, VotedTokensResponse)
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +17,8 @@ async def fetch_token_report(api_base_url: str, mint: str) -> TokenReportRespons
         report_data = await client.get_token_report(mint)
         return TokenReportResponse(
             report=TokenReport(
-                score=report_data.get("score"), risks=[TokenRisk(**risk) for risk in report_data.get("risks", [])]
+                score=report_data.get("score"),
+                risks=[TokenRisk(**risk) for risk in report_data.get("risks", [])],
             ),
             mint_address=mint,
             token_name=report_data.get("token_name", ""),
@@ -55,7 +50,9 @@ async def fetch_most_voted(api_base_url: str) -> VotedTokensResponse:
         await client.close()
 
 
-async def resolve_token_identifier(token_registry: TokenRegistry, identifier: str) -> Optional[str]:
+async def resolve_token_identifier(
+    token_registry: TokenRegistry, identifier: str
+) -> Optional[str]:
     """
     Resolve a token identifier (name or mint address) to a mint address.
     Returns None if the identifier cannot be resolved.

@@ -1,9 +1,11 @@
 import base64
 import logging
 from io import BytesIO
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
 from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -12,8 +14,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from models.service.chat_models import ChatRequest, AgentResponse
-from models.service.agent_core import AgentCore
 from .config import Config
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,11 @@ class ImagenAgent(AgentCore):
             if result["success"]:
                 return AgentResponse.success(
                     content="Image generated successfully",
-                    metadata={"success": True, "service": result["service"], "image": result["image"]},
+                    metadata={
+                        "success": True,
+                        "service": result["service"],
+                        "image": result["image"],
+                    },
                 )
             else:
                 return AgentResponse.error(error_message=result["error"])
@@ -47,7 +51,9 @@ class ImagenAgent(AgentCore):
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message=str(e))
 
-    async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
+    async def _execute_tool(
+        self, func_name: str, args: Dict[str, Any]
+    ) -> AgentResponse:
         """Image generation agent doesn't use tools."""
         return AgentResponse.error(error_message=f"Unknown tool: {func_name}")
 
@@ -91,7 +97,9 @@ class ImagenAgent(AgentCore):
 
             # Find textarea and enter the prompt
             wait = WebDriverWait(driver, 30)
-            textarea = wait.until(EC.presence_of_element_located((By.TAG_NAME, "textarea")))
+            textarea = wait.until(
+                EC.presence_of_element_located((By.TAG_NAME, "textarea"))
+            )
             textarea.clear()
             textarea.send_keys(prompt)
 
@@ -104,7 +112,9 @@ class ImagenAgent(AgentCore):
 
             # Wait for the generated image
             img_element = WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.XPATH, "//img[@alt='Generated' and @loading='lazy']"))
+                EC.presence_of_element_located(
+                    (By.XPATH, "//img[@alt='Generated' and @loading='lazy']")
+                )
             )
 
             if img_element:
@@ -127,11 +137,17 @@ class ImagenAgent(AgentCore):
                         img_data = response.content
                         return Image.open(BytesIO(img_data))
                     else:
-                        logger.error(f"Failed to download image. Status code: {response.status_code}")
+                        logger.error(
+                            f"Failed to download image. Status code: {response.status_code}"
+                        )
                 else:
-                    logger.warning("Image format not supported. Expected a valid imgproxy or replicate URL.")
+                    logger.warning(
+                        "Image format not supported. Expected a valid imgproxy or replicate URL."
+                    )
             else:
-                logger.warning("Image not found or still generating. You may need to increase the wait time.")
+                logger.warning(
+                    "Image not found or still generating. You may need to increase the wait time."
+                )
 
         except Exception as e:
             logger.error(f"Error in image generation: {str(e)}")

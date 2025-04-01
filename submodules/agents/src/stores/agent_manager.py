@@ -1,9 +1,8 @@
 import importlib
-
 from typing import Any, Dict, List, Optional, Tuple
-from langchain_ollama import ChatOllama
 
 from config import load_agent_configs, setup_logging
+from langchain_ollama import ChatOllama
 
 logger = setup_logging()
 
@@ -144,7 +143,9 @@ class AgentManager:
         Returns:
             Optional[Dict]: Agent configuration if found, None otherwise
         """
-        return next((agent for agent in self.config if agent["name"] == agent_name), None)
+        return next(
+            (agent for agent in self.config if agent["name"] == agent_name), None
+        )
 
     def get_agent(self, agent_name: str) -> Optional[Any]:
         """

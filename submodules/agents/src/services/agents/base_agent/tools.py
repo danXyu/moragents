@@ -1,5 +1,6 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from cdp import Wallet
 
 logger = logging.getLogger(__name__)
@@ -57,9 +58,14 @@ def transfer_asset(
     """Transfer an asset to another address"""
     try:
         # Create the transfer
-        gasless = agent_wallet.network_id == "base-mainnet" and asset_id.lower() == "usdc"
+        gasless = (
+            agent_wallet.network_id == "base-mainnet" and asset_id.lower() == "usdc"
+        )
         transfer = agent_wallet.default_address.transfer(
-            amount=amount, asset_id=asset_id, destination=destination_address, gasless=gasless
+            amount=amount,
+            asset_id=asset_id,
+            destination=destination_address,
+            gasless=gasless,
         )
 
         # Wait for transfer to settle and return status
@@ -131,7 +137,9 @@ def request_eth_from_faucet(agent_wallet: Wallet) -> Dict[str, Any]:
         raise Exception(f"Failed to request from faucet: {str(e)}")
 
 
-def deploy_nft(agent_wallet: Wallet, name: str, symbol: str, base_uri: str) -> Dict[str, Any]:
+def deploy_nft(
+    agent_wallet: Wallet, name: str, symbol: str, base_uri: str
+) -> Dict[str, Any]:
     """Deploy an ERC-721 NFT contract"""
     try:
         deployed_nft = agent_wallet.deploy_nft(name, symbol, base_uri)
@@ -148,7 +156,9 @@ def deploy_nft(agent_wallet: Wallet, name: str, symbol: str, base_uri: str) -> D
         raise Exception(f"Failed to deploy NFT: {str(e)}")
 
 
-def mint_nft(agent_wallet: Wallet, contract_address: str, mint_to: str) -> Dict[str, Any]:
+def mint_nft(
+    agent_wallet: Wallet, contract_address: str, mint_to: str
+) -> Dict[str, Any]:
     """Mint an NFT to an address"""
     try:
         mint_args = {"to": mint_to, "quantity": "1"}
@@ -167,7 +177,9 @@ def mint_nft(agent_wallet: Wallet, contract_address: str, mint_to: str) -> Dict[
         raise Exception(f"Failed to mint NFT: {str(e)}")
 
 
-def register_basename(agent_wallet: Wallet, basename: str, amount: float = 0.002) -> Dict[str, Any]:
+def register_basename(
+    agent_wallet: Wallet, basename: str, amount: float = 0.002
+) -> Dict[str, Any]:
     """Register a basename for the agent's wallet"""
     try:
         address_id = agent_wallet.default_address.address_id

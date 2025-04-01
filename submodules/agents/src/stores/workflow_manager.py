@@ -1,12 +1,13 @@
+import asyncio
 import json
 import logging
-from typing import Dict, Optional, List, Any
-from pathlib import Path
-import asyncio
-import aiofiles
-from datetime import datetime, timedelta
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import aiofiles
 from services.agents.dca_agent.tools import DCAActionHandler
 
 logger = logging.getLogger(__name__)
@@ -194,13 +195,23 @@ class WorkflowManager:
             try:
                 logger.info("Workflow scheduler checking for due workflows...")
                 now = datetime.now()
-                active_workflows = [w for w in self.workflows.values() if w.status == WorkflowStatus.ACTIVE]
+                active_workflows = [
+                    w
+                    for w in self.workflows.values()
+                    if w.status == WorkflowStatus.ACTIVE
+                ]
                 logger.info(f"Found {len(active_workflows)} active workflows")
 
                 for workflow in self.workflows.values():
                     logger.info(f"Checking workflow {workflow.id} ({workflow.name})")
-                    if workflow.status == WorkflowStatus.ACTIVE and workflow.next_run and now >= workflow.next_run:
-                        logger.info(f"Executing workflow {workflow.id} ({workflow.name})")
+                    if (
+                        workflow.status == WorkflowStatus.ACTIVE
+                        and workflow.next_run
+                        and now >= workflow.next_run
+                    ):
+                        logger.info(
+                            f"Executing workflow {workflow.id} ({workflow.name})"
+                        )
                         await self._execute_workflow(workflow)
 
                 # Sleep for a short interval before next check
@@ -228,7 +239,10 @@ class WorkflowManager:
             should_remove = False
 
             # Check if total investment amount is reached (for DCA workflows)
-            if workflow.action == "dca_trade" and "total_investment_amount" in workflow.params:
+            if (
+                workflow.action == "dca_trade"
+                and "total_investment_amount" in workflow.params
+            ):
                 total_invested = workflow.params.get("total_invested", 0)
                 total_target = float(workflow.params["total_investment_amount"])
                 step_size = float(workflow.params["step_size"])
@@ -241,7 +255,9 @@ class WorkflowManager:
                 if total_invested >= total_target:
                     workflow.status = WorkflowStatus.COMPLETED
                     should_remove = True
-                    logger.info(f"Workflow {workflow.id} completed - reached total investment target")
+                    logger.info(
+                        f"Workflow {workflow.id} completed - reached total investment target"
+                    )
 
             # Remove completed/failed workflows, keep active ones
             if should_remove:
@@ -341,7 +357,10 @@ class WorkflowManager:
 
     def _workflows_to_dict(self) -> Dict:
         """Convert workflows to dictionary format for storage"""
-        return {workflow_id: workflow.to_dict() for workflow_id, workflow in self.workflows.items()}
+        return {
+            workflow_id: workflow.to_dict()
+            for workflow_id, workflow in self.workflows.items()
+        }
 
     async def _save_workflows(self, data: Dict) -> None:
         """Save workflows to storage file"""
@@ -359,7 +378,8 @@ class WorkflowManager:
                 content = await f.read()
                 data = json.loads(content)
                 self.workflows = {
-                    workflow_id: Workflow.from_dict(workflow_data) for workflow_id, workflow_data in data.items()
+                    workflow_id: Workflow.from_dict(workflow_data)
+                    for workflow_id, workflow_data in data.items()
                 }
         except Exception as e:
             logger.error(f"Failed to load workflows: {e}")
