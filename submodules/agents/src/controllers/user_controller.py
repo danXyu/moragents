@@ -1,11 +1,10 @@
 import logging
-from typing import Optional, List, Dict, Any, Self
+from typing import Any, Dict, List, Optional, Self
 
-from sqlalchemy.orm import Session
-
-from models.session import DBSessionFactory
 from models.daos.user_dao import UserDAO
 from models.service.user_service_models import UserModel, UserSettingModel
+from models.session import DBSessionFactory
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +12,11 @@ logger = logging.getLogger(__name__)
 class UserController:
     """Controller for managing users and user settings."""
 
-    def __init__(self, session: Optional[Session] = None, auto_close_session: Optional[bool] = None):
+    def __init__(
+        self,
+        session: Optional[Session] = None,
+        auto_close_session: Optional[bool] = None,
+    ):
         self._auto_close_session = (session is None) if (auto_close_session is None) else auto_close_session
         self._session: Optional[Session] = session
 
@@ -23,7 +26,12 @@ class UserController:
             self._session = DBSessionFactory.get_instance().new_session()
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_value: Optional[Exception], traceback: Optional[Any]) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_value: Optional[Exception],
+        traceback: Optional[Any],
+    ) -> None:
         """Context manager exit point."""
         if self._auto_close_session and self._session:
             self._session.close()

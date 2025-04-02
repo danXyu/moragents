@@ -1,18 +1,17 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 import requests
 from bs4 import BeautifulSoup
+from config import LLM_AGENT
+from langchain.schema import SystemMessage
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-
-from models.service.chat_models import ChatRequest, AgentResponse
-from models.service.agent_core import AgentCore
-from langchain.schema import SystemMessage
 from services.agents.realtime_search.config import Config
-from config import LLM_AGENT
 
 logger = logging.getLogger(__name__)
 

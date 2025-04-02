@@ -1,17 +1,20 @@
 import logging
-import pytest
+from typing import Any, Dict
 from unittest.mock import patch
-from typing import Dict, Any
 
+import pytest
+from models.service.chat_models import AgentResponse
 from services.agents.crypto_data.agent import CryptoDataAgent
-from models.service.chat_models import ChatRequest, AgentResponse
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
 def crypto_agent(llm):
-    config: Dict[str, Any] = {"name": "crypto_data", "description": "Agent for crypto data queries"}
+    config: Dict[str, Any] = {
+        "name": "crypto_data",
+        "description": "Agent for crypto data queries",
+    }
     return CryptoDataAgent(config=config, llm=llm)
 
 

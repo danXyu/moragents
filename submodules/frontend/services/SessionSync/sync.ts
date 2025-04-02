@@ -1,9 +1,8 @@
+import { encryptSecret, uploadToIrys } from "@/services/LitProtocol/encryption";
 import {
-  encryptSecret,
-  uploadToIrys,
   decryptData,
   downloadFromIrys,
-} from "@/services/LitProtocol/utils";
+} from "@/services/LitProtocol/decryption";
 import { getStorageData, saveStorageData } from "@/services/LocalStorage/core";
 
 export const encryptAndUploadChats = async (): Promise<string> => {

@@ -1,15 +1,15 @@
-import logging
-import json
 import importlib
+import json
+import logging
+from typing import Any, List, Optional, Tuple
 
-from typing import List, Optional, Tuple, Any
-
-from langchain.schema import BaseMessage, SystemMessage
+from config import LLM_AGENT, LLM_DELEGATOR, load_agent_config
 from langchain.output_parsers import PydanticOutputParser
+from langchain.schema import BaseMessage, SystemMessage
+from models.service.chat_models import AgentResponse, ChatRequest, ResponseType
 from pydantic import BaseModel, Field
 from stores import agent_manager_instance
-from models.service.chat_models import ChatRequest, AgentResponse, ResponseType
-from config import load_agent_config, LLM_AGENT, LLM_DELEGATOR
+
 from .system_prompt import get_system_prompt
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ class Delegator:
             agent_config = load_agent_config(agent_name)
             if not agent_config:
                 logger.error(f"Could not load config for agent {agent_name}")
+
                 return None
 
             module = importlib.import_module(agent_config["path"])
@@ -41,9 +42,11 @@ class Delegator:
             agent = agent_class(agent_config, LLM_AGENT)
 
             result: AgentResponse = await agent.chat(chat_request)
+
             if result.response_type == ResponseType.ERROR:
                 logger.warning(f"Agent {agent_name} returned error response. You should probably look into this")
                 logger.error(f"Error message: {result.error_message}")
+                return None
 
             return result
 
@@ -97,10 +100,12 @@ class Delegator:
 
     async def delegate_chat(self, chat_request: ChatRequest) -> Tuple[Optional[str], AgentResponse]:
         """Delegate chat to ranked agents with fallback"""
+        attempts = 0
         try:
             ranked_agents = self.get_delegator_response(chat_request)
 
             for agent_name in ranked_agents:
+                attempts += 1
                 self.attempted_agents.add(agent_name)
                 logger.info(f"Attempting agent: {agent_name}")
 

@@ -1,13 +1,13 @@
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from fastapi.testclient import TestClient
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from src.models.service.chat_models import ChatRequest, ChatMessage
+from fastapi.testclient import TestClient
+from src.models.service.chat_models import ChatMessage, ChatRequest
 from src.models.service.service_models import GenerateConversationTitleRequest
 from src.routes.delegation_routes import router
 from src.services.delegator.delegator import Delegator
-from src.config import LLM_DELEGATOR
 
 app = FastAPI()
 app.include_router(router)
@@ -40,10 +40,9 @@ async def test_chat_success(chat_request):
     response_content = {"content": "test response"}
     mock_response = JSONResponse(content=response_content)
 
-    with patch("src.routes.delegation_routes.Delegator") as mock_delegator_class, patch(
-        "src.routes.delegation_routes.DelegationController"
-    ) as mock_controller_class, patch("src.routes.delegation_routes.logger") as mock_logger:
-
+    with patch("src.routes.delegation_routes.DelegationController") as mock_controller_class, patch(
+        "src.routes.delegation_routes.logger"
+    ) as mock_logger:
         mock_controller = mock_controller_class.return_value
         mock_controller.handle_chat = AsyncMock(return_value=mock_response)
 
@@ -64,7 +63,6 @@ async def test_chat_timeout(chat_request):
     with patch("src.routes.delegation_routes.Delegator"), patch(
         "src.routes.delegation_routes.DelegationController"
     ) as mock_controller_class, patch("src.routes.delegation_routes.logger") as mock_logger:
-
         mock_controller = mock_controller_class.return_value
         mock_controller.handle_chat = AsyncMock(side_effect=TimeoutError())
 
@@ -82,7 +80,6 @@ async def test_chat_value_error(chat_request):
     with patch("src.routes.delegation_routes.Delegator"), patch(
         "src.routes.delegation_routes.DelegationController"
     ) as mock_controller_class, patch("src.routes.delegation_routes.logger") as mock_logger:
-
         mock_controller = mock_controller_class.return_value
         mock_controller.handle_chat = AsyncMock(side_effect=ValueError(error_msg))
 
@@ -100,7 +97,6 @@ async def test_chat_generic_error(chat_request):
     with patch("src.routes.delegation_routes.Delegator"), patch(
         "src.routes.delegation_routes.DelegationController"
     ) as mock_controller_class, patch("src.routes.delegation_routes.logger") as mock_logger:
-
         mock_controller = mock_controller_class.return_value
         mock_controller.handle_chat = AsyncMock(side_effect=Exception(error_msg))
 
@@ -118,7 +114,6 @@ async def test_generate_title_success(title_request):
     with patch("src.routes.delegation_routes.DelegationController") as mock_controller_class, patch(
         "src.routes.delegation_routes.logger"
     ) as mock_logger:
-
         mock_controller = mock_controller_class.return_value
         mock_controller.generate_conversation_title = AsyncMock(return_value=title)
 
@@ -139,7 +134,6 @@ async def test_generate_title_timeout(title_request):
     with patch("src.routes.delegation_routes.DelegationController") as mock_controller_class, patch(
         "src.routes.delegation_routes.logger"
     ) as mock_logger:
-
         mock_controller = mock_controller_class.return_value
         mock_controller.generate_conversation_title = AsyncMock(side_effect=TimeoutError())
 
@@ -157,7 +151,6 @@ async def test_generate_title_value_error(title_request):
     with patch("src.routes.delegation_routes.DelegationController") as mock_controller_class, patch(
         "src.routes.delegation_routes.logger"
     ) as mock_logger:
-
         mock_controller = mock_controller_class.return_value
         mock_controller.generate_conversation_title = AsyncMock(side_effect=ValueError(error_msg))
 
@@ -175,7 +168,6 @@ async def test_generate_title_generic_error(title_request):
     with patch("src.routes.delegation_routes.DelegationController") as mock_controller_class, patch(
         "src.routes.delegation_routes.logger"
     ) as mock_logger:
-
         mock_controller = mock_controller_class.return_value
         mock_controller.generate_conversation_title = AsyncMock(side_effect=Exception(error_msg))
 

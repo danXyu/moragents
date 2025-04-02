@@ -1,11 +1,11 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
-from langchain.schema import HumanMessage
-
-from models.service.agent_core import AgentCore
-from models.service.chat_models import ChatRequest, AgentResponse
 from config import RAG_VECTOR_STORE
+from langchain.schema import HumanMessage
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
+
 from .config import Config
 
 logger = logging.getLogger(__name__)

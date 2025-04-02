@@ -1,20 +1,20 @@
 import logging
-import pytest
+from typing import Any, Dict
 from unittest.mock import patch
-from typing import Dict, Any
 
+import pytest
+from models.service.chat_models import AgentResponse
 from services.agents.default.agent import DefaultAgent
-from models.service.chat_models import ChatRequest, AgentResponse
-from models.service.agent_core import AgentCore
-from stores import agent_manager_instance
-from langchain.schema import SystemMessage
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
 def default_agent(llm):
-    config: Dict[str, Any] = {"name": "default", "description": "Agent for general conversation"}
+    config: Dict[str, Any] = {
+        "name": "default",
+        "description": "Agent for general conversation",
+    }
     return DefaultAgent(config=config, llm=llm)
 
 
@@ -41,7 +41,11 @@ async def test_agent_info_request(default_agent, make_chat_request):
     request = make_chat_request(content="What can Morpheus agents do?", agent_name="default")
 
     mock_agents = [
-        {"name": "crypto_data", "human_readable_name": "Crypto Data", "description": "Crypto data queries"},
+        {
+            "name": "crypto_data",
+            "human_readable_name": "Crypto Data",
+            "description": "Crypto data queries",
+        },
         {"name": "dca", "human_readable_name": "DCA", "description": "DCA strategies"},
     ]
 

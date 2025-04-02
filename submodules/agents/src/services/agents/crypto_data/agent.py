@@ -1,9 +1,9 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
-from services.agents.crypto_data import tools
-from models.service.chat_models import ChatRequest, AgentResponse
 from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
+from services.agents.crypto_data import tools
 from services.agents.crypto_data.config import Config
 from services.agents.crypto_data.tool_types import CryptoDataToolType
 
@@ -65,7 +65,10 @@ class CryptoDataAgent(AgentCore):
                 content = tools.get_coin_market_cap_tool(args["coin_name"])
             else:
                 return AgentResponse.needs_info(
-                    content=f"I don't know how to handle that type of request. Could you try asking about cryptocurrency news instead?"
+                    content=(
+                        "I don't know how to handle that type of request. "
+                        "Could you try asking about cryptocurrency news instead?"
+                    )
                 )
 
             if "error" in content.lower() or "not found" in content.lower():

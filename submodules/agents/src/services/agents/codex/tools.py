@@ -1,13 +1,12 @@
 import logging
-import os
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 import aiohttp
+from services.secrets import get_secret
 
 from .config import Config
+from .models import NftSearchResponse, TokenFilterResult, TopHoldersResponse, TopTokensResponse
 from .utils.networks import NETWORK_TO_ID_MAPPING
-from .models import TopTokensResponse, TopHoldersResponse, NftSearchResponse, TokenFilterResult
-from services.secrets import get_secret
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +49,6 @@ async def list_top_tokens(
 ) -> TopTokensResponse:
     """Get list of trending tokens across specified networks."""
     try:
-
         # Map network names to IDs if networks are provided
         network_filter = []
         if networks:
@@ -124,7 +122,11 @@ async def _filter_tokens(token_name: str, network: str) -> TokenFilterResult:
 
         variables = {
             "phrase": token_name,
-            "filters": {"network": [network_id], "liquidity": {"gt": 100000}, "txnCount24": {"gt": 200}},
+            "filters": {
+                "network": [network_id],
+                "liquidity": {"gt": 100000},
+                "txnCount24": {"gt": 200},
+            },
             "limit": 1,
         }
 
@@ -192,7 +194,7 @@ async def get_top_holders_percent(token_name: str, network: str) -> TopHoldersRe
 
         logger.info(f"Sanitized token name: {token_name}")
         # First get the token info by filtering tokens
-        logger.info(f"Filtering tokens to get token info")
+        logger.info("Filtering tokens to get token info")
         token_info = await _filter_tokens(token_name, network)
         logger.info(f"Found token info: {token_info}")
 
@@ -240,8 +242,10 @@ async def search_nfts(
         }
 
         query = """
-        query SearchNFTs($search: String!, $limit: Int, $networkFilter: [Int!], $filterWashTrading: Boolean, $window: String) {
-            searchNfts(search: $search, limit: $limit, networkFilter: $networkFilter, filterWashTrading: $filterWashTrading, window: $window) {
+        query SearchNFTs($search: String!, $limit: Int, $networkFilter: [Int!], $filterWashTrading: Boolean,
+        $window: String) {
+            searchNfts(search: $search, limit: $limit, networkFilter: $networkFilter,
+            filterWashTrading: $filterWashTrading, window: $window) {
                 hasMore
                 items {
                     address
@@ -265,7 +269,9 @@ async def search_nfts(
 
         response = await _make_graphql_request(query, variables)
         return NftSearchResponse(
-            success=True, hasMore=response["searchNfts"]["hasMore"], items=response["searchNfts"]["items"]
+            success=True,
+            hasMore=response["searchNfts"]["hasMore"],
+            items=response["searchNfts"]["items"],
         )
     except Exception as e:
         logger.error(f"Failed to search NFTs: {str(e)}", exc_info=True)

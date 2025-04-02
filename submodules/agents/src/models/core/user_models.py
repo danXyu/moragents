@@ -1,11 +1,10 @@
 from datetime import datetime
 from typing import List
 
-from sqlalchemy import JSON, DateTime, String, Integer, ForeignKey, func, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from models import Base
 from models.service.user_service_models import UserModel, UserSettingModel
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 class User(Base):
@@ -26,14 +25,20 @@ class User(Base):
     def to_service_model(self) -> UserModel:
         """Convert to service model"""
         return UserModel(
-            id=self.id, wallet_address=self.wallet_address, created_at=self.created_at, updated_at=self.updated_at
+            id=self.id,
+            wallet_address=self.wallet_address,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
         )
 
     @classmethod
     def from_service_model(cls, model: UserModel) -> "User":
         """Create from service model"""
         return cls(
-            id=model.id, wallet_address=model.wallet_address, created_at=model.created_at, updated_at=model.updated_at
+            id=model.id,
+            wallet_address=model.wallet_address,
+            created_at=model.created_at,
+            updated_at=model.updated_at,
         )
 
 

@@ -1,5 +1,6 @@
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel
-from typing import Dict, Any, Optional, List
 
 
 # Response Models

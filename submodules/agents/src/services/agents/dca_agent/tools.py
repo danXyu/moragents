@@ -1,10 +1,11 @@
 import logging
-from typing import Dict, Optional, Any
-from datetime import timedelta
 from dataclasses import dataclass
+from datetime import timedelta
 from decimal import Decimal
-from stores import wallet_manager_instance
+from typing import Any, Dict, Optional
+
 from services.agents.base_agent.tools import get_balance, swap_assets
+from stores import wallet_manager_instance
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,7 @@ class DCAActionHandler:
                 to_asset_id=dca_params.destination_token,
             )
 
-            logger.info(f"DCA trade executed successfully")
+            logger.info("DCA trade executed successfully")
 
         except Exception as e:
             logger.error(f"DCA execution failed: {e}")

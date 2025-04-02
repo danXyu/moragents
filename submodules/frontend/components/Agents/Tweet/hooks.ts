@@ -1,5 +1,8 @@
 import { Axios } from "axios";
-import { decryptData, downloadFromIrys } from "@/services/LitProtocol/utils";
+import {
+  decryptData,
+  downloadFromIrys,
+} from "@/services/LitProtocol/decryption";
 
 export const postTweet = async (
   backendClient: Axios,

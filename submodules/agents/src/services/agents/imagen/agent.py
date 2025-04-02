@@ -1,9 +1,11 @@
 import base64
 import logging
 from io import BytesIO
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
 from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -11,10 +13,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-
-from models.service.chat_models import ChatRequest, AgentResponse
-from models.service.agent_core import AgentCore
-from .config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -30,15 +28,17 @@ class ImagenAgent(AgentCore):
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for image generation."""
         try:
-            messages = [Config.system_message, *request.messages_for_llm]
-
             # For image generation, we'll directly use the prompt content
             result = self.generate_image(request.prompt.content)
 
             if result["success"]:
                 return AgentResponse.success(
                     content="Image generated successfully",
-                    metadata={"success": True, "service": result["service"], "image": result["image"]},
+                    metadata={
+                        "success": True,
+                        "service": result["service"],
+                        "image": result["image"],
+                    },
                 )
             else:
                 return AgentResponse.error(error_message=result["error"])

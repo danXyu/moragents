@@ -1,12 +1,13 @@
 from typing import Optional
+
+from config import LLM_DELEGATOR, setup_logging
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from models.service.chat_models import ChatRequest, AgentResponse
-from stores import agent_manager_instance
-from services.delegator.delegator import Delegator
-from config import setup_logging, LLM_DELEGATOR
-from models.service.service_models import GenerateConversationTitleRequest
 from langchain.schema import SystemMessage
+from models.service.chat_models import AgentResponse, ChatRequest
+from models.service.service_models import GenerateConversationTitleRequest
+from services.delegator.delegator import Delegator
+from stores import agent_manager_instance
 
 logger = setup_logging()
 
@@ -74,7 +75,7 @@ class DelegationController:
         """Generate a title for a conversation based on chat history"""
         system_prompt = """You are a helpful assistant that generates concise, descriptive titles for conversations.
         Generate a short title (3-6 words) that captures the main topic or theme of the conversation.
-        The title should be clear and informative but not too long. DO NOT SURROUND THE TITLE WITH QUOTES, spaces, 
+        The title should be clear and informative but not too long. DO NOT SURROUND THE TITLE WITH QUOTES, spaces,
         or any other characters. Just return the title as a string."""
 
         messages = [

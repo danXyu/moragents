@@ -1,20 +1,19 @@
 import logging
-import os
-from typing import Optional, List, Any
-
 from datetime import datetime, timedelta
-import aiohttp
+from typing import Any, List, Optional
 from urllib.parse import urlencode
 
-from .tool_types import ElfaToolType
+import aiohttp
+from services.secrets import get_secret
+
 from .config import Config
 from .models import (
+    ElfaAccountSmartStatsResponse,
     ElfaMentionsResponse,
     ElfaTopMentionsResponse,
     ElfaTrendingTokensResponse,
-    ElfaAccountSmartStatsResponse,
 )
-from services.secrets import get_secret
+from .tool_types import ElfaToolType
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +44,18 @@ async def _make_request(endpoint: str, params: Optional[dict] = None) -> Any:
 
 
 async def get_top_mentions(
-    ticker: str, time_window: Optional[str] = None, include_account_details: Optional[bool] = None
+    ticker: str,
+    time_window: Optional[str] = None,
+    include_account_details: Optional[bool] = None,
 ) -> ElfaTopMentionsResponse:
     """Get top mentions for a specific ticker."""
     try:
-        params = {"ticker": ticker, "timeWindow": time_window or "1d", "page": 1, "pageSize": 10}  # Sensible defaults
+        params = {
+            "ticker": ticker,
+            "timeWindow": time_window or "1d",
+            "page": 1,
+            "pageSize": 10,
+        }  # Sensible defaults
 
         # Only add if explicitly set to True
         if include_account_details:

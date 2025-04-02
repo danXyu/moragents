@@ -3,12 +3,13 @@
 # or implementing the sample code, visit the AWS docs:
 # https://aws.amazon.com/developer/language/python/
 
-import boto3
 import json
-from botocore.exceptions import ClientError
-from models.config.config import Config
 from functools import lru_cache
+
+import boto3
+from botocore.exceptions import ClientError
 from logs import setup_logging
+from models.config.config import Config
 
 logger = setup_logging()
 

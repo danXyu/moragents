@@ -1,11 +1,11 @@
 import logging
-import pytest
+from typing import Any, Dict
 from unittest.mock import patch
-from typing import Dict, Any
 
+import pytest
+from models.service.chat_models import AgentResponse
 from services.agents.codex.agent import CodexAgent
-from models.service.chat_models import ChatRequest, AgentResponse
-from services.agents.codex.models import TopTokensResponse, TopHoldersResponse, NftSearchResponse
+from services.agents.codex.models import NftSearchResponse, TopHoldersResponse, TopTokensResponse
 from services.agents.codex.utils.tool_types import CodexToolType
 
 logger = logging.getLogger(__name__)

@@ -1,9 +1,10 @@
 import time
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from fastapi import Query
+from langchain.schema import AIMessage, BaseMessage, HumanMessage
 from pydantic import BaseModel, Field
-from langchain.schema import BaseMessage, HumanMessage, AIMessage
 
 
 class ResponseType(Enum):
@@ -98,11 +99,17 @@ class AgentResponse(BaseModel):
 
     @classmethod
     def success(
-        cls, content: str, metadata: Optional[Dict[str, Any]] = None, action_type: Optional[str] = None
+        cls,
+        content: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        action_type: Optional[str] = None,
     ) -> "AgentResponse":
         """Create a successful response"""
         return cls(
-            response_type=ResponseType.SUCCESS, content=content, metadata=metadata or {}, action_type=action_type
+            response_type=ResponseType.SUCCESS,
+            content=content,
+            metadata=metadata or {},
+            action_type=action_type,
         )
 
     @classmethod
@@ -121,7 +128,11 @@ class AgentResponse(BaseModel):
     @classmethod
     def needs_info(cls, content: str, metadata: Optional[Dict[str, Any]] = None) -> "AgentResponse":
         """Create a response requesting more information from user"""
-        return cls(response_type=ResponseType.NEEDS_INFO, content=content, metadata=metadata or {})
+        return cls(
+            response_type=ResponseType.NEEDS_INFO,
+            content=content,
+            metadata=metadata or {},
+        )
 
     @classmethod
     def action_required(

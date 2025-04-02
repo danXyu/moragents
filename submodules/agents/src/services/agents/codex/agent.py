@@ -1,12 +1,14 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from models.service.agent_core import AgentCore
-from models.service.chat_models import ChatRequest, AgentResponse
+from models.service.chat_models import AgentResponse, ChatRequest
+
 from .config import Config
-from .tools import list_top_tokens, get_top_holders_percent, search_nfts
-from .models import TopTokensResponse, TopHoldersResponse, NftSearchResponse
-from .utils.tool_types import CodexToolType
+from .models import NftSearchResponse, TopHoldersResponse, TopTokensResponse
+from .tools import get_top_holders_percent, list_top_tokens, search_nfts
 from .utils.networks import NETWORK_TO_ID_MAPPING
+from .utils.tool_types import CodexToolType
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +56,14 @@ class CodexAgent(AgentCore):
 
                 if args.get("network") is None:
                     return AgentResponse.needs_info(
-                        content=f"Please specify the network (Ethereum, Solana, etc.) you'd like to search for {args.get('tokenName')}"
+                        content=f"Please specify the network (Ethereum, Solana, etc.) you'd like to search for "
+                        f"{args.get('tokenName')}"
                     )
 
                 if args.get("network") not in NETWORK_TO_ID_MAPPING:
                     return AgentResponse.needs_info(
-                        content=f"Please specify a valid network (Ethereum, Solana, etc.) you'd like to search for {args.get('tokenName')}"
+                        content=f"Please specify a valid network (Ethereum, Solana, etc.) you'd like to search for "
+                        f"{args.get('tokenName')}"
                     )
 
                 holders_response: TopHoldersResponse = await get_top_holders_percent(

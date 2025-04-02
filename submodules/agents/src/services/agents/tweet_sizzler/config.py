@@ -1,5 +1,5 @@
-from models.service.agent_config import AgentConfig
 from langchain.schema import SystemMessage
+from models.service.agent_config import AgentConfig
 
 
 class Config:
@@ -48,7 +48,12 @@ class Config:
             "description": "Generate an engaging tweet based on provided content",
             "parameters": {
                 "type": "object",
-                "properties": {"content": {"type": "string", "description": "Content to base the tweet on"}},
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "description": "Content to base the tweet on",
+                    }
+                },
                 "required": ["content"],
             },
         }

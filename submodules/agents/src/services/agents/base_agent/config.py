@@ -34,8 +34,14 @@ class Config:
                 "type": "object",
                 "properties": {
                     "amount": {"type": "string", "description": "Amount to swap"},
-                    "from_asset_id": {"type": "string", "description": "Asset ID to swap from"},
-                    "to_asset_id": {"type": "string", "description": "Asset ID to swap to"},
+                    "from_asset_id": {
+                        "type": "string",
+                        "description": "Asset ID to swap from",
+                    },
+                    "to_asset_id": {
+                        "type": "string",
+                        "description": "Asset ID to swap to",
+                    },
                 },
                 "required": ["amount", "from_asset_id", "to_asset_id"],
             },
@@ -47,7 +53,10 @@ class Config:
                 "type": "object",
                 "properties": {
                     "amount": {"type": "string", "description": "Amount to transfer"},
-                    "asset_id": {"type": "string", "description": "Asset ID to transfer"},
+                    "asset_id": {
+                        "type": "string",
+                        "description": "Asset ID to transfer",
+                    },
                 },
                 "required": ["amount", "asset_id"],
             },
@@ -57,7 +66,12 @@ class Config:
             "description": "Get balance of a specific asset",
             "parameters": {
                 "type": "object",
-                "properties": {"asset_id": {"type": "string", "description": "Asset ID to check balance for"}},
+                "properties": {
+                    "asset_id": {
+                        "type": "string",
+                        "description": "Asset ID to check balance for",
+                    }
+                },
                 "required": ["asset_id"],
             },
         },

@@ -1,9 +1,8 @@
 import logging
 import logging.config
 import os
-from pathlib import Path
-
 from configparser import ConfigParser
+from pathlib import Path
 
 # Get the absolute path to the config directory
 BASE_DIR = Path(os.path.dirname(os.path.abspath(__file__)))

@@ -1,13 +1,13 @@
 import logging
-import pytest
-from unittest.mock import patch, Mock
-from typing import Dict, Any
+from typing import Any, Dict
+from unittest.mock import patch
 
+import pytest
+from models.service.chat_models import AgentResponse
 from services.agents.token_swap.agent import TokenSwapAgent
-from models.service.chat_models import AgentResponse, ChatRequest
-from services.agents.token_swap.tools import InsufficientFundsError, TokenNotFoundError, SwapNotPossibleError
-from services.agents.token_swap.utils.tool_types import SwapToolType
 from services.agents.token_swap.models import SwapQuoteResponse, TransactionResponse
+from services.agents.token_swap.tools import InsufficientFundsError, TokenNotFoundError
+from services.agents.token_swap.utils.tool_types import SwapToolType
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +24,7 @@ def token_swap_agent(llm):
 
 @pytest.mark.benchmark
 @pytest.mark.asyncio
-async def test_swap_success(token_swap_agent, make_chat_request):
-    request = make_chat_request(
-        content="Swap 1 ETH for USDT", agent_name="token_swap", chain_id="1", wallet_address="0x123"
-    )
-
+async def test_swap_success(token_swap_agent):
     mock_swap_result = SwapQuoteResponse(
         fromToken={"symbol": "ETH"},
         toToken={"symbol": "USDT"},
@@ -40,7 +36,8 @@ async def test_swap_success(token_swap_agent, make_chat_request):
         mock_swap.return_value = mock_swap_result
 
         response = await token_swap_agent._execute_tool(
-            SwapToolType.SWAP_TOKENS.value, {"source_token": "ETH", "destination_token": "USDT", "amount": "1.0"}
+            SwapToolType.SWAP_TOKENS.value,
+            {"source_token": "ETH", "destination_token": "USDT", "amount": "1.0"},
         )
 
         assert isinstance(response, AgentResponse)
@@ -56,7 +53,8 @@ async def test_swap_insufficient_funds(token_swap_agent):
         mock_swap.side_effect = InsufficientFundsError("Insufficient funds")
 
         response = await token_swap_agent._execute_tool(
-            SwapToolType.SWAP_TOKENS.value, {"source_token": "ETH", "destination_token": "USDT", "amount": "1000.0"}
+            SwapToolType.SWAP_TOKENS.value,
+            {"source_token": "ETH", "destination_token": "USDT", "amount": "1000.0"},
         )
 
         assert isinstance(response, AgentResponse)
@@ -71,7 +69,8 @@ async def test_swap_token_not_found(token_swap_agent):
         mock_swap.side_effect = TokenNotFoundError("Token not found")
 
         response = await token_swap_agent._execute_tool(
-            SwapToolType.SWAP_TOKENS.value, {"source_token": "INVALID", "destination_token": "USDT", "amount": "1.0"}
+            SwapToolType.SWAP_TOKENS.value,
+            {"source_token": "INVALID", "destination_token": "USDT", "amount": "1.0"},
         )
 
         assert isinstance(response, AgentResponse)
@@ -83,7 +82,10 @@ async def test_swap_token_not_found(token_swap_agent):
 @pytest.mark.asyncio
 async def test_get_transaction_status(token_swap_agent):
     mock_tx_response = TransactionResponse(
-        status="success", tx_hash="0x123", tx_type="swap", formatted_response="Transaction 0x123 was successful"
+        status="success",
+        tx_hash="0x123",
+        tx_type="swap",
+        formatted_response="Transaction 0x123 was successful",
     )
 
     with patch("services.agents.token_swap.tools.get_transaction_status") as mock_status:
@@ -104,7 +106,8 @@ async def test_get_transaction_status(token_swap_agent):
 @pytest.mark.asyncio
 async def test_missing_parameters(token_swap_agent):
     response = await token_swap_agent._execute_tool(
-        SwapToolType.SWAP_TOKENS.value, {"source_token": "ETH"}  # Missing destination_token and amount
+        SwapToolType.SWAP_TOKENS.value,
+        {"source_token": "ETH"},  # Missing destination_token and amount
     )
 
     assert isinstance(response, AgentResponse)

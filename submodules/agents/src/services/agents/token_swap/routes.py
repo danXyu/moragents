@@ -1,7 +1,7 @@
 import logging
+
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-
 from stores import agent_manager_instance
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,10 @@ async def tx_status(request: Request):
         logger.error(f"Failed to check tx status: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to check tx status: {str(e)}"},
+            content={
+                "status": "error",
+                "message": f"Failed to check tx status: {str(e)}",
+            },
         )
 
 
@@ -49,7 +52,10 @@ async def allowance(request: Request):
         logger.error(f"Failed to get allowance: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to get allowance: {str(e)}"},
+            content={
+                "status": "error",
+                "message": f"Failed to get allowance: {str(e)}",
+            },
         )
 
 
