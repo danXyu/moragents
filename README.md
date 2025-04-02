@@ -14,12 +14,6 @@ A developer-focused platform that enables building, testing, and deploying AI ag
 
 ### Available Agents & Features
 
-#### Generate Images (Imagen) 💫
-
-- Generate AI images using Stable Diffusion XL
-- Example: "Generate an image of Donald Trump"
-- Example: "Create a cyberpunk style portrait of Elon Musk"
-
 #### Document Analysis 📄
 
 - Upload and analyze documents with natural language querying
@@ -32,12 +26,6 @@ A developer-focused platform that enables building, testing, and deploying AI ag
 - Example: "What's the price of ETH?"
 - Example: "What's the FDV of USDC?"
 
-#### Token Swaps 🔄
-
-- Swap tokens across multiple chains
-- Example: "Swap 0.2 ETH for USDC"
-- Example: "Exchange my BTC for ETH"
-
 #### Tweet Generator 🔥
 
 - AI-powered viral tweet generation
@@ -49,12 +37,6 @@ A developer-focused platform that enables building, testing, and deploying AI ag
 - Send and swap tokens on Base
 - Example: "Send USDC on Base"
 - Example: "Swap USDC for ETH on Base"
-
-#### MOR Claims Manager 🎁
-
-- Manage and claim MOR token rewards
-- Example: "Claim my MOR rewards"
-- Example: "Help me claim my pending MOR tokens"
 
 #### MOR Rewards Tracking 🏆
 
@@ -124,7 +106,7 @@ To run MySuperAgent locally, follow these comprehensive setup instructions:
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/mysuperagent/mysuperagent.git
+   git clone https://github.com/MorpheusAIs/mysuperagent.git
    cd mysuperagent
    ```
 
@@ -143,7 +125,7 @@ To run MySuperAgent locally, follow these comprehensive setup instructions:
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/mysuperagent/mysuperagent.git
+   git clone https://github.com/MorpheusAIs/mysuperagent.git
    cd mysuperagent
    ```
 
