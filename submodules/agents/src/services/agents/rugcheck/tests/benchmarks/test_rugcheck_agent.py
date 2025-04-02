@@ -1,19 +1,21 @@
-import pytest
 import logging
-from unittest.mock import patch, Mock
-from typing import Dict, Any
+from typing import Any, Dict
+from unittest.mock import patch
 
+import pytest
+from models.service.chat_models import AgentResponse
 from services.agents.rugcheck.agent import RugcheckAgent
-from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.rugcheck.tool_types import RugcheckToolType
-from services.agents.rugcheck.tools import fetch_token_report, fetch_most_viewed, fetch_most_voted
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
 def rugcheck_agent(llm):
-    config: Dict[str, Any] = {"name": "rugcheck", "description": "Agent for analyzing token safety"}
+    config: Dict[str, Any] = {
+        "name": "rugcheck",
+        "description": "Agent for analyzing token safety",
+    }
     return RugcheckAgent(config, llm)
 
 
@@ -25,7 +27,12 @@ async def test_token_report_success(rugcheck_agent, make_chat_request):
     with patch.object(rugcheck_agent.tool_bound_llm, "invoke") as mock_invoke:
         mock_invoke.return_value = {
             "tool_calls": [
-                {"function": {"name": RugcheckToolType.GET_TOKEN_REPORT.value, "arguments": {"identifier": "BONK"}}}
+                {
+                    "function": {
+                        "name": RugcheckToolType.GET_TOKEN_REPORT.value,
+                        "arguments": {"identifier": "BONK"},
+                    }
+                }
             ]
         }
 
@@ -36,7 +43,13 @@ async def test_token_report_success(rugcheck_agent, make_chat_request):
                 mock_fetch.return_value.formatted_response = "Token Analysis Report\nOverall Risk Score: 85"
                 mock_fetch.return_value.model_dump.return_value = {
                     "score": 85,
-                    "risks": [{"name": "Liquidity Risk", "description": "Low liquidity detected", "score": 60}],
+                    "risks": [
+                        {
+                            "name": "Liquidity Risk",
+                            "description": "Low liquidity detected",
+                            "score": 60,
+                        }
+                    ],
                 }
 
                 response = await rugcheck_agent._process_request(request)
@@ -54,7 +67,12 @@ async def test_most_viewed_success(rugcheck_agent):
         mock_fetch.return_value.formatted_response = "Most Viewed Tokens\nToken1: 1000 visits"
         mock_fetch.return_value.model_dump.return_value = {
             "tokens": [
-                {"mint": "mint123", "metadata": {"name": "Token1", "symbol": "TK1"}, "visits": 1000, "user_visits": 500}
+                {
+                    "mint": "mint123",
+                    "metadata": {"name": "Token1", "symbol": "TK1"},
+                    "visits": 1000,
+                    "user_visits": 500,
+                }
             ]
         }
 

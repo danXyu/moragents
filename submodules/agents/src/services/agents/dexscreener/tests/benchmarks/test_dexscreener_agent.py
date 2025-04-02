@@ -1,31 +1,28 @@
 import logging
-import pytest
+from typing import Any, Dict
 from unittest.mock import patch
-from typing import Dict, Any
 
+import pytest
+from models.service.chat_models import AgentResponse
 from services.agents.dexscreener.agent import DexScreenerAgent
-from models.service.chat_models import AgentResponse, ChatRequest
+from services.agents.dexscreener.models import BoostedTokenResponse, DexPairSearchResponse, TokenProfileResponse
 from services.agents.dexscreener.tool_types import DexScreenerToolType
-from services.agents.dexscreener.models import (
-    TokenProfileResponse,
-    BoostedTokenResponse,
-    DexPairSearchResponse,
-)
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
 def dex_agent(llm):
-    config: Dict[str, Any] = {"name": "dexscreener", "description": "Agent for DexScreener API interactions"}
+    config: Dict[str, Any] = {
+        "name": "dexscreener",
+        "description": "Agent for DexScreener API interactions",
+    }
     return DexScreenerAgent(config, llm)
 
 
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_search_dex_pairs_success(dex_agent, make_chat_request):
-    request = make_chat_request(content="Search for ETH/USDC pairs", agent_name="dexscreener")
-
     mock_response = DexPairSearchResponse(
         pairs=[
             {
@@ -75,7 +72,8 @@ async def test_get_latest_token_profiles(dex_agent, make_chat_request):
         mock_profiles.return_value = mock_response
 
         response = await dex_agent._execute_tool(
-            DexScreenerToolType.GET_LATEST_TOKEN_PROFILES.value, {"chain_id": "ethereum"}
+            DexScreenerToolType.GET_LATEST_TOKEN_PROFILES.value,
+            {"chain_id": "ethereum"},
         )
 
         assert isinstance(response, AgentResponse)
@@ -103,7 +101,8 @@ async def test_get_boosted_tokens(dex_agent, make_chat_request):
         mock_boosted.return_value = mock_response
 
         response = await dex_agent._execute_tool(
-            DexScreenerToolType.GET_LATEST_BOOSTED_TOKENS.value, {"chain_id": "ethereum"}
+            DexScreenerToolType.GET_LATEST_BOOSTED_TOKENS.value,
+            {"chain_id": "ethereum"},
         )
 
         assert isinstance(response, AgentResponse)

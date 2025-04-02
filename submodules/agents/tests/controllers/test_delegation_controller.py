@@ -1,12 +1,12 @@
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from fastapi import HTTPException
-from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from unittest.mock import AsyncMock, Mock, patch
 
-from src.models.service.chat_models import ChatRequest, AgentResponse, ChatMessage, ResponseType
+import pytest
+from fastapi import HTTPException
+from langchain.schema import AIMessage, HumanMessage
+from src.controllers.delegation_controller import DelegationController
+from src.models.service.chat_models import AgentResponse, ChatMessage, ChatRequest
 from src.models.service.service_models import GenerateConversationTitleRequest
 from src.services.delegator.delegator import Delegator
-from src.controllers.delegation_controller import DelegationController
 
 
 @pytest.fixture
@@ -41,7 +41,8 @@ async def test_handle_chat_agent_not_found(controller, chat_request):
     chat_request.prompt.content = "/nonexistent_agent test message"
 
     with patch(
-        "stores.agent_manager_instance.parse_command", return_value=("nonexistent_agent", "test message")
+        "stores.agent_manager_instance.parse_command",
+        return_value=("nonexistent_agent", "test message"),
     ), patch("stores.agent_manager_instance.get_agent", return_value=None), patch(
         "stores.agent_manager_instance.set_active_agent"
     ):

@@ -1,12 +1,11 @@
+import sys
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
 
 from alembic import context
 
-import sys
-import os
+# add your model's MetaData object here
+from models.models import Base
+from sqlalchemy import engine_from_config, pool
 
 sys.path.append("./src")
 
@@ -19,9 +18,6 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-from models.models import Base
-
 target_metadata = [Base.metadata]
 
 # other values from the config, defined by the needs of env.py,
@@ -31,7 +27,9 @@ target_metadata = [Base.metadata]
 # DB_URL = os.getenv("db_url")
 DB_URL = "postgresql+psycopg2://neo:trinity@localhost:5678/morpheus_db"
 if DB_URL:
-    config.set_main_option("sqlalchemy.url", "postgresql+psycopg2://neo:trinity@localhost:5678/morpheus_db")  # type: ignore
+    config.set_main_option(
+        "sqlalchemy.url", "postgresql+psycopg2://neo:trinity@localhost:5678/morpheus_db"
+    )  # type: ignore
 
 
 def run_migrations_offline() -> None:

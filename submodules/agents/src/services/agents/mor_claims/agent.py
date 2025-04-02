@@ -1,10 +1,10 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
-from services.agents.mor_claims import tools
-from models.service.chat_models import ChatRequest, AgentResponse
-from models.service.agent_core import AgentCore
 from langchain.schema import HumanMessage, SystemMessage
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
+from services.agents.mor_claims import tools
 from stores import agent_manager_instance
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,11 @@ class MorClaimsAgent(AgentCore):
                 if available_rewards:
                     selected_pool = max(available_rewards.keys())
                     return AgentResponse.success(
-                        content=f"You have {available_rewards[selected_pool]} MOR rewards available in pool {selected_pool}. Would you like to proceed with claiming these rewards?",
+                        content=(
+                            f"You have {available_rewards[selected_pool]} MOR rewards "
+                            f"available in pool {selected_pool}. "
+                            "Would you like to proceed with claiming these rewards?"
+                        ),
                         metadata={
                             "available_rewards": {selected_pool: available_rewards[selected_pool]},
                             "receiver_address": wallet_address,
@@ -45,7 +49,10 @@ class MorClaimsAgent(AgentCore):
                     )
                 else:
                     return AgentResponse.error(
-                        error_message=f"No rewards found for your wallet address {wallet_address} in either pool. Claim cannot be processed."
+                        error_message=(
+                            f"No rewards found for your wallet address {wallet_address} in either pool. "
+                            "Claim cannot be processed."
+                        )
                     )
 
             # Check last message for confirmation
@@ -56,7 +63,10 @@ class MorClaimsAgent(AgentCore):
                     return await self._prepare_transactions(wallet_address, last_message.metadata)
                 else:
                     return AgentResponse.success(
-                        content="Please confirm if you want to proceed with the claim by saying 'yes', 'proceed', 'confirm', or 'claim'."
+                        content=(
+                            "Please confirm if you want to proceed with the claim by saying "
+                            "'yes', 'proceed', 'confirm', or 'claim'."
+                        )
                     )
 
             messages = [

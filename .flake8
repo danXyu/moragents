@@ -1,34 +1,25 @@
 [flake8]
-max-line-length = 100
-max-complexity = 10
-exclude =
+exclude = 
     .git,
     __pycache__,
     build,
     dist,
+    *.egg,
     *.egg-info,
+    .eggs,
+    .venv,
     venv,
-    .venv
-extend-ignore =
-    # Black conflicts with E203 (whitespace before ':')
-    E203,
-    # Line break before binary operator (Black formats this way)
-    W503,
-    # Lambda assignments (used in routes)
-    E731,
-    # Bugbear errors that might cause recursion
-    B023,
-    # Ignore nested function definition
-    B006,
-    # Ignore missing docstring in public module/package/class/function/method
-    D100,
-    D101,
-    D104,
-    D102,
-    D103,
-    D105,
-    D106,
-    D107,
+    env,
+    .env,
+    ENV,
+    node_modules,
+    */node_modules/*,
+    */.venv/*,
+    */site-packages/*,
+    submodules/agents/.venv/,
+    .tox
+max-complexity = 18
+max-line-length = 100
 
 per-file-ignores =
     # Allow unused imports in __init__.py

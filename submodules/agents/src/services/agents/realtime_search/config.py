@@ -52,7 +52,12 @@ class Config:
     SEARCH_URL = "https://www.google.com/search?q={}"
 
     # Chrome options for headless browsing
-    CHROME_OPTIONS = ["--headless", "--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"]
+    CHROME_OPTIONS = [
+        "--headless",
+        "--disable-gpu",
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+    ]
 
     # LLM configuration for answer synthesis
     SYNTHESIS_SYSTEM_PROMPT = "Synthesize information from web search results into a clear, direct answer."

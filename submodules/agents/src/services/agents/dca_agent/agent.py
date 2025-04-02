@@ -1,10 +1,9 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
-from models.service.chat_models import ChatRequest, AgentResponse
 from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
 from stores import wallet_manager_instance
-from langchain.schema import HumanMessage, SystemMessage
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,8 @@ class DCAAgent(AgentCore):
         if not wallet_manager_instance.configure_cdp_client():
             # Return user-friendly error for missing credentials
             return AgentResponse.needs_info(
-                content="I'm not able to help with DCA strategies right now because the CDP client is not initialized. Please set up your API credentials first."
+                content="I'm not able to help with DCA strategies right now because the CDP client is not initialized. "
+                "Please set up your API credentials first."
             )
 
         # Check for active wallet
@@ -36,7 +36,8 @@ class DCAAgent(AgentCore):
         if not active_wallet:
             # Return user-friendly error for missing wallet
             return AgentResponse.needs_info(
-                content="You'll need to select or create a wallet before I can help with DCA strategies. Please set up a wallet first."
+                content="You'll need to select or create a wallet before I can help with DCA strategies. "
+                "Please set up a wallet first."
             )
 
         return AgentResponse.action_required(content="Ready to set up DCA", action_type="dca")

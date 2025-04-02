@@ -15,12 +15,11 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { CopyIcon } from "@chakra-ui/icons";
+import { encryptSecret, uploadToIrys } from "@/services/LitProtocol/encryption";
 import {
-  encryptSecret,
-  uploadToIrys,
   decryptData,
   downloadFromIrys,
-} from "@/services/LitProtocol/utils";
+} from "@/services/LitProtocol/decryption";
 import styles from "./ApiCredentials.module.css";
 
 interface CodexConfigProps {

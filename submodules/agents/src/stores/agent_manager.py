@@ -1,9 +1,8 @@
 import importlib
-
 from typing import Any, Dict, List, Optional, Tuple
-from langchain_ollama import ChatOllama
 
 from config import load_agent_configs, setup_logging
+from langchain_ollama import ChatOllama
 
 logger = setup_logging()
 

@@ -135,7 +135,10 @@ class Config:
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "identifier": {"type": "string", "description": "Token name (e.g., 'BONK', 'RAY') or mint address"}
+                    "identifier": {
+                        "type": "string",
+                        "description": "Token name (e.g., 'BONK', 'RAY') or mint address",
+                    }
                 },
                 "required": ["identifier"],
             },

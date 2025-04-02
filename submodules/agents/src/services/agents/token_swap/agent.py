@@ -1,28 +1,13 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from models.service.agent_core import AgentCore
-from models.service.chat_models import ChatRequest, AgentResponse
+from models.service.chat_models import AgentResponse, ChatRequest
 
 from .config import Config
-from .utils.exceptions import TokenNotFoundError, InsufficientFundsError, SwapNotPossibleError
-from .tools import swap_coins, get_transaction_status
+from .tools import get_transaction_status, swap_coins
+from .utils.exceptions import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
 from .utils.tool_types import SwapToolType
-
-logger = logging.getLogger(__name__)
-
-
-import logging
-from typing import Dict, Any, Union, Optional
-
-from models.service.agent_core import AgentCore
-from models.service.chat_models import ChatRequest, AgentResponse
-
-from .config import Config
-from .utils.exceptions import TokenNotFoundError, InsufficientFundsError, SwapNotPossibleError
-from .tools import swap_coins, get_transaction_status
-from .utils.tool_types import SwapToolType
-from .models import SwapQuoteResponse, TransactionResponse
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +53,10 @@ class TokenSwapAgent(AgentCore):
                 return AgentResponse.error(error_message=f"Unknown tool: {func_name}")
 
         except Exception as e:
-            logger.error(f"Unexpected error in tool execution {func_name}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Unexpected error in tool execution {func_name}: {str(e)}",
+                exc_info=True,
+            )
             return AgentResponse.error(error_message=f"Unexpected error: {str(e)}")
 
     async def _execute_swap_tokens(self, args: Dict[str, Any]) -> AgentResponse:

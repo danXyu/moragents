@@ -31,8 +31,14 @@ class Config:
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "amount": {"type": "string", "description": "Amount to invest per interval"},
-                    "asset_id": {"type": "string", "description": "Asset ID to purchase"},
+                    "amount": {
+                        "type": "string",
+                        "description": "Amount to invest per interval",
+                    },
+                    "asset_id": {
+                        "type": "string",
+                        "description": "Asset ID to purchase",
+                    },
                     "interval": {
                         "type": "string",
                         "description": "Time interval between purchases (daily/weekly/monthly)",
@@ -55,7 +61,10 @@ class Config:
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "schedule_id": {"type": "string", "description": "ID of the DCA schedule to cancel"},
+                    "schedule_id": {
+                        "type": "string",
+                        "description": "ID of the DCA schedule to cancel",
+                    },
                 },
                 "required": ["schedule_id"],
             },

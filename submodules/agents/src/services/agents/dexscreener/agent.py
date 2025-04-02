@@ -1,15 +1,13 @@
 import logging
-from typing import Dict, Any, Union
+from typing import Any, Dict, Union
+
 from models.service.agent_core import AgentCore
-from models.service.chat_models import ChatRequest, AgentResponse
-from .config import Config
+from models.service.chat_models import AgentResponse, ChatRequest
+
 from . import tools
+from .config import Config
+from .models import BoostedTokenResponse, DexPairSearchResponse, TokenProfileResponse
 from .tool_types import DexScreenerToolType
-from .models import (
-    TokenProfileResponse,
-    BoostedTokenResponse,
-    DexPairSearchResponse,
-)
 
 logger = logging.getLogger(__name__)
 
