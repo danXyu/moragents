@@ -1,3 +1,4 @@
+from typing import List, Dict
 from pydantic import BaseModel
 
 
@@ -23,3 +24,4 @@ class AgentConfig(BaseModel):
     command: str
     upload_required: bool = False
     is_enabled: bool = True
+    tools: List[Dict] = []

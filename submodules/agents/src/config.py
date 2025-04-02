@@ -104,6 +104,8 @@ def load_agent_config(agent_name: str) -> Optional[Dict[str, Any]]:
         ):
             config_dict: Dict[str, Any] = module.Config.agent_config.model_dump()
             config_dict["name"] = agent_name
+            if hasattr(module.Config, "tools"):
+                config_dict["tools"] = module.Config.tools
             logger.info(f"Successfully loaded config for {agent_name}")
             return config_dict
         else:

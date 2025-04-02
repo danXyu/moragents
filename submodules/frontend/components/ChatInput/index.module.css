@@ -19,7 +19,7 @@
 .inputWrapper {
   width: 100%;
   border-radius: 8px;
-  background-color: #222;
+  background-color: #111;
   overflow: hidden;
 }
 
@@ -88,15 +88,16 @@
 
 .actionButton {
   background-color: #27292c !important;
-  color: #fff !important;
+  color: #ddd !important;
   border-radius: 20px !important;
   font-size: 12px !important;
   height: auto !important;
-  padding: 4px 12px !important;
+  padding: 6px 12px !important;
   display: flex !important;
   align-items: center !important;
   gap: 4px !important;
   border: none !important;
+  font-weight: 400 !important;
 }
 
 .actionIcon {

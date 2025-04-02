@@ -1,9 +1,10 @@
 import React, { FC, useState, useEffect, useRef } from "react";
 import { Textarea, IconButton, useMediaQuery, Button } from "@chakra-ui/react";
-import { AddIcon, SearchIcon, LinkIcon, SettingsIcon } from "@chakra-ui/icons";
+import { AddIcon, SearchIcon, LinkIcon } from "@chakra-ui/icons";
 import { SendIcon } from "../CustomIcon/SendIcon";
 import { Command } from "./Commands";
 import { CommandsPortal } from "./CommandsPortal";
+import { ToolsButton } from "@/components/Tools/ToolsButton";
 import styles from "./index.module.css";
 import API_BASE_URL from "../../config";
 
@@ -236,16 +237,9 @@ export const ChatInput: FC<ChatInputProps> = ({
               </Button>
             </div>
 
-            {/* Right aligned tools button */}
+            {/* Right aligned tools button - replaced with new component */}
             <div className={styles.rightActions}>
-              <Button
-                leftIcon={<SettingsIcon />}
-                size="xs"
-                className={styles.actionButton}
-                aria-label="Tools"
-              >
-                Tools
-              </Button>
+              <ToolsButton apiBaseUrl={API_BASE_URL} />
             </div>
           </div>
         </div>
