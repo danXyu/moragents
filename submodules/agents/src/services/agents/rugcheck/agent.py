@@ -6,12 +6,7 @@ from models.service.chat_models import AgentResponse, ChatRequest
 
 from .config import Config, TokenRegistry
 from .tool_types import RugcheckToolType
-from .tools import (
-    fetch_most_viewed,
-    fetch_most_voted,
-    fetch_token_report,
-    resolve_token_identifier,
-)
+from .tools import fetch_most_viewed, fetch_most_voted, fetch_token_report, resolve_token_identifier
 
 logger = logging.getLogger(__name__)
 

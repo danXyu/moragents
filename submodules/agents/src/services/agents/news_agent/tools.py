@@ -1,12 +1,12 @@
 import logging
 import re
 import urllib.parse
-import feedparser
-import pytz
-
-from dateutil import parser
 from datetime import datetime, timedelta
 from html import unescape
+
+import feedparser
+import pytz
+from dateutil import parser
 
 logger = logging.getLogger(__name__)
 

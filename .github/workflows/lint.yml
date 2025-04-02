@@ -54,7 +54,7 @@ jobs:
       - name: Run flake8
         run: |
           # Run flake8 for other linting checks with comprehensive exclusions
-          flake8 . --exclude=.git,__pycache__,build,dist,*.egg,*.egg-info,.eggs,.venv,venv,env,.env,ENV,node_modules,*/node_modules/*,*/.venv/*,*/site-packages/*,submodules/agents/.venv/ --max-line-length=120
+          flake8 --max-line-length=120 .
 
       - name: Run JavaScript/TypeScript linters
         run: |

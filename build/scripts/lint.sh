@@ -60,64 +60,77 @@ $PIP_CMD install flake8==7.0.0 black==23.12.1 isort==5.13.2
 # Create a temporary file for capturing linting issues
 LINT_ISSUES=$(mktemp)
 
-# Define exclusion patterns - align these with the GitHub Actions workflow
-EXCLUDE_DIRS="--exclude=.git,__pycache__,build,dist,*.egg,*.egg-info,.eggs,.venv,venv,env,.env,ENV,node_modules,*/node_modules/*,*/.venv/*,*/site-packages/*"
+# Change to the project root directory to match GitHub Actions behavior
+cd "$PROJECT_ROOT"
 
-# Find Python files to check (excluding node_modules, venv, etc.)
-print_header "Finding Python Files to Check"
-PYTHON_FILES=$(find "$PROJECT_ROOT" -name "*.py" -type f | grep -v "node_modules\|\.venv\|site-packages\|__pycache__\|\.git")
-FILE_COUNT=$(echo "$PYTHON_FILES" | wc -l)
-echo "Found $FILE_COUNT Python files to check."
-
-if [ "$FILE_COUNT" -eq 0 ]; then
-    echo -e "${YELLOW}Warning: No Python files found to check in $PROJECT_ROOT${NC}"
-    exit 0
+# Run Black with diff output
+print_header "Running Black with diff output"
+if ! black --diff --line-length=120 . 2>&1 | tee -a "$LINT_ISSUES"; then
+    BLACK_DIFF_ISSUES=1
 fi
 
-# Black formatting check with correct line length (with diff)
-print_header "Checking Python Formatting with Black"
-if black --line-length=120 --diff $PYTHON_FILES 2>&1 | tee -a "$LINT_ISSUES" | grep -q "would reformat"; then
-    echo -e "\n${YELLOW}Some files need formatting with Black.${NC}"
-    echo -e "Run: ${GREEN}black --line-length=120 \"$PROJECT_ROOT\"${NC} to fix formatting issues."
-    FORMAT_NEEDED=1
+# Check formatting with Black
+print_header "Checking formatting with Black"
+if ! black --check --line-length=120 . 2>&1 | tee -a "$LINT_ISSUES"; then
+    BLACK_CHECK_ISSUES=1
+fi
+
+# Run isort with diff output
+print_header "Running isort with diff output"
+if ! isort --profile black --line-length 120 --diff . 2>&1 | tee -a "$LINT_ISSUES"; then
+    ISORT_DIFF_ISSUES=1
+fi
+
+# Check imports with isort
+print_header "Checking imports with isort"
+if ! isort --profile black --line-length 120 --check . 2>&1 | tee -a "$LINT_ISSUES"; then
+    ISORT_CHECK_ISSUES=1
+fi
+
+# Run flake8
+print_header "Running flake8"
+if ! flake8 --max-line-length=120 . 2>&1 | tee -a "$LINT_ISSUES"; then
+    FLAKE8_ISSUES=1
+fi
+
+# Run JavaScript/TypeScript linters if package.json exists
+print_header "Checking for JavaScript/TypeScript linters"
+if [ -f package.json ]; then
+    echo "Found package.json, installing JS dependencies..."
+    if command_exists npm; then
+        npm ci
+        # Run eslint if configured in package.json
+        if grep -q '"eslint"' package.json; then
+            echo "Running eslint..."
+            npm run lint
+            if [ $? -ne 0 ]; then
+                JS_ISSUES=1
+            fi
+        else
+            echo "No eslint configuration found in package.json"
+        fi
+    else
+        echo -e "${YELLOW}Warning: npm not found, skipping JavaScript/TypeScript linting${NC}"
+    fi
 else
-    echo -e "${GREEN}All Python files are properly formatted according to Black.${NC}"
+    echo "No package.json found, skipping JavaScript/TypeScript linting"
 fi
 
-# Use isort with the settings from pyproject.toml
-print_header "Checking Python Import Sorting with isort"
-if isort --profile black --line-length 120 --diff $PYTHON_FILES 2>&1 | tee -a "$LINT_ISSUES" | grep -q "ERROR"; then
-    echo -e "\n${YELLOW}Some imports need sorting with isort.${NC}"
-    echo -e "Run: ${GREEN}isort --profile black --line-length 120 \"$PROJECT_ROOT\"${NC} to fix import sorting issues."
-    FORMAT_NEEDED=1
-else
-    echo -e "${GREEN}All Python imports are properly sorted according to isort.${NC}"
-fi
-
-# flake8 linting check
-print_header "Checking Python Code with flake8"
-if ! flake8 $EXCLUDE_DIRS --max-line-length=120 "$PROJECT_ROOT" 2>&1 | tee -a "$LINT_ISSUES"; then
-    echo -e "\n${YELLOW}flake8 found issues that need to be fixed.${NC}"
-    LINT_ISSUES_FOUND=1
-else
-    echo -e "${GREEN}No flake8 issues found.${NC}"
-fi
-
-# Check if formatting or linting issues were found
+# Check if any issues were found
 print_header "Summary"
-if [ -n "$FORMAT_NEEDED" ] || [ -n "$LINT_ISSUES_FOUND" ]; then
+if [ -n "$BLACK_DIFF_ISSUES" ] || [ -n "$BLACK_CHECK_ISSUES" ] || [ -n "$ISORT_DIFF_ISSUES" ] || [ -n "$ISORT_CHECK_ISSUES" ] || [ -n "$FLAKE8_ISSUES" ] || [ -n "$JS_ISSUES" ]; then
     echo -e "${YELLOW}Linting issues were found. See above for details.${NC}"
     
     # Ask if user wants to automatically fix formatting issues
-    if [ -n "$FORMAT_NEEDED" ]; then
+    if [ -n "$BLACK_CHECK_ISSUES" ] || [ -n "$ISORT_CHECK_ISSUES" ]; then
         echo -ne "\n${BLUE}Would you like to automatically fix formatting issues? [y/N] ${NC}"
         read -r response
         if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
             echo "Formatting Python files with Black..."
-            black --line-length=120 $PYTHON_FILES
+            black --line-length=120 .
             
             echo "Sorting imports with isort..."
-            isort --profile black --line-length 120 $PYTHON_FILES
+            isort --profile black --line-length 120 .
             
             echo -e "${GREEN}Formatting complete!${NC}"
         else
@@ -126,7 +139,7 @@ if [ -n "$FORMAT_NEEDED" ] || [ -n "$LINT_ISSUES_FOUND" ]; then
     fi
     
     # Remind about flake8 issues
-    if [ -n "$LINT_ISSUES_FOUND" ]; then
+    if [ -n "$FLAKE8_ISSUES" ]; then
         echo -e "\n${YELLOW}Note: flake8 issues must be fixed manually. They cannot be auto-fixed.${NC}"
     fi
     

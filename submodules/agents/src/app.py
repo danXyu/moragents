@@ -7,11 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from models.config.config import Config
 
 # Configure routes
-from routes import (
-    agent_manager_routes,
-    delegation_routes,
-    wallet_manager_routes,
-)  # workflow_manager_routes,
+from routes import agent_manager_routes, delegation_routes, wallet_manager_routes  # workflow_manager_routes,
 
 # Configure logging
 logger = setup_logging()

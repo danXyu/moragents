@@ -6,10 +6,7 @@ import pytest
 from models.service.chat_models import AgentResponse
 from services.agents.token_swap.agent import TokenSwapAgent
 from services.agents.token_swap.models import SwapQuoteResponse, TransactionResponse
-from services.agents.token_swap.tools import (
-    InsufficientFundsError,
-    TokenNotFoundError,
-)
+from services.agents.token_swap.tools import InsufficientFundsError, TokenNotFoundError
 from services.agents.token_swap.utils.tool_types import SwapToolType
 
 logger = logging.getLogger(__name__)

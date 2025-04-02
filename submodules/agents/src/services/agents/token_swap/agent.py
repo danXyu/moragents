@@ -6,11 +6,7 @@ from models.service.chat_models import AgentResponse, ChatRequest
 
 from .config import Config
 from .tools import get_transaction_status, swap_coins
-from .utils.exceptions import (
-    InsufficientFundsError,
-    SwapNotPossibleError,
-    TokenNotFoundError,
-)
+from .utils.exceptions import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
 from .utils.tool_types import SwapToolType
 
 logger = logging.getLogger(__name__)

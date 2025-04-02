@@ -1,15 +1,15 @@
-import logging
 import json
+import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
+from services.secrets import get_secret
 from web3 import Web3
 from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 
 from ..config import Config
 from ..models import SwapRoute, TokenInfo
 from .exceptions import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
-from services.secrets import get_secret
 
 logger = logging.getLogger(__name__)
 
