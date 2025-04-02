@@ -60,8 +60,8 @@ $PIP_CMD install flake8==7.0.0 black==23.12.1 isort==5.13.2
 # Create a temporary file for capturing linting issues
 LINT_ISSUES=$(mktemp)
 
-# Define exclusion patterns
-EXCLUDE_DIRS="--exclude=.git,__pycache__,build,dist,*.egg,*.egg-info,.eggs,.venv,venv,env,.env,ENV,node_modules,*/node_modules/*,*/.venv/*,*/site-packages/*,submodules/agents/.venv/"
+# Define exclusion patterns - align these with the GitHub Actions workflow
+EXCLUDE_DIRS="--exclude=.git,__pycache__,build,dist,*.egg,*.egg-info,.eggs,.venv,venv,env,.env,ENV,node_modules,*/node_modules/*,*/.venv/*,*/site-packages/*"
 
 # Find Python files to check (excluding node_modules, venv, etc.)
 print_header "Finding Python Files to Check"
@@ -84,11 +84,11 @@ else
     echo -e "${GREEN}All Python files are properly formatted according to Black.${NC}"
 fi
 
-# isort import sorting check (with diff)
+# Use isort with the settings from pyproject.toml
 print_header "Checking Python Import Sorting with isort"
-if isort --diff $PYTHON_FILES 2>&1 | tee -a "$LINT_ISSUES" | grep -q "ERROR"; then
+if isort --profile black --line-length 120 --diff $PYTHON_FILES 2>&1 | tee -a "$LINT_ISSUES" | grep -q "ERROR"; then
     echo -e "\n${YELLOW}Some imports need sorting with isort.${NC}"
-    echo -e "Run: ${GREEN}isort \"$PROJECT_ROOT\"${NC} to fix import sorting issues."
+    echo -e "Run: ${GREEN}isort --profile black --line-length 120 \"$PROJECT_ROOT\"${NC} to fix import sorting issues."
     FORMAT_NEEDED=1
 else
     echo -e "${GREEN}All Python imports are properly sorted according to isort.${NC}"
@@ -117,7 +117,7 @@ if [ -n "$FORMAT_NEEDED" ] || [ -n "$LINT_ISSUES_FOUND" ]; then
             black --line-length=120 $PYTHON_FILES
             
             echo "Sorting imports with isort..."
-            isort $PYTHON_FILES
+            isort --profile black --line-length 120 $PYTHON_FILES
             
             echo -e "${GREEN}Formatting complete!${NC}"
         else

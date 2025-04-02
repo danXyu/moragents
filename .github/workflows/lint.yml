@@ -43,18 +43,18 @@ jobs:
 
       - name: Run isort with diff output
         run: |
-          # Run isort with diff output
-          isort --diff .
+          # Run isort with diff output and use the black profile
+          isort --profile black --line-length 120 --diff .
 
       - name: Check imports with isort
         run: |
           # Check if imports are properly sorted
-          isort --check .
+          isort --profile black --line-length 120 --check .
 
       - name: Run flake8
         run: |
           # Run flake8 for other linting checks with comprehensive exclusions
-          flake8 . --exclude=.git,__pycache__,build,dist,*.egg,*.egg-info,.eggs,.venv,venv,env,.env,ENV,node_modules,*/node_modules/*,*/.venv/*,*/site-packages/*
+          flake8 . --exclude=.git,__pycache__,build,dist,*.egg,*.egg-info,.eggs,.venv,venv,env,.env,ENV,node_modules,*/node_modules/*,*/.venv/*,*/site-packages/*,submodules/agents/.venv/ --max-line-length=120
 
       - name: Run JavaScript/TypeScript linters
         run: |
