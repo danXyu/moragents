@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from stores import wallet_manager_instance
@@ -43,10 +44,19 @@ async def restore_wallet(request: Request) -> JSONResponse:
         wallet = wallet_manager_instance.restore_wallet(wallet_id, wallet_data, set_active)
         if wallet:
             address = wallet.default_address.address_id
-            return JSONResponse(content={"status": "success", "wallet_id": wallet_id, "address": address})
+            return JSONResponse(
+                content={
+                    "status": "success",
+                    "wallet_id": wallet_id,
+                    "address": address,
+                }
+            )
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to restore wallet {wallet_id}"},
+            content={
+                "status": "error",
+                "message": f"Failed to restore wallet {wallet_id}",
+            },
         )
     except Exception as e:
         logger.error(f"Failed to restore wallet: {str(e)}")
@@ -149,7 +159,10 @@ async def set_active_wallet(request: Request) -> JSONResponse:
         return JSONResponse(content={"status": "success", "wallet_id": wallet_id, "address": address})
     return JSONResponse(
         status_code=500,
-        content={"status": "error", "message": f"Failed to set wallet {wallet_id} as active"},
+        content={
+            "status": "error",
+            "message": f"Failed to set wallet {wallet_id} as active",
+        },
     )
 
 

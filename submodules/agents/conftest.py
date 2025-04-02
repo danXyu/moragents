@@ -2,11 +2,10 @@ import asyncio
 import sys
 
 import pytest
-from langchain_ollama import ChatOllama
-from langchain_community.embeddings import OllamaEmbeddings
-
-from src.models.service.chat_models import ChatRequest, ChatMessage
 from config import AppConfig
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_ollama import ChatOllama
+from src.models.service.chat_models import ChatMessage, ChatRequest
 
 
 def pytest_addoption(parser):

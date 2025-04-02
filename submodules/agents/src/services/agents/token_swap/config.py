@@ -1,5 +1,6 @@
-from models.service.agent_config import AgentConfig
 from langchain.schema import SystemMessage
+from models.service.agent_config import AgentConfig
+
 from .utils.tool_types import SwapToolType
 
 
@@ -109,7 +110,7 @@ class Config:
 
     INCH_URL = "https://api.1inch.dev/token"
     QUOTE_URL = "https://api.1inch.dev/swap"
-    APIBASEURL = f"https://api.1inch.dev/swap/v6.0/"
+    APIBASEURL = "https://api.1inch.dev/swap/v6.0/"
     HEADERS = {
         "Authorization": "Bearer WvQuxaMYpPvDiiOL5RHWUm7OzOd20nt4",
         "accept": "application/json",

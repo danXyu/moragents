@@ -1,13 +1,12 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from cdp import Wallet
 
 logger = logging.getLogger(__name__)
 
 
-def swap_assets(
-    agent_wallet: Wallet, amount: str, from_asset_id: str, to_asset_id: str
-) -> Dict[str, Any]:
+def swap_assets(agent_wallet: Wallet, amount: str, from_asset_id: str, to_asset_id: str) -> Dict[str, Any]:
     """Swap one asset for another (Base Mainnet only)"""
     try:
         if agent_wallet.network_id != "base-mainnet":
@@ -15,7 +14,7 @@ def swap_assets(
 
         from_asset_id = from_asset_id.lower()
         to_asset_id = to_asset_id.lower()
-        logger.info(f"Attempting swap on Base Mainnet:")
+        logger.info("Attempting swap on Base Mainnet:")
         logger.info(f"From asset: {from_asset_id}")
         logger.info(f"To asset: {to_asset_id}")
         logger.info(f"Amount: {amount}")
@@ -32,13 +31,11 @@ def swap_assets(
             logger.info(f"Trade constructed: {trade}")
         except Exception as e:
             if "internal" in str(e).lower():
-                raise Exception(
-                    "Not enough ETH. Please ensure you have sufficient ETH for gas fees."
-                )
+                raise Exception("Not enough ETH. Please ensure you have sufficient ETH for gas fees.")
             raise e
 
         trade.wait()
-        logger.info(f"Trade completed")
+        logger.info("Trade completed")
 
         return {
             "success": True,
@@ -51,15 +48,16 @@ def swap_assets(
         raise Exception(f"Failed to swap assets: {str(e)}")
 
 
-def transfer_asset(
-    agent_wallet: Wallet, amount: str, asset_id: str, destination_address: str
-) -> Dict[str, Any]:
+def transfer_asset(agent_wallet: Wallet, amount: str, asset_id: str, destination_address: str) -> Dict[str, Any]:
     """Transfer an asset to another address"""
     try:
         # Create the transfer
         gasless = agent_wallet.network_id == "base-mainnet" and asset_id.lower() == "usdc"
         transfer = agent_wallet.default_address.transfer(
-            amount=amount, asset_id=asset_id, destination=destination_address, gasless=gasless
+            amount=amount,
+            asset_id=asset_id,
+            destination=destination_address,
+            gasless=gasless,
         )
 
         # Wait for transfer to settle and return status
@@ -97,9 +95,7 @@ def get_balance(agent_wallet: Wallet, asset_id: str) -> Dict[str, Any]:
 # -----------------------------------------------------
 
 
-def create_token(
-    agent_wallet: Wallet, name: str, symbol: str, initial_supply: int
-) -> Dict[str, Any]:
+def create_token(agent_wallet: Wallet, name: str, symbol: str, initial_supply: int) -> Dict[str, Any]:
     """Create a new ERC-20 token"""
     try:
         deployed_contract = agent_wallet.deploy_token(name, symbol, initial_supply)
@@ -122,7 +118,6 @@ def request_eth_from_faucet(agent_wallet: Wallet) -> Dict[str, Any]:
         if agent_wallet.network_id == "base-mainnet":
             raise Exception("Faucet only available on testnet")
 
-        faucet_tx = agent_wallet.faucet()
         return {
             "success": True,
             "address": agent_wallet.default_address.address_id,
@@ -152,9 +147,7 @@ def mint_nft(agent_wallet: Wallet, contract_address: str, mint_to: str) -> Dict[
     """Mint an NFT to an address"""
     try:
         mint_args = {"to": mint_to, "quantity": "1"}
-        mint_tx = agent_wallet.invoke_contract(
-            contract_address=contract_address, method="mint", args=mint_args
-        )
+        mint_tx = agent_wallet.invoke_contract(contract_address=contract_address, method="mint", args=mint_args)
         mint_tx.wait()
 
         return {
@@ -178,9 +171,7 @@ def register_basename(agent_wallet: Wallet, basename: str, amount: float = 0.002
             basename += suffix
 
         contract_address = (
-            "0x4cCb0BB02FCABA27e82a56646E81d8c5bC4119a5"
-            if is_mainnet
-            else "0x49aE3cC2e3AA768B1e5654f5D3C6002144A59581"
+            "0x4cCb0BB02FCABA27e82a56646E81d8c5bC4119a5" if is_mainnet else "0x49aE3cC2e3AA768B1e5654f5D3C6002144A59581"
         )
 
         register_tx = agent_wallet.invoke_contract(

@@ -1,14 +1,13 @@
 """db session factory"""
 
-import re
 import logging
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
-from sqlalchemy.exc import SQLAlchemyError
+import re
 
 from agents.src.models.config.config import Config
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 logger = logging.getLogger(__name__)
 

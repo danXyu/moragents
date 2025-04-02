@@ -5,6 +5,4 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 metadata = Base.metadata
 
-from models.core.user_models import User, UserSetting
-
-__all__ = ["Base", "User", "UserSetting"]
+__all__ = ["Base", "metadata"]

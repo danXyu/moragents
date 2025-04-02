@@ -1,9 +1,10 @@
 import logging
 from decimal import Decimal
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from stores import workflow_manager_instance, wallet_manager_instance
 from services.agents.dca_agent.tools import DCAParams, create_dca_workflow
+from stores import wallet_manager_instance, workflow_manager_instance
 
 router = APIRouter(prefix="/dca", tags=["dca"])
 logger = logging.getLogger(__name__)
@@ -52,7 +53,10 @@ async def create_strategy(data: dict):
         logger.error(f"Failed to create DCA strategy: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to create DCA strategy: {str(e)}"},
+            content={
+                "status": "error",
+                "message": f"Failed to create DCA strategy: {str(e)}",
+            },
         )
 
 
@@ -69,7 +73,10 @@ async def list_strategies():
         logger.error(f"Failed to list DCA strategies: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to list DCA strategies: {str(e)}"},
+            content={
+                "status": "error",
+                "message": f"Failed to list DCA strategies: {str(e)}",
+            },
         )
 
 
@@ -81,7 +88,10 @@ async def get_strategy(workflow_id: str):
         if not workflow:
             return JSONResponse(
                 status_code=404,
-                content={"status": "error", "message": f"Strategy {workflow_id} not found"},
+                content={
+                    "status": "error",
+                    "message": f"Strategy {workflow_id} not found",
+                },
             )
 
         return {"status": "success", "strategy": workflow.to_dict()}
@@ -90,7 +100,10 @@ async def get_strategy(workflow_id: str):
         logger.error(f"Failed to get DCA strategy: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to get DCA strategy: {str(e)}"},
+            content={
+                "status": "error",
+                "message": f"Failed to get DCA strategy: {str(e)}",
+            },
         )
 
 
@@ -102,14 +115,23 @@ async def delete_strategy(workflow_id: str):
         if not success:
             return JSONResponse(
                 status_code=404,
-                content={"status": "error", "message": f"Strategy {workflow_id} not found"},
+                content={
+                    "status": "error",
+                    "message": f"Strategy {workflow_id} not found",
+                },
             )
 
-        return {"status": "success", "message": f"Strategy {workflow_id} deleted successfully"}
+        return {
+            "status": "success",
+            "message": f"Strategy {workflow_id} deleted successfully",
+        }
 
     except Exception as e:
         logger.error(f"Failed to delete DCA strategy: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to delete DCA strategy: {str(e)}"},
+            content={
+                "status": "error",
+                "message": f"Failed to delete DCA strategy: {str(e)}",
+            },
         )

@@ -1,9 +1,8 @@
 import logging
 import logging.config
 import os
-
 from configparser import ConfigParser
-from typing import Any, Callable, TypeVar, Optional
+from typing import Any, Callable, Optional, TypeVar
 
 BASE_DIR = "./config"
 
@@ -77,7 +76,12 @@ class Config:
         # disable noisy loggers
         logging.getLogger("google.cloud.pubsub_v1").setLevel(logging.WARNING)
 
-    def get(self, key: str, section: str = "default", type_conv: Callable[[str], T] = lambda x: x) -> T:
+    def get(
+        self,
+        key: str,
+        section: str = "default",
+        type_conv: Callable[[str], T] = lambda x: x,
+    ) -> T:
         """Get config value for key, section.  If not found in config file, check environment variables"""
         value = self._env_vars.get(key)
 

@@ -1,66 +1,160 @@
-import { WebUploader } from "@irys/web-upload";
-import { WebEthereum } from "@irys/web-upload-ethereum";
-import { EthersV6Adapter } from "@irys/web-upload-ethereum-ethers-v6";
 import { ethers } from "ethers";
 import { LitNodeClient } from "@lit-protocol/lit-node-client";
-import { encryptString, decryptToString } from "@lit-protocol/encryption";
-import { LIT_NETWORK, LIT_ABILITY } from "@lit-protocol/constants";
-import {
-  LitAccessControlConditionResource,
-  createSiweMessage,
-  generateAuthSig,
-} from "@lit-protocol/auth-helpers";
+import { LIT_NETWORK } from "@lit-protocol/constants";
 import { SecretsManager } from "@aws-sdk/client-secrets-manager";
 
-// Hardcoded secret name for Lit Protocol secrets
-const LIT_PROTOCOL_SECRET_NAME = "LitProtocolCapacityCreditsSecrets";
+// Secret name for Lit Protocol secrets
+const LIT_PROTOCOL_SECRET_NAME = "LitProtocolPaymentDelegationSecrets";
 
-let CAPACITY_CREDIT_TOKEN_ID: string = "";
-let CREDIT_OWNER_PRIVATE_KEY: string = "";
+// Initialization state
+let isInitialized = false;
+let LIT_RELAYER_API_KEY: string;
+let LIT_PAYER_SECRET_KEY: string;
 
-// Only fetch secrets in production
-if (process.env.NODE_ENV === "production") {
+// Choose network based on environment
+export const getLitNetwork = () => {
+  return process.env.NODE_ENV === "production"
+    ? LIT_NETWORK.Datil
+    : LIT_NETWORK.DatilDev;
+};
+
+// Initialize the Lit client
+export const litClient = new LitNodeClient({
+  litNetwork: getLitNetwork(),
+});
+
+// Gateway address
+export const gatewayAddress = "https://gateway.irys.xyz/";
+
+// Get the appropriate relayer URL based on network
+export const getRelayerUrl = (endpoint: string) => {
+  const network =
+    process.env.NODE_ENV === "production" ? "datil" : "datil-test";
+  return `https://${network}-relayer.getlit.dev/${endpoint}`;
+};
+
+// Get secrets from AWS Secrets Manager
+export const getSecrets = async () => {
+  console.log("[LIT] Getting secrets from AWS Secrets Manager");
   const secretsManager = new SecretsManager({
     region: process.env.AWS_REGION || "us-west-1",
   });
 
-  // Initialize secrets
-  secretsManager
-    .getSecretValue({
-      SecretId: LIT_PROTOCOL_SECRET_NAME,
-    })
-    .then((response) => {
-      const secrets = JSON.parse(response.SecretString || "{}");
-      CAPACITY_CREDIT_TOKEN_ID = secrets.CAPACITY_CREDIT_TOKEN_ID;
-      CREDIT_OWNER_PRIVATE_KEY = secrets.CREDIT_OWNER_PRIVATE_KEY;
-    });
-}
+  const response = await secretsManager.getSecretValue({
+    SecretId: LIT_PROTOCOL_SECRET_NAME,
+  });
 
-// Choose network based on environment
-const getLitNetwork = () => {
-  // Check if we're in production
-  if (process.env.NODE_ENV === "production") {
-    return LIT_NETWORK.Datil; // Use production network (Manzano)
-  } else {
-    return LIT_NETWORK.DatilDev; // Use dev network otherwise
+  const secrets = JSON.parse(response.SecretString || "{}");
+  return {
+    LIT_RELAYER_API_KEY: secrets.LIT_RELAYER_API_KEY,
+    LIT_PAYER_SECRET_KEY: secrets.LIT_PAYER_SECRET_KEY,
+  };
+};
+
+// Initialize Lit Protocol
+export const initializeLitProtocol = async (): Promise<void> => {
+  // Return immediately if already initialized
+  if (isInitialized) return;
+
+  try {
+    // Connect to Lit network
+    console.log("[LIT] Connecting to Lit Network");
+    await litClient.connect();
+    console.log("[LIT] Lit client connected successfully");
+
+    // Load secrets
+    console.log("[LIT] Loading secrets");
+    const secrets = await getSecrets();
+    LIT_RELAYER_API_KEY = secrets.LIT_RELAYER_API_KEY;
+    LIT_PAYER_SECRET_KEY = secrets.LIT_PAYER_SECRET_KEY;
+
+    // Verify we have the API key
+    if (!LIT_RELAYER_API_KEY) {
+      throw new Error("LIT_RELAYER_API_KEY not found in secrets");
+    }
+
+    isInitialized = true;
+    console.log("[LIT] Initialization complete");
+  } catch (error) {
+    console.error("[LIT] Initialization failed:", error);
+    throw error;
   }
 };
 
-const gatewayAddress = "https://gateway.irys.xyz/";
+/**
+ * Add users as payees for the payer wallet - must be called before encryption/decryption
+ */
+export const addUsers = async (users: string[]): Promise<boolean> => {
+  await initializeLitProtocol();
 
-const getIrysUploader = async () => {
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const irysUploader = await WebUploader(WebEthereum).withAdapter(
-    EthersV6Adapter(provider)
-  );
-  return irysUploader;
+  // Verify we have the required credentials
+  if (!LIT_RELAYER_API_KEY || !LIT_PAYER_SECRET_KEY) {
+    console.error("[LIT] Missing API key or payer secret key");
+    throw new Error("API key or payer secret key is missing");
+  }
+
+  const headers = {
+    "api-key": LIT_RELAYER_API_KEY,
+    "payer-secret-key": LIT_PAYER_SECRET_KEY,
+    "Content-Type": "application/json",
+  };
+
+  console.log(`[LIT] Adding ${users.length} users as delegatees`);
+
+  try {
+    const url = getRelayerUrl("add-users");
+    const response = await fetch(url, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(users),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        `[LIT] Add users failed: ${response.status} - ${errorText}`
+      );
+      throw new Error(`Error: ${errorText}`);
+    }
+
+    const data = await response.json();
+    if (data.success !== true) {
+      throw new Error(`Error: ${data.error}`);
+    }
+    console.log("[LIT] Added users as delegatees successfully");
+
+    return true;
+  } catch (error) {
+    console.error("[LIT] Error adding users:", error);
+    throw error;
+  }
 };
 
-const litClient = new LitNodeClient({
-  litNetwork: getLitNetwork(),
-});
+/**
+ * Adds the current user to the Payment Delegation Database
+ * Should be called before any encryption/decryption operation
+ */
+export const addCurrentUserAsDelegatee = async (): Promise<boolean> => {
+  try {
+    // Get the user's address from browser ethereum provider
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const userWalletAddress = await signer.getAddress();
 
-const getAccessControlConditions = () => {
+    console.log(
+      `[LIT] Adding current user (${userWalletAddress}) to payment delegation database`
+    );
+    return await addUsers([userWalletAddress]);
+  } catch (error) {
+    console.error("[LIT] Error adding current user as delegatee:", error);
+    throw error;
+  }
+};
+
+/**
+ * Standard access control conditions for all encryption/decryption
+ */
+export const getAccessControlConditions = () => {
   return [
     {
       conditionType: "evmBasic" as const,
@@ -75,195 +169,4 @@ const getAccessControlConditions = () => {
       },
     },
   ];
-};
-
-/**
- * Creates capacity delegation auth signature for the current user
- */
-export const createCapacityDelegation = async (): Promise<any> => {
-  // Skip capacity delegation in dev environment
-  if (process.env.NODE_ENV !== "production") {
-    return null;
-  }
-
-  // Initialize the Lit client
-  const localLitClient = new LitNodeClient({
-    litNetwork: getLitNetwork(),
-    checkNodeAttestation: true,
-  });
-
-  await localLitClient.connect();
-
-  // Create wallet instance for the credit owner using the hardcoded private key
-  const creditOwnerWallet = new ethers.Wallet(CREDIT_OWNER_PRIVATE_KEY);
-
-  // Get the user's address from browser ethereum provider
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  const userWalletAddress = await signer.getAddress();
-
-  console.log(
-    `Creating capacity delegation from owner to current user: ${userWalletAddress}`
-  );
-
-  // Create the capacity delegation auth signature
-  const { capacityDelegationAuthSig } =
-    await localLitClient.createCapacityDelegationAuthSig({
-      uses: "10000", // Number of uses for this delegation
-      dAppOwnerWallet: creditOwnerWallet,
-      capacityTokenId: CAPACITY_CREDIT_TOKEN_ID,
-      delegateeAddresses: [userWalletAddress], // Delegate to the current user
-    });
-
-  console.log("Capacity delegation created successfully");
-  return capacityDelegationAuthSig;
-};
-
-export const encryptSecret = async (
-  text: string
-): Promise<{ ciphertext: string; dataToEncryptHash: string }> => {
-  await litClient.connect();
-
-  const { ciphertext, dataToEncryptHash } = await encryptString(
-    {
-      accessControlConditions: getAccessControlConditions(),
-      dataToEncrypt: text,
-    },
-    litClient
-  );
-
-  return { ciphertext, dataToEncryptHash };
-};
-
-export const uploadToIrys = async (
-  cipherText: string,
-  dataToEncryptHash: string
-): Promise<string> => {
-  const irysUploader = await getIrysUploader();
-
-  const dataToUpload = {
-    ciphertext: cipherText, // Note: using ciphertext (lowercase) consistently
-    dataToEncryptHash: dataToEncryptHash,
-    accessControlConditions: getAccessControlConditions(),
-  };
-
-  try {
-    const tags = [{ name: "Content-Type", value: "application/json" }];
-    const receipt = await irysUploader.upload(JSON.stringify(dataToUpload), {
-      tags,
-    });
-    return receipt?.id ? `${gatewayAddress}${receipt.id}` : "";
-  } catch (error) {
-    console.error("Error uploading data: ", error);
-    throw error;
-  }
-};
-
-export const downloadFromIrys = async (
-  id: string
-): Promise<[string, string, any[]]> => {
-  const url = `${gatewayAddress}${id}`;
-  console.log("Downloading from URL:", url);
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Failed to retrieve data for ID: ${id}`);
-
-    const data = await response.json();
-    console.log("Raw data from Irys:", data);
-
-    // Ensure consistent property names
-    const ciphertext = data.ciphertext || data.cipherText;
-    const dataToEncryptHash = data.dataToEncryptHash;
-    const accessControlConditions = data.accessControlConditions;
-
-    if (!ciphertext || !dataToEncryptHash || !accessControlConditions) {
-      console.error("Missing required data from Irys:", {
-        ciphertext,
-        dataToEncryptHash,
-        accessControlConditions,
-      });
-      throw new Error("Missing required data from Irys");
-    }
-
-    return [ciphertext, dataToEncryptHash, accessControlConditions];
-  } catch (error) {
-    console.error("Error retrieving data:", error);
-    throw error;
-  }
-};
-
-export const decryptData = async (
-  encryptedText: string,
-  dataToEncryptHash: string,
-  accessControlConditions: any[]
-): Promise<string> => {
-  console.log("Decrypting with:", {
-    encryptedText,
-    dataToEncryptHash,
-    accessControlConditions,
-  });
-
-  await litClient.connect();
-
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  const walletAddress = await signer.getAddress();
-
-  const latestBlockhash = await litClient.getLatestBlockhash();
-
-  // Get capacity delegation for the current user
-  const capacityDelegationAuthSig = await createCapacityDelegation();
-
-  // Get session signatures with capacity delegation
-  const sessionSigs = await litClient.getSessionSigs({
-    chain: "ethereum",
-    expiration: new Date(Date.now() + 1000 * 60 * 10).toISOString(), // 10 minutes
-    resourceAbilityRequests: [
-      {
-        resource: new LitAccessControlConditionResource("*"),
-        ability: LIT_ABILITY.AccessControlConditionDecryption,
-      },
-    ],
-    authNeededCallback: async ({
-      uri,
-      expiration,
-      resourceAbilityRequests,
-    }) => {
-      const toSign = await createSiweMessage({
-        uri,
-        expiration,
-        resources: resourceAbilityRequests,
-        walletAddress: walletAddress,
-        nonce: latestBlockhash,
-        litNodeClient: litClient,
-        domain: window.location.hostname,
-      });
-
-      return await generateAuthSig({
-        signer: signer,
-        toSign,
-      });
-    },
-    ...(capacityDelegationAuthSig && { capacityDelegationAuthSig }), // Only include if not null
-  });
-
-  // Decrypt using sessionSigs
-  try {
-    const decryptedString = await decryptToString(
-      {
-        accessControlConditions,
-        chain: "ethereum",
-        ciphertext: encryptedText,
-        dataToEncryptHash,
-        sessionSigs,
-      },
-      litClient
-    );
-
-    return decryptedString;
-  } catch (error) {
-    console.error("Decryption error:", error);
-    throw error;
-  }
 };

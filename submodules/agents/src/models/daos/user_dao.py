@@ -1,9 +1,9 @@
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from typing import Any, Dict, List, Optional
 
 from models.core.user_models import User, UserSetting
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 class UserDAO:
@@ -74,7 +74,11 @@ class UserDAO:
             setting.settings_value = settings_value
             setting.updated_at = datetime.utcnow()
         else:
-            setting = UserSetting(user_id=user_id, settings_key=settings_key, settings_value=settings_value)
+            setting = UserSetting(
+                user_id=user_id,
+                settings_key=settings_key,
+                settings_value=settings_value,
+            )
             self.session.add(setting)
         self.session.commit()
         return setting

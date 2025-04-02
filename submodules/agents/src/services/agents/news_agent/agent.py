@@ -2,12 +2,11 @@ import logging
 from typing import Any, Dict, List
 
 import pyshorteners
-
+from langchain.schema import SystemMessage
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.news_agent.config import Config
 from services.agents.news_agent.tools import clean_html, fetch_rss_feed, is_within_time_window
-from models.service.chat_models import ChatRequest, AgentResponse
-from models.service.agent_core import AgentCore
-from langchain.schema import HumanMessage, SystemMessage
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +58,10 @@ class NewsAgent(AgentCore):
                         content="No relevant news found for the specified cryptocurrencies in the last 24 hours."
                     )
 
-                response = "Here are the latest news items relevant to changes in price movement of the mentioned tokens in the last 24 hours:\n\n"
+                response = (
+                    "Here are the latest news items relevant to "
+                    + "changes in price movement of the mentioned tokens in the last 24 hours:\n\n"
+                )
                 for index, item in enumerate(news, start=1):
                     coin_name = Config.CRYPTO_DICT.get(item["Coin"], item["Coin"])
                     short_url = self.url_shortener.tinyurl.short(item["Link"])
@@ -71,7 +73,8 @@ class NewsAgent(AgentCore):
                 return AgentResponse.success(content=response)
             else:
                 return AgentResponse.needs_info(
-                    content=f"I don't know how to handle that type of request. Could you try asking about cryptocurrency news instead?"
+                    content="I don't know how to handle that type of request. "
+                    + "Could you try asking about cryptocurrency news instead?"
                 )
 
         except Exception as e:

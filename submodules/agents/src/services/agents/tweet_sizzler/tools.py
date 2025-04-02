@@ -1,8 +1,8 @@
 import logging
-from typing import Dict
+
+from config import LLM_AGENT
 from langchain.schema import HumanMessage
 from services.agents.tweet_sizzler.config import Config
-from config import LLM_AGENT
 
 logger = logging.getLogger(__name__)
 

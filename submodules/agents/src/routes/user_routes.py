@@ -1,9 +1,9 @@
+from typing import Any, Dict
+
+from config import setup_logging
+from controllers.user_controller import UserController
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from typing import List, Dict, Any
-from agents.src.models.service.user_service_models import UserModel, UserSettingModel
-from controllers.user_controller import UserController
-from config import setup_logging
 
 logger = setup_logging()
 
@@ -38,7 +38,10 @@ async def get_user_by_wallet(wallet_address: str) -> JSONResponse:
         with UserController() as controller:
             user = controller.get_user_by_wallet(wallet_address)
             if not user:
-                raise HTTPException(status_code=404, detail=f"User with wallet {wallet_address} not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"User with wallet {wallet_address} not found",
+                )
             return JSONResponse(content=user.model_dump())
 
     except HTTPException:
@@ -125,7 +128,10 @@ async def get_user_setting(user_id: int, settings_key: str) -> JSONResponse:
         with UserController() as controller:
             setting = controller.get_setting(user_id, settings_key)
             if not setting:
-                raise HTTPException(status_code=404, detail=f"Setting {settings_key} not found for user {user_id}")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Setting {settings_key} not found for user {user_id}",
+                )
             return JSONResponse(content=setting.model_dump())
 
     except HTTPException:
@@ -174,7 +180,10 @@ async def update_user_setting(user_id: int, settings_key: str, settings_value: D
         with UserController() as controller:
             setting = controller.update_setting(user_id, settings_key, settings_value)
             if not setting:
-                raise HTTPException(status_code=404, detail=f"Setting {settings_key} not found for user {user_id}")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Setting {settings_key} not found for user {user_id}",
+                )
             return JSONResponse(content=setting.model_dump())
 
     except HTTPException:
@@ -193,7 +202,10 @@ async def delete_user_setting(user_id: int, settings_key: str) -> JSONResponse:
         with UserController() as controller:
             success = controller.delete_setting(user_id, settings_key)
             if not success:
-                raise HTTPException(status_code=404, detail=f"Setting {settings_key} not found for user {user_id}")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Setting {settings_key} not found for user {user_id}",
+                )
             return JSONResponse(content={"status": "success"})
 
     except HTTPException:

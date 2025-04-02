@@ -1,15 +1,12 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from models.service.agent_core import AgentCore
-from models.service.chat_models import ChatRequest, AgentResponse
+from models.service.chat_models import AgentResponse, ChatRequest
+
 from .config import Config, TokenRegistry
 from .tool_types import RugcheckToolType
-from .tools import (
-    fetch_token_report,
-    fetch_most_viewed,
-    fetch_most_voted,
-    resolve_token_identifier,
-)
+from .tools import fetch_most_viewed, fetch_most_voted, fetch_token_report, resolve_token_identifier
 
 logger = logging.getLogger(__name__)
 

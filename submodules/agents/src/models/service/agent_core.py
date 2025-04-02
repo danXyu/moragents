@@ -1,9 +1,9 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, Callable, TypeVar, Awaitable
 from functools import wraps
+from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
 
-from models.service.chat_models import ChatRequest, AgentResponse
+from models.service.chat_models import AgentResponse, ChatRequest
 
 T = TypeVar("T")
 

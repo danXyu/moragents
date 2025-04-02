@@ -1,5 +1,6 @@
+from typing import List, Optional
+
 from pydantic import BaseModel
-from typing import Optional, List
 
 
 class TokenMetadata(BaseModel):
@@ -136,7 +137,7 @@ class TopHoldersResponse(BaseModel):
         response = f"Top 10 holders own {self.data:.2f}% of supply. {risk}\n\n"
 
         if self.token_info and self.token_info.token:
-            response += f"Token Info:\n"
+            response += "Token Info:\n"
             response += f"Name: {self.token_info.token.name} ({self.token_info.token.symbol})\n"
 
             if self.token_info.priceUSD:

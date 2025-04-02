@@ -1,20 +1,20 @@
-import pytest
 import logging
+from typing import Any, Dict
 from unittest.mock import patch
-from typing import Dict, Any
 
+import pytest
+from models.service.chat_models import AgentResponse
 from services.agents.tweet_sizzler.agent import TweetSizzlerAgent
-from models.service.chat_models import ChatRequest, AgentResponse
-from models.service.agent_core import AgentCore
-from services.agents.tweet_sizzler.tools import generate_tweet
-from services.agents.tweet_sizzler.config import Config
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
 def tweet_sizzler_agent(llm):
-    config: Dict[str, Any] = {"name": "tweet_sizzler", "description": "Agent for generating and posting tweets"}
+    config: Dict[str, Any] = {
+        "name": "tweet_sizzler",
+        "description": "Agent for generating and posting tweets",
+    }
     return TweetSizzlerAgent(config, llm)
 
 
@@ -86,7 +86,11 @@ async def test_execute_unknown_tool(tweet_sizzler_agent):
 async def test_tweet_generation_error(tweet_sizzler_agent, make_chat_request):
     request = make_chat_request(content="Write a tweet")
 
-    with patch.object(tweet_sizzler_agent.tool_bound_llm, "ainvoke", side_effect=Exception("LLM Error")):
+    with patch.object(
+        tweet_sizzler_agent.tool_bound_llm,
+        "ainvoke",
+        side_effect=Exception("LLM Error"),
+    ):
         response = await tweet_sizzler_agent._process_request(request)
 
         assert isinstance(response, AgentResponse)

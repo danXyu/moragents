@@ -1,22 +1,18 @@
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from models.service.agent_core import AgentCore
-from models.service.chat_models import ChatRequest, AgentResponse
+from models.service.chat_models import AgentResponse, ChatRequest
 
 from .config import Config
-from .tool_types import ElfaToolType
 from .models import (
+    ElfaAccountSmartStatsResponse,
     ElfaMentionsResponse,
     ElfaTopMentionsResponse,
     ElfaTrendingTokensResponse,
-    ElfaAccountSmartStatsResponse,
 )
-from .tools import (
-    get_top_mentions,
-    search_mentions,
-    get_trending_tokens,
-    get_account_smart_stats,
-)
+from .tool_types import ElfaToolType
+from .tools import get_account_smart_stats, get_top_mentions, get_trending_tokens, search_mentions
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +66,8 @@ class ElfaAgent(AgentCore):
 
             elif func_name == ElfaToolType.GET_TRENDING_TOKENS.value:
                 trending_tokens_response: ElfaTrendingTokensResponse = await get_trending_tokens(
-                    time_window=args.get("timeWindow"), min_mentions=args.get("minMentions")
+                    time_window=args.get("timeWindow"),
+                    min_mentions=args.get("minMentions"),
                 )
                 return AgentResponse.success(
                     content=trending_tokens_response.formatted_response,

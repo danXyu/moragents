@@ -1,24 +1,22 @@
 import logging
 import time
-from typing import Optional
 
 from web3 import Web3
 
 from .config import Config
-from .utils.exceptions import SwapNotPossibleError, TokenNotFoundError, InsufficientFundsError
 from .models import SwapQuoteResponse, TransactionResponse, TransactionStatus
-from .utils.helpers import (
-    validate_token_pair,
-    get_swap_quote,
-    convert_to_smallest_unit,
-    convert_to_readable_unit,
-)
+from .utils.exceptions import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
+from .utils.helpers import convert_to_readable_unit, convert_to_smallest_unit, get_swap_quote, validate_token_pair
 
 logger = logging.getLogger(__name__)
 
 
 async def swap_coins(
-    source_token: str, destination_token: str, amount: float, chain_id: int, wallet_address: str
+    source_token: str,
+    destination_token: str,
+    amount: float,
+    chain_id: int,
+    wallet_address: str,
 ) -> SwapQuoteResponse:
     """
     Get a quote for swapping tokens.
@@ -61,16 +59,22 @@ async def swap_coins(
             raise SwapNotPossibleError(f"Cannot connect to RPC for chain ID: {chain_id}")
 
         # Validate the swap and get token addresses and symbols
-        source_token_address, source_token_symbol, destination_token_address, destination_token_symbol = (
-            await validate_token_pair(web3, source_token, destination_token, chain_id, amount, wallet_address)
-        )
+        (
+            source_token_address,
+            source_token_symbol,
+            destination_token_address,
+            destination_token_symbol,
+        ) = await validate_token_pair(web3, source_token, destination_token, chain_id, amount, wallet_address)
 
         # Get quote from exchange API
         time.sleep(1)  # Rate limiting
         source_amount_in_wei = convert_to_smallest_unit(web3, amount, source_token_address)
 
         quote_result = await get_swap_quote(
-            source_token_address, destination_token_address, source_amount_in_wei, chain_id
+            source_token_address,
+            destination_token_address,
+            source_amount_in_wei,
+            chain_id,
         )
 
         if not quote_result:
@@ -96,7 +100,12 @@ async def swap_coins(
             swap_tx_cb="/swap",
             estimated_gas=quote_result.get("estimatedGas"),
         )
-    except (TokenNotFoundError, InsufficientFundsError, SwapNotPossibleError, ValueError) as e:
+    except (
+        TokenNotFoundError,
+        InsufficientFundsError,
+        SwapNotPossibleError,
+        ValueError,
+    ) as e:
         # Convert ValueError to SwapNotPossibleError for consistency
         if isinstance(e, ValueError):
             error = SwapNotPossibleError(str(e))

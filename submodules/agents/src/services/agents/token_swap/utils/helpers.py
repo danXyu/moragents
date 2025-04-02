@@ -1,14 +1,15 @@
+import json
 import logging
-import time
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
+from services.secrets import get_secret
 from web3 import Web3
-from web3.exceptions import ContractLogicError, BadFunctionCallOutput
+from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 
 from ..config import Config
-from .exceptions import TokenNotFoundError, InsufficientFundsError, SwapNotPossibleError
-from ..models import TokenInfo, SwapRoute
+from ..models import SwapRoute, TokenInfo
+from .exceptions import InsufficientFundsError, SwapNotPossibleError, TokenNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,11 @@ async def search_token(
     """
     logger.info(f"Searching for token - Query: {query}, Chain ID: {chain_id}")
     endpoint = f"/v1.2/{chain_id}/search"
-    params = {"query": str(query), "limit": str(limit), "ignore_listed": str(ignore_listed)}
+    params = {
+        "query": str(query),
+        "limit": str(limit),
+        "ignore_listed": str(ignore_listed),
+    }
 
     try:
         response = requests.get(Config.INCH_URL + endpoint, params=params, headers=get_api_headers())
@@ -63,8 +68,8 @@ async def search_token(
             try:
                 error_details = response.json()
                 error_message += f" - {error_details.get('description', '')}"
-            except:
-                error_message += f" - {response.text}"
+            except json.JSONDecodeError as json_error:
+                error_message += f" - JSON Error: {str(json_error)} - Response: {response.text}"
 
             logger.error(error_message)
             raise TokenNotFoundError(error_message)
@@ -180,7 +185,12 @@ def convert_to_readable_unit(web3: Web3, smallest_unit_amount: int, token_addres
 
 
 async def validate_token_pair(
-    web3: Web3, source_token: str, destination_token: str, chain_id: int, amount: float, wallet_address: str
+    web3: Web3,
+    source_token: str,
+    destination_token: str,
+    chain_id: int,
+    amount: float,
+    wallet_address: str,
 ) -> Tuple[str, str, str, str]:
     """
     Validate that a swap can be performed and return token addresses and symbols.
@@ -269,7 +279,10 @@ async def validate_token_pair(
 
 
 async def get_swap_quote(
-    source_token_address: str, destination_token_address: str, amount_in_wei: int, chain_id: int
+    source_token_address: str,
+    destination_token_address: str,
+    amount_in_wei: int,
+    chain_id: int,
 ) -> Optional[Dict[str, Any]]:
     """
     Get a quote for swapping between tokens.
@@ -308,14 +321,14 @@ async def get_swap_quote(
 
         if response.status_code == 200:
             result = response.json()
-            logger.info(f"Quote received successfully")
+            logger.info("Quote received successfully")
             return result
         else:
             error_message = f"Failed to get quote. Status code: {response.status_code}"
             try:
                 error_details = response.json()
                 error_message += f" - {error_details.get('description', '')}"
-            except:
+            except Exception:
                 error_message += f" - {response.text}"
 
             logger.error(error_message)
