@@ -99,16 +99,26 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Mock API call for now
-      console.log("Creating new agent with data:", formData);
+      // Call the backend API to create the agent
+      const response = await fetch(`${apiBaseUrl}/agents/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const data = await response.json();
 
-      // For demo purposes, we'll just show success
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to create agent");
+      }
+
       toast({
         title: "Agent created",
-        description: `Agent "${formData.human_readable_name}" has been created successfully.`,
+        description:
+          data.message ||
+          `Agent "${formData.human_readable_name}" has been created successfully.`,
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -127,11 +137,17 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
         upload_required: false,
         is_enabled: true,
       });
+
+      // Close the modal
+      onClose();
     } catch (error) {
       console.error("Error creating agent:", error);
       toast({
         title: "Error creating agent",
-        description: "There was an error creating the agent. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "There was an error creating the agent. Please try again.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -237,12 +253,13 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
                 name="mcp_server_url"
                 value={formData.mcp_server_url}
                 onChange={handleChange}
-                placeholder="e.g., https://my-mcp-server.com/api"
+                placeholder="e.g., http://localhost:8000/sse"
                 className={styles.input}
                 size="sm"
               />
               <FormHelperText className={styles.helperText}>
-                The URL of the MCP server to connect to
+                The URL of the MCP server to connect to (must be a Server-Sent
+                Events endpoint)
               </FormHelperText>
             </FormControl>
 
