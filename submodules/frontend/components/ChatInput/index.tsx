@@ -1,12 +1,17 @@
 import React, { FC, useState, useEffect, useRef } from "react";
 import { Textarea, IconButton, useMediaQuery, Button } from "@chakra-ui/react";
-import { AddIcon, SearchIcon, LinkIcon } from "@chakra-ui/icons";
+import {
+  AddIcon,
+  SearchIcon,
+  LinkIcon,
+  QuestionOutlineIcon,
+} from "@chakra-ui/icons";
 import { SendIcon } from "../CustomIcon/SendIcon";
 import { Command } from "./Commands";
 import { CommandsPortal } from "./CommandsPortal";
 import { ToolsButton } from "@/components/Tools/ToolsButton";
 import styles from "./index.module.css";
-import API_BASE_URL from "../../config";
+import BASE_URL from "@/services/constants";
 
 type ChatInputProps = {
   onSubmit: (
@@ -17,12 +22,16 @@ type ChatInputProps = {
   ) => Promise<void>;
   disabled: boolean;
   isSidebarOpen: boolean;
+  onToggleHelp: () => void;
+  showPrefilledOptions: boolean;
 };
 
 export const ChatInput: FC<ChatInputProps> = ({
   onSubmit,
   disabled,
   isSidebarOpen,
+  onToggleHelp,
+  showPrefilledOptions,
 }) => {
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -69,7 +78,7 @@ export const ChatInput: FC<ChatInputProps> = ({
 
   // Fetch commands
   useEffect(() => {
-    fetch(`${API_BASE_URL}/agents/commands`)
+    fetch(`${BASE_URL}/agents/commands`)
       .then((res) => res.json())
       .then((data) => setCommands(data.commands))
       .catch((error) => console.error("Error fetching commands:", error));
@@ -206,7 +215,6 @@ export const ChatInput: FC<ChatInputProps> = ({
 
           {/* Action buttons container */}
           <div className={styles.actionsContainer}>
-            {/* Left aligned buttons */}
             <div className={styles.leftActions}>
               <IconButton
                 aria-label="Add"
@@ -235,11 +243,21 @@ export const ChatInput: FC<ChatInputProps> = ({
               >
                 Multi-Agent
               </Button>
+              <Button
+                leftIcon={<QuestionOutlineIcon />}
+                size="xs"
+                className={`${styles.actionButton} ${
+                  showPrefilledOptions ? styles.activeButton : ""
+                }`}
+                onClick={onToggleHelp}
+              >
+                Help
+              </Button>
             </div>
 
-            {/* Right aligned tools button - replaced with new component */}
+            {/* Right aligned tools button */}
             <div className={styles.rightActions}>
-              <ToolsButton apiBaseUrl={API_BASE_URL} />
+              <ToolsButton apiBaseUrl={BASE_URL} />
             </div>
           </div>
         </div>

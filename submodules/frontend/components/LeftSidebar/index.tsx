@@ -251,57 +251,6 @@ export const LeftSidebar: FC<LeftSidebarProps> = ({
             ))}
           </div>
 
-          <Box width="100%" mb={1}>
-            <Popover
-              placement="top"
-              trigger="hover"
-              openDelay={0}
-              closeDelay={0}
-            >
-              <PopoverTrigger>
-                <Box
-                  as="button"
-                  width="100%"
-                  bg="rgba(255, 255, 255, 0.05)"
-                  color="white"
-                  borderColor="rgba(255, 255, 255, 0.1)"
-                  borderWidth="1px"
-                  borderRadius="8px"
-                  fontSize="15px"
-                  fontWeight="500"
-                  height="40px"
-                  opacity="0.8"
-                  cursor="pointer"
-                  _hover={{ bg: "rgba(255, 255, 255, 0.08)" }}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  Create or Trade Tokenized Agents
-                </Box>
-              </PopoverTrigger>
-              <PopoverContent
-                bg="#080808"
-                borderColor="rgba(255, 255, 255, 0.1)"
-                boxShadow="0 4px 12px rgba(0, 0, 0, 0.2)"
-                color="white"
-                fontSize="14px"
-                maxWidth="380px"
-                _focus={{
-                  boxShadow: "none",
-                  outline: "none",
-                }}
-              >
-                <PopoverArrow bg="#080808" />
-                <PopoverBody p={4}>
-                  All of the functionality in MySuperAgent can be leveraged in
-                  your own custom agents that can trade for you, post on X, and
-                  more. Agent tokenization is coming soon.
-                </PopoverBody>
-              </PopoverContent>
-            </Popover>
-          </Box>
-
           <div className={styles.footer}>
             <VStack spacing={4} align="stretch" width="100%">
               <Box width="100%">

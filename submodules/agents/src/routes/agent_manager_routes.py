@@ -89,3 +89,11 @@ async def create_agent(agent_data: CreateAgentRequest) -> JSONResponse:
     except Exception as e:
         logger.error(f"Error creating agent: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error creating agent: {str(e)}")
+
+
+@router.post("/reset")
+async def reset_agent_manager() -> JSONResponse:
+    """Reset the agent manager to its initial state"""
+    agent_manager_instance.reset()
+
+    return JSONResponse(content={"status": "success", "message": "Agent manager reset to initial state"})

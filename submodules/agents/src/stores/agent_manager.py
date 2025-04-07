@@ -45,6 +45,21 @@ class AgentManager:
         # self.load_all_agents(LLM, EMBEDDINGS)
         logger.info(f"AgentManager initialized with {len(self.selected_agents)} agents")
 
+    def reset(self) -> None:
+        """
+        Reset the agent manager to its initial state by reloading configurations.
+        This clears all dynamically added agents and restores the default state.
+        """
+        fresh_configs = load_agent_configs()
+        self.active_agent = None
+        self.selected_agents = []
+        self.config = fresh_configs
+        self.agents = {}
+
+        # Reset to default selected agents
+        self.set_selected_agents([agent["name"] for agent in fresh_configs])
+        logger.info(f"AgentManager reset with {len(self.selected_agents)} agents")
+
     def _load_agent(self, agent_config: Dict) -> bool:
         """
         Load a single agent from its configuration.

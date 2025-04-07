@@ -11,6 +11,7 @@ type MessageListProps = {
   isSidebarOpen: boolean;
   onSubmit: (message: string, file: File | null) => Promise<void>;
   disabled: boolean;
+  showPrefilledOptions: boolean;
 };
 
 export const MessageList: FC<MessageListProps> = ({
@@ -19,6 +20,7 @@ export const MessageList: FC<MessageListProps> = ({
   isSidebarOpen,
   onSubmit,
   disabled,
+  showPrefilledOptions,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -100,12 +102,16 @@ export const MessageList: FC<MessageListProps> = ({
           <div ref={messagesEndRef} /> {/* Scroll target */}
         </VStack>
       </Box>
-      <Box width="100%" bg="black" mt="auto" position="relative" zIndex={2}>
-        <PrefilledOptions
-          onSelect={handlePrefilledSelect}
-          isSidebarOpen={isSidebarOpen}
-        />
-      </Box>
+
+      {/* Only render PrefilledOptions when showPrefilledOptions is true */}
+      {showPrefilledOptions && (
+        <Box width="100%" bg="black" mt="auto" position="relative" zIndex={2}>
+          <PrefilledOptions
+            onSelect={handlePrefilledSelect}
+            isSidebarOpen={isSidebarOpen}
+          />
+        </Box>
+      )}
     </Box>
   );
 };

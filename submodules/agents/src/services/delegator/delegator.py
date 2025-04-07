@@ -31,15 +31,10 @@ class Delegator:
     async def _try_agent(self, agent_name: str, chat_request: ChatRequest) -> Optional[AgentResponse]:
         """Attempt to use a single agent, with error handling"""
         try:
-            agent_config = load_agent_config(agent_name)
-            if not agent_config:
-                logger.error(f"Could not load config for agent {agent_name}")
-
+            agent = agent_manager_instance.get_agent(agent_name)
+            if not agent:
+                logger.error(f"Agent {agent_name} not found")
                 return None
-
-            module = importlib.import_module(agent_config["path"])
-            agent_class = getattr(module, agent_config["class_name"])
-            agent = agent_class(agent_config, LLM_AGENT)
 
             result: AgentResponse = await agent.chat(chat_request)
 

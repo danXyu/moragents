@@ -229,6 +229,8 @@ Resources:
           # Set ENV to prod to ensure we use Together/Cerebras APIs
           cat > /home/ec2-user/mysuperagent/.env << 'EOL'
           ENV=prod
+          NODE_ENV=production
+          APP_ENV=production
           AWS_DEFAULT_REGION=us-west-1
           EOL
 
@@ -273,6 +275,11 @@ Resources:
               restart: always
               ports:
                 - "3333:80"
+              environment:
+                - NODE_ENV=production
+                - APP_ENV=production
+                - AWS_DEFAULT_REGION=us-west-1
+                - AWS_REGION=us-west-1
               dns:
                 - 8.8.8.8
                 - 8.8.4.4

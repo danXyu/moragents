@@ -1,4 +1,4 @@
-FROM --platform=linux/arm64 python:3.12-bullseye
+FROM python:3.12-bullseye
 
 # Set the working directory in the container
 WORKDIR /app

@@ -29,40 +29,43 @@ class MCPAgent(AgentCore):
         }
 
         self.mcp_client = None
-        self.is_initialized = False
         self.tool_bound_llm = None
 
         self.logger.info(f"Created MCPAgent for {self.agent_name} with URL {self.mcp_url}")
 
     async def chat(self, request: ChatRequest) -> AgentResponse:
         """Override the chat method to initialize the MCP client before processing."""
-        # Check if we need to initialize
-        if not self.is_initialized or not self.mcp_client:
-            try:
-                # Create and initialize the MCP client
-                self.mcp_client = MultiServerMCPClient(self.mcp_config)
-                await self.mcp_client.__aenter__()
+        try:
+            # Always clean up previous client if it exists
+            if self.mcp_client:
+                try:
+                    await self.mcp_client.__aexit__(None, None, None)
+                except Exception as e:
+                    self.logger.warning(f"Error cleaning up previous MCP client: {str(e)}")
 
-                # Get tools from the MCP server
-                tools = self.mcp_client.get_tools()
-                self.tools_provided = tools
+            # Always create and initialize a new MCP client
+            self.mcp_client = MultiServerMCPClient(self.mcp_config)
+            await self.mcp_client.__aenter__()
 
-                # Bind tools to the LLM if available
-                if self.llm:
-                    self.tool_bound_llm = self.llm.bind_tools(tools)
-                    self.logger.info(f"Bound {len(tools)} tools to LLM for {self.agent_name}")
-                else:
-                    return AgentResponse.error(error_message="LLM is not available for tool binding")
+            # Get tools from the MCP server
+            tools = self.mcp_client.get_tools()
+            self.tools_provided = tools
 
-                self.is_initialized = True
-                self.logger.info(f"Successfully initialized MCP agent {self.agent_name}")
+            # Bind tools to the LLM if available
+            if self.llm:
+                self.tool_bound_llm = self.llm.bind_tools(tools)
+                self.logger.info(f"Bound {len(tools)} tools to LLM for {self.agent_name}")
+            else:
+                return AgentResponse.error(error_message="LLM is not available for tool binding")
 
-            except Exception as e:
-                self.logger.error(f"Failed to initialize MCP agent: {str(e)}", exc_info=True)
-                return AgentResponse.error(error_message=f"Failed to initialize MCP agent: {str(e)}")
+            self.logger.info(f"Successfully initialized MCP agent {self.agent_name}")
 
-        # Now proceed with the normal chat flow
-        return await super().chat(request)
+            # Now proceed with the normal chat flow
+            return await super().chat(request)
+
+        except Exception as e:
+            self.logger.error(f"Failed to initialize MCP agent: {str(e)}", exc_info=True)
+            return AgentResponse.error(error_message=f"Failed to initialize MCP agent: {str(e)}")
 
     async def _validate_request(self, request: ChatRequest) -> Optional[AgentResponse]:
         """Validate the request before processing."""
@@ -71,10 +74,7 @@ class MCPAgent(AgentCore):
         if parent_validation:
             return parent_validation
 
-        # Make sure we're initialized
-        if not self.is_initialized:
-            return AgentResponse.error(error_message="MCP agent is not properly initialized")
-
+        # No need to check initialization since we always initialize in chat()
         return None
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
@@ -135,11 +135,10 @@ class MCPAgent(AgentCore):
 
     async def cleanup(self):
         """Clean up resources when the agent is no longer needed."""
-        if self.mcp_client and self.is_initialized:
+        if self.mcp_client:
             try:
                 await self.mcp_client.__aexit__(None, None, None)
                 self.mcp_client = None
-                self.is_initialized = False
                 self.logger.info(f"Successfully cleaned up MCP client for {self.agent_name}")
             except Exception as e:
                 self.logger.error(f"Error cleaning up MCP client: {str(e)}", exc_info=True)
