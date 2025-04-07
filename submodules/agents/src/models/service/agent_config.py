@@ -19,10 +19,10 @@ class AgentConfig(BaseModel):
     path: str
     class_name: str
     description: str
-    delegator_description: str
+    delegator_description: Optional[str] = None
     name: Optional[str] = None
-    human_readable_name: str
-    command: str
+    human_readable_name: Optional[str] = None
+    command: Optional[str] = None
     upload_required: bool = False
     is_enabled: bool = True
     tools: List[Dict] = []

@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import List
 
-from models import Base
-from models.service.user_service_models import UserModel, UserSettingModel
+from src.models import Base
+from src.models.core.user_service_models import UserModel, UserSettingModel
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

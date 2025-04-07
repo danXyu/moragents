@@ -135,3 +135,10 @@ pre-commit run --files path/to/file.py
 # Run all hooks on all files
 pre-commit run --all-files
 ```
+
+### Running a Migration
+
+```bash
+poetry run alembic revision --autogenerate -m "Enter Message Here"
+alembic upgrade head
+```

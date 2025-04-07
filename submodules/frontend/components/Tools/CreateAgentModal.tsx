@@ -41,11 +41,8 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     human_readable_name: "",
-    command: "",
     description: "",
-    delegator_description: "",
     mcp_server_url: "",
-    upload_required: false,
     is_enabled: true,
   });
 
@@ -66,9 +63,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
   const validateForm = () => {
     const requiredFields = [
       "human_readable_name",
-      "command",
       "description",
-      "delegator_description",
       "mcp_server_url",
     ];
 
@@ -130,11 +125,8 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
       // Reset form
       setFormData({
         human_readable_name: "",
-        command: "",
         description: "",
-        delegator_description: "",
         mcp_server_url: "",
-        upload_required: false,
         is_enabled: true,
       });
 
@@ -196,26 +188,6 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
             </FormControl>
 
             <FormControl isRequired className={styles.formGroup}>
-              <FormLabel className={styles.formLabel}>Command</FormLabel>
-              <InputGroup size="sm">
-                <InputLeftAddon className={styles.inputLeftAddon}>
-                  /
-                </InputLeftAddon>
-                <Input
-                  name="command"
-                  value={formData.command}
-                  onChange={handleChange}
-                  placeholder="e.g., search"
-                  className={styles.input}
-                  size="sm"
-                />
-              </InputGroup>
-              <FormHelperText className={styles.helperText}>
-                Command used to invoke this agent (no spaces)
-              </FormHelperText>
-            </FormControl>
-
-            <FormControl isRequired className={styles.formGroup}>
               <FormLabel className={styles.formLabel}>Description</FormLabel>
               <Textarea
                 name="description"
@@ -229,62 +201,18 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
             </FormControl>
 
             <FormControl isRequired className={styles.formGroup}>
-              <FormLabel className={styles.formLabel}>
-                Delegator Description
-              </FormLabel>
-              <Textarea
-                name="delegator_description"
-                value={formData.delegator_description}
-                onChange={handleChange}
-                placeholder="Description for the delegator..."
-                className={styles.textarea}
-                rows={2}
-                size="sm"
-              />
-              <FormHelperText className={styles.helperText}>
-                Description used by the delegator to determine when to use this
-                agent
-              </FormHelperText>
-            </FormControl>
-
-            <FormControl isRequired className={styles.formGroup}>
               <FormLabel className={styles.formLabel}>MCP Server URL</FormLabel>
               <Input
                 name="mcp_server_url"
                 value={formData.mcp_server_url}
                 onChange={handleChange}
-                placeholder="e.g., http://localhost:8000/sse"
+                placeholder="e.g., https://example.com/sse"
                 className={styles.input}
                 size="sm"
               />
               <FormHelperText className={styles.helperText}>
-                The URL of the MCP server to connect to (must be a Server-Sent
-                Events endpoint)
+                Remote URL to connect to (must be a Server-Sent Events endpoint)
               </FormHelperText>
-            </FormControl>
-
-            <Divider className={styles.formDivider} />
-
-            <FormControl
-              display="flex"
-              alignItems="center"
-              className={styles.formGroup}
-            >
-              <Switch
-                id="upload-required"
-                isChecked={formData.upload_required}
-                onChange={() => handleSwitchChange("upload_required")}
-                className={styles.switch}
-                size="sm"
-              />
-              <FormLabel
-                htmlFor="upload-required"
-                mb="0"
-                ml={2}
-                className={styles.switchLabel}
-              >
-                Requires File Upload
-              </FormLabel>
             </FormControl>
           </VStack>
         </ModalBody>
