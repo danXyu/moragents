@@ -1,0 +1,112 @@
+/* Create Agent Form Styles */
+.overlay {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.modalContent {
+  background-color: #0d0d0d !important;
+  color: white !important;
+  border-radius: 8px !important;
+  width: 100% !important;
+  max-width: 500px !important;
+  max-height: 80vh !important;
+  overflow-y: auto !important;
+  margin: 0 auto !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.modalHeader {
+  font-size: 1.2rem !important;
+  font-weight: 500 !important;
+  color: #59f886 !important;
+  border-bottom: none !important;
+  padding-bottom: 0.75rem !important;
+  text-align: left !important;
+  position: relative !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.backButton {
+  background-color: transparent !important;
+  color: #ddd !important;
+  font-size: 0.85rem !important;
+  padding: 0.25rem 0.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  order: 2 !important;
+}
+
+.backButton:hover {
+  background-color: #2a2a2a !important;
+  color: #59f886 !important;
+}
+
+.createAgentDescription {
+  color: #aaa !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 1.5rem !important;
+  padding: 1rem 1.5rem 0 !important;
+}
+
+.formLabel {
+  color: #ddd !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.input,
+.textarea {
+  background-color: #1a1a1a !important;
+  border-color: #333 !important;
+  color: white !important;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: #59f886 !important;
+  box-shadow: 0 0 0 1px #59f886 !important;
+}
+
+.helperText {
+  color: #888 !important;
+  font-size: 0.8rem !important;
+  margin-top: 0.3rem !important;
+}
+
+.modalBody {
+  padding: 0 !important;
+}
+
+.modalFooter {
+  border-top: 1px solid #2a2a2a !important;
+  padding: 1rem 1.5rem !important;
+}
+
+.cancelButton {
+  border-color: #444 !important;
+  color: #ddd !important;
+}
+
+.cancelButton:hover {
+  background-color: #2a2a2a !important;
+}
+
+.createButton {
+  background-color: #2f854f !important;
+  color: white !important;
+}
+
+.createButton:hover {
+  background-color: #3a9660 !important;
+}
+
+/* Override for VStack in the form */
+.modalBody > div {
+  padding: 0 1.5rem 1.5rem !important;
+}

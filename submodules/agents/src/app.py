@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from models.config.config import Config
 
 # Configure routes
-from routes import agent_manager_routes, delegation_routes, wallet_manager_routes  # workflow_manager_routes,
+from routes import agent_manager_routes, wallet_manager_routes
+from routes import chat_routes  # workflow_manager_routes,
 
 # Configure logging
 logger = setup_logging()
@@ -32,7 +33,7 @@ logger.info(f"Upload folder created at {UPLOAD_FOLDER}")
 
 # Include core routers
 ROUTERS = [
-    delegation_routes.router,
+    chat_routes.router,
     agent_manager_routes.router,
     wallet_manager_routes.router,
     # workflow_manager_routes.router,

@@ -1,16 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Box,
   Text,
-  VStack,
-  Collapse,
-  Button,
-  HStack,
   Badge,
+  HStack,
+  IconButton,
+  Switch,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverBody,
+  useToast,
   Tooltip,
-  Flex,
 } from "@chakra-ui/react";
-import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
+import { FaRegCopy, FaWrench } from "react-icons/fa";
 import { AgentTools } from "./AgentTools";
 import styles from "./ToolsConfiguration.module.css";
 
@@ -22,62 +26,195 @@ interface Agent {
   upload_required: boolean;
   is_enabled: boolean;
   tools: any[];
+  mcp_server_url?: string;
 }
 
 interface AgentCardProps {
   agent: Agent;
   apiBaseUrl: string;
+  selectedAgents: string[];
+  onAgentToggled: (updatedSelectedAgents: string[]) => void;
 }
 
-export const AgentCard: React.FC<AgentCardProps> = ({ agent, apiBaseUrl }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+export const AgentCard: React.FC<AgentCardProps> = ({
+  agent,
+  apiBaseUrl,
+  selectedAgents,
+  onAgentToggled,
+}) => {
+  const [isEnabled, setIsEnabled] = useState(
+    selectedAgents.includes(agent.name)
+  );
+  const toast = useToast();
+  const hasTools = agent.tools && agent.tools.length > 0;
+  // Use a ref to track if an operation is in progress to prevent duplicate toasts
+  const isTogglingRef = useRef(false);
+
+  const toggleAgent = async () => {
+    // If already processing a toggle, exit early
+    if (isTogglingRef.current) return;
+
+    // Mark as processing
+    isTogglingRef.current = true;
+
+    const newState = !isEnabled;
+
+    try {
+      // Create updated list of selected agents
+      let updatedSelectedAgents = [...selectedAgents];
+
+      if (newState) {
+        if (!updatedSelectedAgents.includes(agent.name)) {
+          updatedSelectedAgents.push(agent.name);
+        }
+      } else {
+        updatedSelectedAgents = updatedSelectedAgents.filter(
+          (name) => name !== agent.name
+        );
+      }
+
+      // Update selected agents via API
+      const response = await fetch(`${apiBaseUrl}/agents/selected`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ agents: updatedSelectedAgents }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update agent status");
+      }
+
+      // Update local state
+      setIsEnabled(newState);
+      onAgentToggled(updatedSelectedAgents);
+
+      // Show subtle toast notification
+      toast({
+        title: `${agent.human_readable_name}`,
+        description: `Successfully ${newState ? "enabled" : "disabled"}`,
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+        position: "bottom-right",
+        variant: "subtle",
+      });
+    } catch (error) {
+      console.error("Error toggling agent:", error);
+      toast({
+        title: "Update Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Could not update agent status",
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+        position: "bottom-right",
+        variant: "subtle",
+      });
+    } finally {
+      // Reset processing state after a small delay to prevent rapid toggling
+      setTimeout(() => {
+        isTogglingRef.current = false;
+      }, 300);
+    }
+  };
+
+  // Use separate handler functions to avoid event propagation issues
+  const handleSwitchChange = () => {
+    toggleAgent();
+  };
+
+  const handleLabelClick = () => {
+    toggleAgent();
+  };
 
   return (
     <Box className={styles.agentCard}>
-      <Flex width="100%" position="relative">
-        {/* Content area with fixed width to prevent shifting */}
-        <Box flexGrow={1} pr="40px">
-          <HStack spacing={1} mb={0.5}>
-            <Text className={styles.agentName}>
-              {agent.human_readable_name}
-            </Text>
-            {agent.upload_required && (
-              <Tooltip label="File upload required" placement="top">
-                <Badge className={styles.uploadBadge}>Upload</Badge>
-              </Tooltip>
-            )}
-            <Badge className={styles.commandBadge}>/{agent.command}</Badge>
+      <Box className={styles.cardHeader}>
+        <Text className={styles.agentName}>{agent.human_readable_name}</Text>
+        {agent.upload_required && (
+          <Badge className={styles.uploadBadge}>Upload</Badge>
+        )}
+        {agent.mcp_server_url && (
+          <HStack spacing={1} alignItems="center">
+            <Text className={styles.mcpUrlLabel}>MCP</Text>
+            <Tooltip label="Copy MCP URL" placement="top">
+              <IconButton
+                aria-label="Copy MCP URL"
+                icon={<FaRegCopy />}
+                size="sm"
+                variant="subtle"
+                onClick={() => {
+                  if (agent.mcp_server_url) {
+                    navigator.clipboard.writeText(agent.mcp_server_url);
+                    toast({
+                      title: "Copied to clipboard",
+                      status: "success",
+                      duration: 2000,
+                      isClosable: true,
+                      position: "bottom-right",
+                      variant: "subtle",
+                    });
+                  }
+                }}
+              />
+            </Tooltip>
           </HStack>
-          <Text className={styles.agentDescription}>{agent.description}</Text>
-        </Box>
+        )}
+      </Box>
 
-        {/* Button in absolute position */}
-        <Box
-          position="absolute"
-          right="0"
-          top="50%"
-          transform="translateY(-50%)"
-        >
-          <Button
+      <Text className={styles.agentDescription} noOfLines={2}>
+        {agent.description}
+      </Text>
+
+      <HStack className={styles.cardFooter} spacing={3}>
+        <HStack spacing={1}>
+          <Switch
             size="sm"
-            variant="ghost"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className={styles.expandButton}
-          >
-            {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-          </Button>
-        </Box>
-      </Flex>
-
-      <Collapse in={isExpanded} animateOpacity>
-        <Box pt={2} px={1}>
-          <AgentTools
-            agentName={agent.name}
-            tools={agent.tools}
-            apiBaseUrl={apiBaseUrl}
+            isChecked={isEnabled}
+            onChange={handleSwitchChange}
+            colorScheme="green"
           />
-        </Box>
-      </Collapse>
+          <Text
+            fontSize="xs"
+            color={isEnabled ? "#59f886" : "#aaa"}
+            cursor="pointer"
+            onClick={handleLabelClick}
+          >
+            {isEnabled ? "Enabled" : "Disabled"}
+          </Text>
+        </HStack>
+
+        <Popover placement="bottom" closeOnBlur closeOnEsc>
+          <PopoverTrigger>
+            <IconButton
+              aria-label="View tools"
+              icon={<FaWrench />}
+              variant="ghost"
+              size="sm"
+              className={
+                hasTools ? styles.toolsButton : styles.toolsButtonDisabled
+              }
+              isDisabled={!hasTools}
+            />
+          </PopoverTrigger>
+          {hasTools && (
+            <PopoverContent className={styles.popoverContent}>
+              <PopoverArrow className={styles.popoverArrow} />
+              <PopoverBody className={styles.popoverBody} p={0}>
+                <AgentTools
+                  agentName={agent.name}
+                  tools={agent.tools}
+                  apiBaseUrl={apiBaseUrl}
+                />
+              </PopoverBody>
+            </PopoverContent>
+          )}
+        </Popover>
+      </HStack>
     </Box>
   );
 };

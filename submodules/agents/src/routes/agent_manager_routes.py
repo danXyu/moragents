@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
@@ -52,10 +53,10 @@ class CreateAgentRequest(BaseModel):
     """Request model for creating a new agent"""
 
     human_readable_name: str
-    command: str
     description: str
-    delegator_description: str
     mcp_server_url: str
+    command: Optional[str] = None
+    delegator_description: Optional[str] = None
     upload_required: bool = False
     is_enabled: bool = True
 
@@ -64,10 +65,11 @@ class CreateAgentRequest(BaseModel):
 async def create_agent(agent_data: CreateAgentRequest) -> JSONResponse:
     """Create a new MCP agent"""
     try:
-        # Validate that the command is unique
-        commands = [agent["command"] for agent in agent_manager_instance.get_available_agents()]
-        if agent_data.command in commands:
-            raise HTTPException(status_code=400, detail=f"Command '{agent_data.command}' already exists")
+        # If command is provided, validate that it's unique
+        if agent_data.command:
+            commands = [agent["command"] for agent in agent_manager_instance.get_available_agents()]
+            if agent_data.command in commands:
+                raise HTTPException(status_code=400, detail=f"Command '{agent_data.command}' already exists")
 
         # Create the agent
         agent_config = await agent_manager_instance.create_mcp_agent(agent_data.model_dump())

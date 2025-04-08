@@ -39,7 +39,7 @@ class AgentManager:
         self.config: List[Dict] = config
         self.agents: Dict[str, Any] = {}
         self.llm: Optional[ChatOllama | ChatTogether] = LLM_AGENT
-
+        self.load_all_agents(LLM_AGENT)
         # Select first 6 agents by default
         self.set_selected_agents([agent["name"] for agent in config])
         # self.load_all_agents(LLM, EMBEDDINGS)

@@ -140,5 +140,5 @@ pre-commit run --all-files
 
 ```bash
 poetry run alembic revision --autogenerate -m "Enter Message Here"
-alembic upgrade head
+poetry run alembic upgrade head
 ```

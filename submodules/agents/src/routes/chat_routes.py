@@ -1,10 +1,12 @@
 from config import LLM_DELEGATOR, setup_logging
-from controllers.delegation_controller import DelegationController
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
+
 from models.service.chat_models import ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from services.delegator.delegator import Delegator
+from services.orchestrator.orchestrator import Orchestrator
+from controllers.chat_controller import ChatController
 
 logger = setup_logging()
 
@@ -18,7 +20,8 @@ async def chat(chat_request: ChatRequest) -> JSONResponse:
 
     # Initialize new delegator and controller for each request
     delegator = Delegator(LLM_DELEGATOR)
-    controller = DelegationController(delegator)
+    orchestrator = Orchestrator(LLM_DELEGATOR)
+    controller = ChatController(delegator, orchestrator)
 
     try:
         response = await controller.handle_chat(chat_request)
@@ -45,7 +48,7 @@ async def generate_conversation_title(
     logger.info(f"Received title generation request for conversation {request.conversation_id}")
 
     # Initialize new delegator and controller for each request
-    controller = DelegationController()
+    controller = ChatController()
 
     try:
         title = await controller.generate_conversation_title(request)

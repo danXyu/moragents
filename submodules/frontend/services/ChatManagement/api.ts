@@ -38,6 +38,8 @@ export const writeMessage = async (
       chat_history: currentHistory,
       chain_id: String(chainId),
       wallet_address: address,
+      use_multiagent: false,
+      use_realtime_search: true,
     });
 
     // Process response

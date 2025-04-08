@@ -8,7 +8,7 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.schema import BaseMessage, SystemMessage
 from models.service.chat_models import AgentResponse, ChatRequest, ResponseType
 from pydantic import BaseModel, Field
-from stores import agent_manager_instance
+from stores.agent_manager import agent_manager_instance
 
 from .system_prompt import get_system_prompt
 
@@ -31,6 +31,9 @@ class Delegator:
     async def _try_agent(self, agent_name: str, chat_request: ChatRequest) -> Optional[AgentResponse]:
         """Attempt to use a single agent, with error handling"""
         try:
+            logger.info(f"Attempting agent: {agent_name}")
+            logger.info(f"Agent manager agents: {agent_manager_instance.agents}")
+            logger.info(f"Agent manager config: {agent_manager_instance.config}")
             agent = agent_manager_instance.get_agent(agent_name)
             if not agent:
                 logger.error(f"Agent {agent_name} not found")

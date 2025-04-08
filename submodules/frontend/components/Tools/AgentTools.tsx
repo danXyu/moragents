@@ -20,7 +20,7 @@ interface Tool {
 }
 
 interface AgentToolsProps {
-  agentName: string;
+  agentName?: string;
   tools: Tool[];
   apiBaseUrl: string;
 }
@@ -42,27 +42,19 @@ export const AgentTools: React.FC<AgentToolsProps> = ({
 
   return (
     <VStack spacing={0} align="stretch" className={styles.toolsContainer}>
-      <Text className={styles.toolsHeader} ml={2}>
-        Available Tools
+      <Text className={styles.toolsHeader}>
+        Available Tools ({tools.length})
       </Text>
-      <Divider className={styles.toolsDivider} mt={2} mb={2} />
+      <Divider className={styles.toolsDivider} />
 
       {tools.map((tool, index) => (
         <React.Fragment key={`${agentName}-tool-${index}`}>
           <Box className={styles.toolItem}>
-            <HStack justifyContent="space-between" width="100%" spacing={2}>
-              <Box>
-                <HStack spacing={1} mb={1}>
-                  <Text className={styles.toolName}>{tool.name}</Text>
-                  {tool.type && (
-                    <Badge className={styles.toolTypeBadge}>{tool.type}</Badge>
-                  )}
-                </HStack>
-                <Text className={styles.toolDescription}>
-                  {tool.description}
-                </Text>
-              </Box>
-
+            <HStack spacing={1} mb={1}>
+              <Text className={styles.toolName}>{tool.name}</Text>
+              {tool.type && (
+                <Badge className={styles.toolTypeBadge}>{tool.type}</Badge>
+              )}
               {tool.parameters && tool.parameters.length > 0 && (
                 <Tooltip
                   label={`${tool.parameters.length} parameter${
@@ -70,17 +62,17 @@ export const AgentTools: React.FC<AgentToolsProps> = ({
                   }`}
                   placement="top"
                 >
-                  <Box className={styles.parameterIndicator}>
-                    <Icon as={InfoIcon} boxSize={2.5} />
-                    <Text fontSize="xs">{tool.parameters.length}</Text>
-                  </Box>
+                  <Badge className={styles.parameterBadge}>
+                    {tool.parameters.length}
+                  </Badge>
                 </Tooltip>
               )}
             </HStack>
+            <Text className={styles.toolDescription}>{tool.description}</Text>
           </Box>
 
           {index < tools.length - 1 && (
-            <Divider className={styles.toolItemDivider} my={2} />
+            <Divider className={styles.toolItemDivider} />
           )}
         </React.Fragment>
       ))}

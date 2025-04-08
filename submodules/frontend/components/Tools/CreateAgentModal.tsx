@@ -14,15 +14,12 @@ import {
   VStack,
   Switch,
   FormHelperText,
-  Divider,
   Text,
   useToast,
-  InputGroup,
-  InputLeftAddon,
   HStack,
 } from "@chakra-ui/react";
 import { ChevronLeftIcon } from "@chakra-ui/icons";
-import styles from "./ToolsConfiguration.module.css";
+import styles from "./CreateAgentModal.module.css";
 
 interface CreateAgentModalProps {
   isOpen: boolean;
@@ -53,10 +50,10 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSwitchChange = (name: string) => {
+  const handleSwitchChange = () => {
     setFormData((prev) => ({
       ...prev,
-      [name]: !prev[name as keyof typeof prev],
+      is_enabled: !prev.is_enabled,
     }));
   };
 
@@ -74,9 +71,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
     if (missingFields.length > 0) {
       toast({
         title: "Missing required fields",
-        description: `Please fill in all required fields: ${missingFields.join(
-          ", "
-        )}`,
+        description: `Please fill in all required fields.`,
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -111,9 +106,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
 
       toast({
         title: "Agent created",
-        description:
-          data.message ||
-          `Agent "${formData.human_readable_name}" has been created successfully.`,
+        description: `Agent "${formData.human_readable_name}" has been created successfully.`,
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -151,7 +144,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay className={styles.overlay} />
       <ModalContent className={styles.modalContent}>
         <ModalHeader className={styles.modalHeader}>
@@ -166,7 +159,6 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
             Back
           </Button>
         </ModalHeader>
-        {/* No ModalCloseButton here as it's been replaced by the Back button */}
 
         <ModalBody className={styles.modalBody}>
           <Text className={styles.createAgentDescription}>
@@ -174,8 +166,8 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
             tools will be imported automatically.
           </Text>
 
-          <VStack spacing={3} align="stretch">
-            <FormControl isRequired className={styles.formGroup}>
+          <VStack spacing={4} align="stretch">
+            <FormControl isRequired>
               <FormLabel className={styles.formLabel}>Agent Name</FormLabel>
               <Input
                 name="human_readable_name"
@@ -187,7 +179,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
               />
             </FormControl>
 
-            <FormControl isRequired className={styles.formGroup}>
+            <FormControl isRequired>
               <FormLabel className={styles.formLabel}>Description</FormLabel>
               <Textarea
                 name="description"
@@ -200,7 +192,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
               />
             </FormControl>
 
-            <FormControl isRequired className={styles.formGroup}>
+            <FormControl isRequired>
               <FormLabel className={styles.formLabel}>MCP Server URL</FormLabel>
               <Input
                 name="mcp_server_url"
