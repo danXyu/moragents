@@ -220,12 +220,12 @@ export const ChatInput: FC<ChatInputProps> = ({
                 aria-label="Add"
                 icon={<AddIcon />}
                 className={styles.actionIcon}
-                size="xs"
+                size="sm"
                 onClick={handleFileUpload}
               />
               <Button
                 leftIcon={<SearchIcon />}
-                size="xs"
+                size="sm"
                 className={`${styles.actionButton} ${
                   useRealtimeSearch ? styles.activeButton : ""
                 }`}
@@ -235,7 +235,7 @@ export const ChatInput: FC<ChatInputProps> = ({
               </Button>
               <Button
                 leftIcon={<LinkIcon />}
-                size="xs"
+                size="sm"
                 className={`${styles.actionButton} ${
                   useMultiagent ? styles.activeButton : ""
                 }`}
@@ -245,7 +245,7 @@ export const ChatInput: FC<ChatInputProps> = ({
               </Button>
               <Button
                 leftIcon={<QuestionOutlineIcon />}
-                size="xs"
+                size="sm"
                 className={`${styles.actionButton} ${
                   showPrefilledOptions ? styles.activeButton : ""
                 }`}

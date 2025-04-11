@@ -85,7 +85,6 @@ export const CustomConnectButton: FC = () => {
         openConnectModal,
         authenticationStatus,
         mounted,
-        disconnect,
       }) => {
         const ready = mounted && authenticationStatus !== "loading";
         const connected =
@@ -179,7 +178,7 @@ export const CustomConnectButton: FC = () => {
                       <MenuDivider className={styles.menuDivider} />
                       <MenuItem
                         className={styles.menuItem}
-                        onClick={() => disconnect()}
+                        onClick={openAccountModal}
                       >
                         <Text>Disconnect</Text>
                       </MenuItem>

@@ -15,7 +15,7 @@ export const ToolsButton: React.FC<ToolsButtonProps> = ({ apiBaseUrl }) => {
     <>
       <Button
         leftIcon={<SettingsIcon />}
-        size="xs"
+        size="sm"
         className={styles.actionButton}
         aria-label="Tools"
         onClick={onOpen}

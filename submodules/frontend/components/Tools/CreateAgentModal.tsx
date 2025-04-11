@@ -12,13 +12,16 @@ import {
   Input,
   Textarea,
   VStack,
-  Switch,
   FormHelperText,
   Text,
   useToast,
   HStack,
+  Box,
+  Tooltip,
+  Switch,
+  FormErrorMessage,
 } from "@chakra-ui/react";
-import { ChevronLeftIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, InfoIcon } from "@chakra-ui/icons";
 import styles from "./CreateAgentModal.module.css";
 
 interface CreateAgentModalProps {
@@ -26,6 +29,12 @@ interface CreateAgentModalProps {
   onClose: () => void;
   onAgentCreated: () => void;
   apiBaseUrl: string;
+}
+
+interface FormErrors {
+  human_readable_name?: string;
+  description?: string;
+  mcp_server_url?: string;
 }
 
 export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
@@ -43,11 +52,18 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
     is_enabled: true,
   });
 
+  const [errors, setErrors] = useState<FormErrors>({});
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear error for this field when user types
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSwitchChange = () => {
@@ -58,29 +74,32 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
   };
 
   const validateForm = () => {
-    const requiredFields = [
-      "human_readable_name",
-      "description",
-      "mcp_server_url",
-    ];
+    const newErrors: FormErrors = {};
+    let isValid = true;
 
-    const missingFields = requiredFields.filter(
-      (field) => !formData[field as keyof typeof formData]
-    );
-
-    if (missingFields.length > 0) {
-      toast({
-        title: "Missing required fields",
-        description: `Please fill in all required fields.`,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-        position: "top-right",
-      });
-      return false;
+    // Validate agent name
+    if (!formData.human_readable_name.trim()) {
+      newErrors.human_readable_name = "Agent name is required";
+      isValid = false;
     }
 
-    return true;
+    // Validate description
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required";
+      isValid = false;
+    }
+
+    // Validate MCP server URL
+    if (!formData.mcp_server_url.trim()) {
+      newErrors.mcp_server_url = "MCP Server URL is required";
+      isValid = false;
+    } else if (!formData.mcp_server_url.startsWith("http")) {
+      newErrors.mcp_server_url = "URL must start with http:// or https://";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
   };
 
   const handleSubmit = async () => {
@@ -105,8 +124,8 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
       }
 
       toast({
-        title: "Agent created",
-        description: `Agent "${formData.human_readable_name}" has been created successfully.`,
+        title: "Agent created successfully",
+        description: `"${formData.human_readable_name}" has been added to your agents.`,
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -144,13 +163,13 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
       <ModalOverlay className={styles.overlay} />
       <ModalContent className={styles.modalContent}>
         <ModalHeader className={styles.modalHeader}>
           <Text>Create New Agent</Text>
           <Button
-            leftIcon={<ChevronLeftIcon />}
+            leftIcon={<ChevronLeftIcon boxSize={5} />}
             onClick={onClose}
             className={styles.backButton}
             variant="ghost"
@@ -163,11 +182,11 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
         <ModalBody className={styles.modalBody}>
           <Text className={styles.createAgentDescription}>
             Create a new agent by connecting to an MCP server. The agent&apos;s
-            tools will be imported automatically.
+            tools will be verified and imported automatically.
           </Text>
 
-          <VStack spacing={4} align="stretch">
-            <FormControl isRequired>
+          <VStack spacing={2} align="stretch">
+            <FormControl isRequired isInvalid={!!errors.human_readable_name}>
               <FormLabel className={styles.formLabel}>Agent Name</FormLabel>
               <Input
                 name="human_readable_name"
@@ -175,11 +194,16 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
                 onChange={handleChange}
                 placeholder="e.g., WebSearch Agent"
                 className={styles.input}
-                size="sm"
+                size="md"
               />
+              {errors.human_readable_name && (
+                <FormErrorMessage>
+                  {errors.human_readable_name}
+                </FormErrorMessage>
+              )}
             </FormControl>
 
-            <FormControl isRequired>
+            <FormControl isRequired isInvalid={!!errors.description}>
               <FormLabel className={styles.formLabel}>Description</FormLabel>
               <Textarea
                 name="description"
@@ -187,12 +211,15 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
                 onChange={handleChange}
                 placeholder="Describe what this agent does..."
                 className={styles.textarea}
-                rows={2}
-                size="sm"
+                rows={3}
+                size="md"
               />
+              {errors.description && (
+                <FormErrorMessage>{errors.description}</FormErrorMessage>
+              )}
             </FormControl>
 
-            <FormControl isRequired>
+            <FormControl isRequired isInvalid={!!errors.mcp_server_url}>
               <FormLabel className={styles.formLabel}>MCP Server URL</FormLabel>
               <Input
                 name="mcp_server_url"
@@ -200,11 +227,16 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
                 onChange={handleChange}
                 placeholder="e.g., https://example.com/sse"
                 className={styles.input}
-                size="sm"
+                size="md"
               />
-              <FormHelperText className={styles.helperText}>
-                Remote URL to connect to (must be a Server-Sent Events endpoint)
-              </FormHelperText>
+              {errors.mcp_server_url ? (
+                <FormErrorMessage>{errors.mcp_server_url}</FormErrorMessage>
+              ) : (
+                <FormHelperText className={styles.helperText}>
+                  Remote URL to connect to (must be a Server-Sent Events
+                  endpoint)
+                </FormHelperText>
+              )}
             </FormControl>
           </VStack>
         </ModalBody>
@@ -215,7 +247,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
               variant="outline"
               onClick={onClose}
               className={styles.cancelButton}
-              size="sm"
+              size="md"
             >
               Cancel
             </Button>
@@ -224,7 +256,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
               isLoading={isSubmitting}
               loadingText="Creating..."
               className={styles.createButton}
-              size="sm"
+              size="md"
             >
               Create Agent
             </Button>
