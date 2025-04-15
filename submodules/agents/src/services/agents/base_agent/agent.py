@@ -7,7 +7,7 @@ from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.base_agent import tools
 from services.agents.base_agent.config import Config
 from services.agents.base_agent.tool_types import BaseAgentToolType
-from stores import wallet_manager_instance
+from stores.wallet_manager import wallet_manager_instance
 
 logger = logging.getLogger(__name__)
 

@@ -18,6 +18,7 @@ class Config:
         human_readable_name="DCA Transaction Manager",
         command="dca",
         upload_required=False,
+        is_enabled=False,
     )
 
     # *************

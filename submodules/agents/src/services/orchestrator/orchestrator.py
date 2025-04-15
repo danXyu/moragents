@@ -5,7 +5,7 @@ from crewai.agent import Agent as CrewAgent
 from crewai.task import Task as CrewTask
 from pydantic import BaseModel, Field
 
-from stores import agent_manager_instance
+from stores.agent_manager import agent_manager_instance
 from models.service.chat_models import AgentResponse, ChatRequest, ResponseType, ChatMessage
 from services.orchestrator.system_prompt import get_system_prompt
 

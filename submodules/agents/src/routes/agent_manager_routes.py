@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from stores import agent_manager_instance
+from stores.agent_manager import agent_manager_instance
 
 logger = logging.getLogger(__name__)
 

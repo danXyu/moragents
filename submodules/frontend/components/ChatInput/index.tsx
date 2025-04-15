@@ -233,7 +233,7 @@ export const ChatInput: FC<ChatInputProps> = ({
               >
                 Search
               </Button>
-              <Button
+              {/* <Button
                 leftIcon={<LinkIcon />}
                 size="sm"
                 className={`${styles.actionButton} ${
@@ -242,7 +242,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                 onClick={toggleMultiagent}
               >
                 Multi-Agent
-              </Button>
+              </Button> */}
               <Button
                 leftIcon={<QuestionOutlineIcon />}
                 size="sm"

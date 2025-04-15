@@ -8,7 +8,7 @@ from models.service.chat_models import AgentResponse, ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from services.delegator.delegator import Delegator
 from services.orchestrator.orchestrator import Orchestrator
-from stores import agent_manager_instance
+from stores.agent_manager import agent_manager_instance
 
 logger = setup_logging()
 

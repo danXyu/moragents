@@ -26,7 +26,7 @@ import {
 } from "@chakra-ui/react";
 import { AddIcon, SearchIcon } from "@chakra-ui/icons";
 import { AgentCard } from "./AgentCard";
-import { CreateAgentModal } from "./CreateAgentModal";
+import { CreateAgentModal } from "./CreateAgentModal/index";
 import styles from "./ToolsConfiguration.module.css";
 
 interface Agent {
@@ -214,7 +214,7 @@ export const ToolsConfigurationModal: React.FC<
                           : "No agents available. Create a new agent to get started."}
                       </Text>
                     ) : (
-                      <SimpleGrid columns={[1, 3, 3]} spacing={3}>
+                      <SimpleGrid columns={[1, 2, 3]} spacing={3}>
                         {filteredAgents.map((agent) => (
                           <AgentCard
                             key={agent.name}

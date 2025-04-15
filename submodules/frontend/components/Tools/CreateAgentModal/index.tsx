@@ -16,25 +16,20 @@ import {
   Text,
   useToast,
   HStack,
-  Box,
-  Tooltip,
   Switch,
   FormErrorMessage,
+  Box,
 } from "@chakra-ui/react";
-import { ChevronLeftIcon, InfoIcon } from "@chakra-ui/icons";
-import styles from "./CreateAgentModal.module.css";
+import { ChevronLeftIcon } from "@chakra-ui/icons";
+import styles from "./index.module.css";
+import { MCPConfigForm } from "./MCPConfigForm";
+import { FormErrors } from "./types";
 
 interface CreateAgentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAgentCreated: () => void;
   apiBaseUrl: string;
-}
-
-interface FormErrors {
-  human_readable_name?: string;
-  description?: string;
-  mcp_server_url?: string;
 }
 
 export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
@@ -53,6 +48,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
+  const [showUrlInput, setShowUrlInput] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -71,6 +67,18 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
       ...prev,
       is_enabled: !prev.is_enabled,
     }));
+  };
+
+  const handleConfigToggle = () => {
+    setShowUrlInput(!showUrlInput);
+    if (showUrlInput) {
+      // Reset the URL field when switching to config mode
+      setFormData((prev) => ({ ...prev, mcp_server_url: "" }));
+    }
+  };
+
+  const handleUrlUpdate = (url: string) => {
+    setFormData((prev) => ({ ...prev, mcp_server_url: url }));
   };
 
   const validateForm = () => {
@@ -163,7 +171,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
       <ModalOverlay className={styles.overlay} />
       <ModalContent className={styles.modalContent}>
         <ModalHeader className={styles.modalHeader}>
@@ -211,7 +219,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
                 onChange={handleChange}
                 placeholder="Describe what this agent does..."
                 className={styles.textarea}
-                rows={3}
+                rows={1}
                 size="md"
               />
               {errors.description && (
@@ -219,25 +227,46 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
               )}
             </FormControl>
 
-            <FormControl isRequired isInvalid={!!errors.mcp_server_url}>
-              <FormLabel className={styles.formLabel}>MCP Server URL</FormLabel>
-              <Input
-                name="mcp_server_url"
-                value={formData.mcp_server_url}
-                onChange={handleChange}
-                placeholder="e.g., https://example.com/sse"
-                className={styles.input}
-                size="md"
-              />
-              {errors.mcp_server_url ? (
-                <FormErrorMessage>{errors.mcp_server_url}</FormErrorMessage>
-              ) : (
-                <FormHelperText className={styles.helperText}>
-                  Remote URL to connect to (must be a Server-Sent Events
-                  endpoint)
-                </FormHelperText>
-              )}
-            </FormControl>
+            <Box className={styles.connectionToggleContainer}>
+              <HStack spacing={2} className={styles.connectionToggle}>
+                <Switch
+                  id="connection-mode"
+                  colorScheme="green"
+                  isChecked={showUrlInput}
+                  onChange={handleConfigToggle}
+                  className={styles.toggle}
+                />
+                <Text className={`${styles.formLabel} ${styles.toggleLabel}`}>
+                  I already have a remote MCP URL
+                </Text>
+              </HStack>
+            </Box>
+
+            {showUrlInput ? (
+              <FormControl isRequired isInvalid={!!errors.mcp_server_url}>
+                <FormLabel className={styles.formLabel}>
+                  MCP Server URL
+                </FormLabel>
+                <Input
+                  name="mcp_server_url"
+                  value={formData.mcp_server_url}
+                  onChange={handleChange}
+                  placeholder="e.g., https://example.com/sse"
+                  className={styles.input}
+                  size="md"
+                />
+                {errors.mcp_server_url ? (
+                  <FormErrorMessage>{errors.mcp_server_url}</FormErrorMessage>
+                ) : (
+                  <FormHelperText className={styles.helperText}>
+                    Remote URL to connect to (must be a Server-Sent Events
+                    endpoint)
+                  </FormHelperText>
+                )}
+              </FormControl>
+            ) : (
+              <MCPConfigForm onUrlUpdate={handleUrlUpdate} />
+            )}
           </VStack>
         </ModalBody>
 
@@ -257,8 +286,11 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
               loadingText="Creating..."
               className={styles.createButton}
               size="md"
+              isDisabled={!showUrlInput && !formData.mcp_server_url}
             >
-              Create Agent
+              {!showUrlInput && !formData.mcp_server_url
+                ? "Enter URL After Running Script"
+                : "Create Agent"}
             </Button>
           </HStack>
         </ModalFooter>

@@ -20,6 +20,7 @@ class Config:
         human_readable_name="Base Transaction Manager",
         command="base",
         upload_required=False,
+        is_enabled=False,
     )
 
     # *************

@@ -10,7 +10,7 @@ from langchain_core.messages import SystemMessage
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.base_agent.tool_types import BaseAgentToolType
 from services.langchain_agent import LangChainAgent
-from stores import wallet_manager_instance
+from stores.wallet_manager import wallet_manager_instance
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,109 @@
+/* MCP Config Form Styles */
+.configContainer {
+  padding: 0.5rem 0.25rem !important;
+  margin: 0.5rem 0 !important;
+  background-color: rgba(25, 25, 25, 0.4) !important;
+  border-radius: 8px !important;
+  border: 1px solid #222 !important;
+}
+
+.configTitle {
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  color: #59f886 !important;
+  padding: 0.5rem 0.25rem !important;
+  text-align: center !important;
+  margin-bottom: 0.5rem !important;
+  border-bottom: 1px solid #222 !important;
+  width: 100% !important;
+}
+
+.formLabel {
+  color: #eee !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 0.25rem !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.input {
+  background-color: #151515 !important;
+  border-color: #333 !important;
+  color: white !important;
+  padding: 0.6rem 0.8rem !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.input:hover {
+  background-color: #181818 !important;
+  border-color: #444 !important;
+}
+
+.input:focus {
+  border-color: #59f886 !important;
+  box-shadow: 0 0 0 1px rgba(89, 248, 134, 0.3) !important;
+  background-color: #181818 !important;
+}
+
+.scriptActions {
+  margin-top: 1rem !important;
+  padding-top: 0.75rem !important;
+  border-top: 1px solid #222 !important;
+}
+
+.actionButton {
+  border-radius: 6px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  padding: 0.5rem 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.actionButton:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+.scriptPreview {
+  margin-top: 1rem !important;
+  padding: 1rem !important;
+  background-color: #121212 !important;
+  border-radius: 6px !important;
+  border: 1px solid #1a1a1a !important;
+}
+
+.scriptContainer {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  padding: 0.5rem !important;
+  margin: 0.5rem 0 !important;
+  background-color: #0a0a0a !important;
+  border-radius: 4px !important;
+}
+
+.scriptCode {
+  white-space: pre !important;
+  color: #d1d1d1 !important;
+  font-family: monospace !important;
+  font-size: 0.85rem !important;
+  width: 100% !important;
+  display: block !important;
+  background-color: transparent !important;
+}
+
+.helperText {
+  color: #999 !important;
+  font-size: 0.8rem !important;
+  margin-top: 0.4rem !important;
+  font-style: italic !important;
+}
+
+.inlineCode {
+  background-color: #181818 !important;
+  color: #e5e5e5 !important;
+  padding: 0.1rem 0.3rem !important;
+  border-radius: 3px !important;
+  font-size: 0.85rem !important;
+}
