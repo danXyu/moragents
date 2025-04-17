@@ -4,21 +4,16 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalFooter,
   ModalBody,
   Button,
   FormControl,
-  FormLabel,
   Input,
   Textarea,
-  VStack,
   FormHelperText,
   Text,
   useToast,
-  HStack,
   Switch,
   FormErrorMessage,
-  Box,
 } from "@chakra-ui/react";
 import { ChevronLeftIcon } from "@chakra-ui/icons";
 import styles from "./index.module.css";
@@ -170,12 +165,16 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
     }
   };
 
+  const isFormValid =
+    formData.human_readable_name.trim() &&
+    formData.description.trim() &&
+    formData.mcp_server_url.trim();
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
       <ModalOverlay className={styles.overlay} />
       <ModalContent className={styles.modalContent}>
         <ModalHeader className={styles.modalHeader}>
-          <Text>Create New Agent</Text>
           <Button
             leftIcon={<ChevronLeftIcon boxSize={5} />}
             onClick={onClose}
@@ -185,6 +184,17 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
           >
             Back
           </Button>
+          <Text className={styles.headerTitle}>Create New Agent</Text>
+          <Button
+            onClick={handleSubmit}
+            isLoading={isSubmitting}
+            loadingText="Creating..."
+            className={styles.createButton}
+            size="md"
+            isDisabled={!isFormValid}
+          >
+            Create
+          </Button>
         </ModalHeader>
 
         <ModalBody className={styles.modalBody}>
@@ -193,107 +203,99 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
             tools will be verified and imported automatically.
           </Text>
 
-          <VStack spacing={2} align="stretch">
-            <FormControl isRequired isInvalid={!!errors.human_readable_name}>
-              <FormLabel className={styles.formLabel}>Agent Name</FormLabel>
-              <Input
-                name="human_readable_name"
-                value={formData.human_readable_name}
-                onChange={handleChange}
-                placeholder="e.g., WebSearch Agent"
-                className={styles.input}
-                size="md"
-              />
-              {errors.human_readable_name && (
-                <FormErrorMessage>
-                  {errors.human_readable_name}
-                </FormErrorMessage>
-              )}
-            </FormControl>
+          <div className={styles.formContainer}>
+            <div className={styles.formRow}>
+              <div className={styles.labelColumn}>
+                <label className={styles.formLabel}>Agent Name</label>
+              </div>
+              <div className={styles.inputColumn}>
+                <FormControl
+                  isRequired
+                  isInvalid={!!errors.human_readable_name}
+                >
+                  <Input
+                    name="human_readable_name"
+                    value={formData.human_readable_name}
+                    onChange={handleChange}
+                    placeholder="e.g., WebSearch Agent"
+                    className={styles.input}
+                    size="md"
+                  />
+                  {errors.human_readable_name && (
+                    <FormErrorMessage>
+                      {errors.human_readable_name}
+                    </FormErrorMessage>
+                  )}
+                </FormControl>
+              </div>
+            </div>
 
-            <FormControl isRequired isInvalid={!!errors.description}>
-              <FormLabel className={styles.formLabel}>Description</FormLabel>
-              <Textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Describe what this agent does..."
-                className={styles.textarea}
-                rows={1}
-                size="md"
-              />
-              {errors.description && (
-                <FormErrorMessage>{errors.description}</FormErrorMessage>
-              )}
-            </FormControl>
+            <div className={styles.formRow}>
+              <div className={styles.labelColumn}>
+                <label className={styles.formLabel}>Description</label>
+              </div>
+              <div className={styles.inputColumn}>
+                <FormControl isRequired isInvalid={!!errors.description}>
+                  <Textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Describe what this agent does..."
+                    className={styles.textarea}
+                    rows={2}
+                    size="md"
+                  />
+                  {errors.description && (
+                    <FormErrorMessage>{errors.description}</FormErrorMessage>
+                  )}
+                </FormControl>
+              </div>
+            </div>
 
-            <Box className={styles.connectionToggleContainer}>
-              <HStack spacing={2} className={styles.connectionToggle}>
-                <Switch
-                  id="connection-mode"
-                  colorScheme="green"
-                  isChecked={showUrlInput}
-                  onChange={handleConfigToggle}
-                  className={styles.toggle}
-                />
-                <Text className={`${styles.formLabel} ${styles.toggleLabel}`}>
-                  I already have a remote MCP URL
-                </Text>
-              </HStack>
-            </Box>
+            <div className={styles.toggleRow}>
+              <Switch
+                id="connection-mode"
+                colorScheme="green"
+                isChecked={showUrlInput}
+                onChange={handleConfigToggle}
+              />
+              <Text className={styles.formLabel}>
+                I already have a remote MCP URL
+              </Text>
+            </div>
 
             {showUrlInput ? (
-              <FormControl isRequired isInvalid={!!errors.mcp_server_url}>
-                <FormLabel className={styles.formLabel}>
-                  MCP Server URL
-                </FormLabel>
-                <Input
-                  name="mcp_server_url"
-                  value={formData.mcp_server_url}
-                  onChange={handleChange}
-                  placeholder="e.g., https://example.com/sse"
-                  className={styles.input}
-                  size="md"
-                />
-                {errors.mcp_server_url ? (
-                  <FormErrorMessage>{errors.mcp_server_url}</FormErrorMessage>
-                ) : (
-                  <FormHelperText className={styles.helperText}>
-                    Remote URL to connect to (must be a Server-Sent Events
-                    endpoint)
-                  </FormHelperText>
-                )}
-              </FormControl>
+              <div className={styles.formRow}>
+                <div className={styles.labelColumn}>
+                  <label className={styles.formLabel}>MCP Server URL</label>
+                </div>
+                <div className={styles.inputColumn}>
+                  <FormControl isRequired isInvalid={!!errors.mcp_server_url}>
+                    <Input
+                      name="mcp_server_url"
+                      value={formData.mcp_server_url}
+                      onChange={handleChange}
+                      placeholder="e.g., https://ngrok.com/sse"
+                      className={styles.input}
+                      size="md"
+                    />
+                    {errors.mcp_server_url ? (
+                      <FormErrorMessage>
+                        {errors.mcp_server_url}
+                      </FormErrorMessage>
+                    ) : (
+                      <FormHelperText className={styles.helperText}>
+                        Remote URL to connect to (Server-Sent Events endpoint)
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                </div>
+              </div>
             ) : (
               <MCPConfigForm onUrlUpdate={handleUrlUpdate} />
             )}
-          </VStack>
+          </div>
         </ModalBody>
-
-        <ModalFooter className={styles.modalFooter}>
-          <HStack spacing={3}>
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className={styles.cancelButton}
-              size="md"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              isLoading={isSubmitting}
-              loadingText="Creating..."
-              className={styles.createButton}
-              size="md"
-              isDisabled={!showUrlInput && !formData.mcp_server_url}
-            >
-              {!showUrlInput && !formData.mcp_server_url
-                ? "Enter URL After Running Script"
-                : "Create Agent"}
-            </Button>
-          </HStack>
-        </ModalFooter>
       </ModalContent>
     </Modal>
   );

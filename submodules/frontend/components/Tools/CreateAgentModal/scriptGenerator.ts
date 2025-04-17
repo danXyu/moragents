@@ -10,7 +10,7 @@ export const generateShellScript = (config: MCPConfig): string => {
   // Format environment variables
   const envVars = config.env
     .filter((env) => env.key.trim() && env.value.trim())
-    .map((env) => `${env.key}="${env.value}"`)
+    .map((env) => `export ${env.key}="${env.value}"`)
     .join("\n");
 
   // Format arguments
@@ -19,12 +19,23 @@ export const generateShellScript = (config: MCPConfig): string => {
     .map((arg) => `"${arg}"`)
     .join(" ");
 
+  // Properly escape the command and args to prevent shell interpretation issues
+  const escapedCommand = config.command.replace(/"/g, '\\"');
+
   // Replace placeholders in the template
-  return SCRIPT_TEMPLATE.replace("{{DATE}}", new Date().toLocaleString())
-    .replace("{{COMMAND}}", config.command)
+  let script = SCRIPT_TEMPLATE.replace("{{DATE}}", new Date().toLocaleString())
+    .replace("{{COMMAND}}", escapedCommand)
     .replace("{{ARGS}}", args)
     .replace(
       "{{ENV_VARS}}",
       envVars ? envVars : "# No environment variables specified"
     );
+
+  // Fix the supergateway command to properly execute the command with arguments
+  script = script.replace(
+    'npx -y supergateway --stdio "{{COMMAND}} {{ARGS}}"',
+    `npx -y supergateway --stdio "${escapedCommand} ${args}"`
+  );
+
+  return script;
 };

@@ -149,10 +149,10 @@ export const ToolsConfigurationModal: React.FC<
           >
             <TabList className={styles.tabList}>
               <Tab className={tabIndex === 0 ? styles.activeTab : styles.tab}>
-                Manage Existing Agents
+                Manage
               </Tab>
               <Tab className={tabIndex === 1 ? styles.activeTab : styles.tab}>
-                Import New Agents
+                Publish
               </Tab>
             </TabList>
 

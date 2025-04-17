@@ -14,11 +14,15 @@ if ! command -v ngrok &> /dev/null; then
     exit 1
 fi
 
+if ! command -v npx &> /dev/null; then
+    echo "❌ npx is not installed. Please install Node.js first."
+    exit 1
+fi
+
 # Function to cleanup on exit
 cleanup() {
     echo "📞 Cleaning up processes..."
-    [[ -n $SERVER_PID ]] && kill $SERVER_PID
-    [[ -n $NGROK_PID ]] && kill $NGROK_PID
+    [[ -n $SUPERGATEWAY_PID ]] && kill $SUPERGATEWAY_PID
     exit 0
 }
 
@@ -28,38 +32,31 @@ trap cleanup EXIT INT TERM
 # Set environment variables
 {{ENV_VARS}}
 
-# Start the MCP server in the background
-echo "🔧 Starting MCP server: {{COMMAND}} {{ARGS}}"
-{{COMMAND}} {{ARGS}} &
-SERVER_PID=$!
+# Generate a random port for supergateway to avoid collisions
+GATEWAY_PORT=$(( 8000 + RANDOM % 1000 ))
+
+# Start the MCP server via supergateway in the background
+echo "🔧 Starting MCP server via supergateway: {{COMMAND}} {{ARGS}}"
+npx -y supergateway --stdio "{{COMMAND}} {{ARGS}}" --port $GATEWAY_PORT &
+SUPERGATEWAY_PID=$!
 
 # Wait for server to start
 echo "⏳ Waiting for server to initialize (5 seconds)..."
 sleep 5
 
-# Start ngrok tunnel
+# Get the ngrok URL using the ngrok API
 echo "🔗 Creating ngrok tunnel..."
-ngrok http 3000 --log=stdout > ngrok.log &
-NGROK_PID=$!
-
-# Wait for ngrok to initialize
-echo "⏳ Waiting for ngrok to initialize (5 seconds)..."
-sleep 5
-
-# Extract the ngrok URL
-NGROK_URL=$(grep -o 'https://[0-9a-z\\-]*\\.ngrok\\.io' ngrok.log | head -1)
-
-if [ -z "$NGROK_URL" ]; then
-    echo "❌ Failed to get ngrok URL. Check ngrok.log for details."
-    exit 1
-fi
-
-echo "✅ Success! Your MCP server is running and accessible at:"
-echo $NGROK_URL
-echo
-echo "📋 Copy this URL and paste it in the MCP Server URL field"
-echo
+echo "✅ Your MCP server will be accessible via the ngrok URL shown below"
+echo "📋 Copy the https:// URL and paste it in the MCP Server URL field"
 echo "💡 Press Ctrl+C to stop the server and tunnel when you're done"
+echo
 
-# Keep the script running
-wait $SERVER_PID`;
+# Start ngrok in the foreground
+ngrok http $GATEWAY_PORT
+
+# The script will not reach here unless ngrok exits unexpectedly
+echo "❌ ngrok has exited. The MCP server may still be running in the background."
+echo "Run 'ps aux | grep supergateway' to find and kill the process if needed."
+
+# Keep the script running until supergateway exits
+wait $SUPERGATEWAY_PID`;
