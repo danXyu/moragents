@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Your AI Superagent – Morpheus</title>
+
+    <!-- type & style -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+
+  <body>
+    <!-- decorative background -->
+    <div class="bg‑pattern"></div>
+
+    <!-- ============ HEADER ============ -->
+    <header class="container header">
+      <a href="#" class="logo" aria-label="Morpheus">
+        <!-- simplified inline SVG logo -->
+        <svg viewBox="0 0 40 16" width="80" height="32" fill="currentColor">
+          <path d="M10 0 5 8l5 8 5‑8L10 0Zm20 0 5 8‑5 8‑5‑8 5‑8Z" />
+        </svg>
+      </a>
+
+      <nav class="nav">
+        <a href="#how">How it works</a>
+        <a href="#cases">Use Cases</a>
+        <a href="#feed">Feedback</a>
+        <button class="btn btn‑primary">Get Started <span>→</span></button>
+      </nav>
+    </header>
+
+    <!-- ============ HERO ============ -->
+    <section class="hero container">
+      <h1>Your AI Superagent</h1>
+      <p class="hero‑sub">
+        Skip the hustle. Just tell Morpheus what you need and let the right
+        agent handle it.
+      </p>
+
+      <div class="hero‑input">
+        <span class="hero‑icon">
+          <!-- tiny hexagon icon -->
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            stroke="currentColor"
+            fill="none"
+          >
+            <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2" />
+          </svg>
+        </span>
+        <input
+          type="text"
+          placeholder="Test out different MCP servers and have them collaborate"
+        />
+        <button class="btn btn‑primary btn‑lg">Try it Free</button>
+      </div>
+      <small class="caption">NO WALLET NEEDED</small>
+    </section>
+
+    <!-- ============ FEATURES ============ -->
+    <section id="how" class="features container">
+      <!-- 6 cards -->
+      <article class="feature">
+        <div class="feature‑icon">
+          <img src="icons/match.svg" alt="Smart Matching Icon" />
+        </div>
+        <h3>Smart Matching</h3>
+        <p>
+          No menus. No confusion. Just describe your task – we'll assign the
+          perfect agent for the job.
+        </p>
+      </article>
+
+      <article class="feature">
+        <div class="feature‑icon">
+          <img src="icons/try.svg" alt="Try Icon" />
+        </div>
+        <h3>Try Before You Buy</h3>
+        <p>Get started with trial agents – no wallet or tokens needed.</p>
+      </article>
+
+      <article class="feature">
+        <div class="feature‑icon">
+          <img src="icons/privacy.svg" alt="Privacy Icon" />
+        </div>
+        <h3>Privacy, When You Need It</h3>
+        <p>
+          Go incognito at any time. Your data, your rules. We don't store
+          anything unless you say so.
+        </p>
+      </article>
+
+      <article class="feature">
+        <div class="feature‑icon">
+          <img src="icons/earn.svg" alt="Earn Icon" />
+        </div>
+        <h3>Earn with Your Data</h3>
+        <p>
+          Don't just delegate. Share useful data (only if you want) and earn MOR
+          tokens for it.
+        </p>
+      </article>
+
+      <article class="feature">
+        <div class="feature‑icon">
+          <img src="icons/auto.svg" alt="Automation Icon" />
+        </div>
+        <h3>Repetitive? Automated.</h3>
+        <p>Let your agents handle recurring tasks daily, weekly, or 24/7.</p>
+        <span class="pill">COMING SOON</span>
+      </article>
+
+      <article class="feature">
+        <div class="feature‑icon">
+          <img src="icons/plus.svg" alt="Plus Icon" />
+        </div>
+        <h3>And That's Just the Beginning</h3>
+        <p>
+          New agents launch every week – from automation wizards to meme
+          generators.
+        </p>
+      </article>
+    </section>
+
+    <!-- ============ SUPERAGENT IN ACTION ============ -->
+    <section id="cases" class="action container">
+      <h2>Superagent in Action</h2>
+      <p class="action‑sub">
+        Here are real examples of queries superagent can execute for you.
+      </p>
+
+      <div class="tabs">
+        <ul class="tab‑list">
+          <li class="tab active" data‑tab="data">
+            <span class="emoji">📈</span> DATA & MARKET INTELLIGENCE
+          </li>
+          <li class="tab" data‑tab="social">
+            <span class="emoji">🔥</span> SOCIAL & CONTENT
+          </li>
+          <li class="tab" data‑tab="mor">
+            <span class="emoji">🤖</span> MOR TRACKING
+          </li>
+          <li class="tab" data‑tab="doc">
+            <span class="emoji">📄</span> DOCUMENT & NEWS ANALYSIS
+          </li>
+          <li class="tab" data‑tab="safe">
+            <span class="emoji">🛡️</span> TOKEN SAFETY
+          </li>
+        </ul>
+
+        <div class="tab‑panel active" id="data">
+          <button class="card">What's the price of ETH?</button>
+          <button class="card">What's the FDV of USDC?</button>
+          <button class="card">
+            Scan Dexscreener for the most active tokens on Solana
+          </button>
+          <button class="card">
+            Show me DEX activity for ETH as reported by Dexscreener
+          </button>
+          <button class="card">
+            What are the top trending tokens on Ethereum?
+          </button>
+          <button class="card">
+            Who are the top holders of $TRUMP on Solana?
+          </button>
+        </div>
+        
+        <div class="tab‑panel" id="social">
+          <button class="card">Create a Twitter thread about the future of DeFi</button>
+          <button class="card">Write a LinkedIn post about my new NFT project</button>
+          <button class="card">Generate a meme about Ethereum gas prices</button>
+          <button class="card">Draft a Medium article about blockchain scalability</button>
+          <button class="card">Create a crypto newsletter intro</button>
+          <button class="card">Write a Reddit post about bullish market signals</button>
+        </div>
+        
+        <div class="tab‑panel" id="mor">
+          <button class="card">What's the current MOR token price?</button>
+          <button class="card">Track my MOR token rewards this month</button>
+          <button class="card">Show me the latest MOR token activity on exchanges</button>
+          <button class="card">Calculate potential MOR earnings for my data sharing</button>
+          <button class="card">Display MOR token price history for the last 3 months</button>
+          <button class="card">How many MOR tokens do I need for premium features?</button>
+        </div>
+        
+        <div class="tab‑panel" id="doc">
+          <button class="card">Analyze this PDF whitepaper and summarize key points</button>
+          <button class="card">Find all mentions of "Layer 2" in this technical document</button>
+          <button class="card">Summarize today's crypto news from major sources</button>
+          <button class="card">Extract financial data from this quarterly report</button>
+          <button class="card">Compare these two smart contract audits</button>
+          <button class="card">Translate this Chinese crypto news article to English</button>
+        </div>
+        
+        <div class="tab‑panel" id="safe">
+          <button class="card">Is this contract address safe to interact with?</button>
+          <button class="card">Check if this website is a known crypto scam</button>
+          <button class="card">Analyze this wallet for suspicious transactions</button>
+          <button class="card">Verify the legitimacy of this token contract</button>
+          <button class="card">Check if this crypto project has been audited</button>
+          <button class="card">Report a phishing attempt to the network</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CTA STRIP ============ -->
+    <section class="cta‑strip container">
+      <h3>It's already trained – now it's your turn.</h3>
+      <button class="btn btn‑primary">Get Started <span>→</span></button>
+    </section>
+
+    <!-- ============ TESTIMONIALS ============ -->
+    <section id="feed" class="testimonials container">
+      <h2 class="testi‑title">
+        Real feedback from the people already using agents to get things done —
+        faster, smarter, easier.
+      </h2>
+
+      <div class="carousel">
+        <article class="t‑card">
+          <p>
+            "I gave it one sentence — something like 'make a pitch deck about my
+            AI idea'. A few seconds later I had 10 clean slides with titles,
+            content, and even a meme. It's honestly wild."
+          </p>
+          <div class="author">
+            <img src="https://i.pravatar.cc/80?img=64" alt="Alex's avatar" />
+            <div><strong>Alex</strong><br /><span>Startup founder</span></div>
+          </div>
+        </article>
+
+        <article class="t‑card">
+          <p>
+            "It feels like having a full‑time assistant that just gets it. No
+            small talk, no endless back‑and‑forth. I type what I need and it
+            comes back ready to go."
+          </p>
+          <div class="author">
+            <img src="https://i.pravatar.cc/80?img=12" alt="Tom Hensley's avatar" />
+            <div>
+              <strong>Tom Hensley</strong><br /><span>Product manager</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="t‑card">
+          <p>
+            "I tried it as a joke — to tweet about Gary Gensler. It did it
+            perfectly. I've used it in both serious work and silly stuff."
+          </p>
+          <div class="author">
+            <img src="https://i.pravatar.cc/80?img=32" alt="Sara Lin's avatar" />
+            <div>
+              <strong>Sara Lin</strong><br /><span
+                >Creator &amp; newsletter writer</span
+              >
+            </div>
+          </div>
+        </article>
+        
+        <article class="t‑card">
+          <p>
+            "Morpheus helped me analyze market trends in minutes instead of hours. 
+            The data intelligence features are game-changing for my investment strategy."
+          </p>
+          <div class="author">
+            <img src="https://i.pravatar.cc/80?img=22" alt="Michael Chen's avatar" />
+            <div>
+              <strong>Michael Chen</strong><br /><span>Crypto trader</span>
+            </div>
+          </div>
+        </article>
+        
+        <article class="t‑card">
+          <p>
+            "As a content creator, I was skeptical about AI tools, but Morpheus 
+            understands context in a way I've never seen before. It's become an 
+            essential part of my workflow."
+          </p>
+          <div class="author">
+            <img src="https://i.pravatar.cc/80?img=40" alt="Leila Johnson's avatar" />
+            <div>
+              <strong>Leila Johnson</strong><br /><span>Digital content strategist</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <ul class="dots">
+        <li class="dot"></li>
+        <li class="dot"></li>
+        <li class="dot active"></li>
+        <li class="dot"></li>
+        <li class="dot"></li>
+      </ul>
+      
+      <div class="carousel-controls">
+        <button class="carousel-prev" aria-label="Previous testimonial">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <button class="carousel-next" aria-label="Next testimonial">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+      </div>
+    </section>
+
+-label="LinkedIn">in</a>
+      </div>
+      
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="#">Features</a>
+          <a href="#">Pricing</a>
+          <a href="#">Roadmap</a>
+          <a href="#">API</a>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <a href="#">Documentation</a>
+          <a href="#">Tutorials</a>
+          <a href="#">Blog</a>
+          <a href="#">Support</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">Cookies</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- JavaScript for interactivity -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Tab functionality
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            // Remove active class from all tabs and panels
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab‑panel').forEach(p => p.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding panel
+            tab.classList.add('active');
+            const tabId = tab.getAttribute('data‑tab');
+            document.getElementById(tabId).classList.add('active');
+          });
+        });
+        
+        // Carousel functionality
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.t‑card');
+        const dots = document.querySelectorAll('.dot');
+        const totalSlides = slides.length;
+        
+        // Calculate the gap width between testimonial cards
+        const getGapWidth = () => {
+          const style = window.getComputedStyle(document.querySelector('.carousel'));
+          return parseInt(style.getPropertyValue('gap').replace('px', '')) || 28;
+        };
+        
+        // Calculate the width of a single testimonial card
+        const getCardWidth = () => {
+          const card = document.querySelector('.t‑card');
+          return card.offsetWidth + getGapWidth();
+        };
+        
+        function updateCarousel() {
+          // Calculate position based on card width and gap
+          const position = currentSlide * getCardWidth();
+          document.querySelector('.carousel').scrollTo({
+            left: position,
+            behavior: 'smooth'
+          });
+          
+          // Update dots
+          dots.forEach(dot => dot.classList.remove('active'));
+          dots[currentSlide].classList.add('active');
+        }
+        
+        // Handle dots click
+        dots.forEach((dot, index) => {
+          dot.addEventListener('click', () => {
+            currentSlide = index;
+            updateCarousel();
+          });
+        });
+        
+        // Handle next and previous buttons
+        const nextBtn = document.querySelector('.carousel-next');
+        const prevBtn = document.querySelector('.carousel-prev');
+        
+        nextBtn.addEventListener('click', () => {
+          currentSlide = (currentSlide + 1) % totalSlides;
+          updateCarousel();
+        });
+        
+        prevBtn.addEventListener('click', () => {
+          currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+          updateCarousel();
+        });
+        
+        // Auto rotate testimonials every 5 seconds
+        setInterval(() => {
+          currentSlide = (currentSlide + 1) % totalSlides;
+          updateCarousel();
+        }, 5000);
+      });
+    </script>
+  </body>
+</html>

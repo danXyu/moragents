@@ -52,10 +52,21 @@ class Delegator:
             logger.error(f"Error using agent {agent_name}: {str(e)}")
             return None
 
-    def get_delegator_response(self, prompt: ChatRequest, max_retries: int = 3) -> List[str]:
+    def get_delegator_response(self, chat_request: ChatRequest, max_retries: int = 3) -> List[str]:
         """Get ranked list of appropriate agents with retry logic"""
-        available_agents = agent_manager_instance.get_available_agents()
-        logger.info(f"Available agents: {available_agents}")
+        # Get all available agents
+        all_available_agents = agent_manager_instance.get_available_agents()
+        logger.info(f"All available agents: {all_available_agents}")
+
+        # Filter by selected agents if specified in the request
+        available_agents = all_available_agents
+        if chat_request.selected_agents:
+            # Filter available agents to only include those that were selected
+            available_agents = [
+                agent for agent in all_available_agents if agent.get("name") in chat_request.selected_agents
+            ]
+            logger.info(f"Filtered to selected agents: {chat_request.selected_agents}")
+            logger.info(f"Available selected agents: {available_agents}")
 
         if not available_agents:
             if "default" not in self.attempted_agents:
@@ -66,7 +77,7 @@ class Delegator:
 
         # Build message history from chat history
         messages: List[BaseMessage] = [SystemMessage(content=system_prompt)]
-        messages.extend(prompt.messages_for_llm)
+        messages.extend(chat_request.messages_for_llm)
 
         for attempt in range(max_retries):
             try:
@@ -100,6 +111,7 @@ class Delegator:
         """Delegate chat to ranked agents with fallback"""
         attempts = 0
         try:
+            # Get ranked agents based on LLM delegation
             ranked_agents = self.get_delegator_response(chat_request)
 
             for agent_name in ranked_agents:

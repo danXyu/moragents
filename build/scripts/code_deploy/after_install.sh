@@ -12,37 +12,62 @@ echo "Pulling latest Docker images..."
 docker pull $ECR_URL/$AGENT_REPO:latest
 docker pull $ECR_URL/$FRONTEND_REPO:latest
 
-# Create docker-compose.yml if building on deploy
+# Create docker-compose.yml with proper network configuration
 cat > /home/ec2-user/mysuperagent/docker-compose.yml << EOL
 version: '3'
-
 services:
   backend:
+    container_name: backend
     image: $ECR_URL/$AGENT_REPO:latest
     restart: always
     ports:
       - "8888:5000"
     environment:
-      - NODE_ENV=production
-
+      - ENV=staging
+      - AWS_DEFAULT_REGION=us-west-1
+      - AWS_REGION=us-west-1
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    tty: true
+    stdin_open: true
+  
   frontend:
+    container_name: frontend
     image: $ECR_URL/$FRONTEND_REPO:latest
     restart: always
     ports:
       - "3333:80"
-    depends_on:
-      - backend
+    environment:
+      - NODE_ENV=production
+      - APP_ENV=staging
+      - AWS_DEFAULT_REGION=us-west-1
+      - AWS_REGION=us-west-1
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    tty: true
+    stdin_open: true
 
+networks:
+  default:
+    external:
+      name: mysuperagent-network
 EOL
 
-# Setup environment variables if needed
-if [ -f "/home/ec2-user/mysuperagent/.env" ]; then
-    cp /home/ec2-user/mysuperagent/.env /home/ec2-user/mysuperagent/.env.backup
-fi
+# Setup environment variables
+cat > /home/ec2-user/mysuperagent/.env << EOL
+ENV=staging
+AWS_DEFAULT_REGION=us-west-1
+NODE_ENV=production
+APP_ENV=staging
+AWS_DEFAULT_REGION=us-west-1
+EOL
 
-# If there's a .env file in the repository, use it
-if [ -f "/home/ec2-user/mysuperagent/.env.template" ]; then
-    cp /home/ec2-user/mysuperagent/.env.template /home/ec2-user/mysuperagent/.env
+# Configure Docker network if it doesn't exist
+if ! docker network inspect mysuperagent-network &>/dev/null; then
+  echo "Creating Docker network..."
+  docker network create --driver bridge --subnet 172.28.0.0/16 --gateway 172.28.0.1 --opt "com.docker.network.bridge.name"="docker1" mysuperagent-network
 fi
 
 # Ensure permissions are set correctly

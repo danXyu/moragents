@@ -47,6 +47,8 @@ class ChatRequest(BaseModel):
     wallet_address: str
     conversation_id: str = Query(default="default")
     use_multiagent: bool = Query(default=False)
+    use_realtime_search: bool = Query(default=True)
+    selected_agents: List[str] = Field(default_factory=list)
     chat_history: List[ChatMessage] = Field(default_factory=list)
 
     @property

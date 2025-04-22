@@ -6,10 +6,8 @@ import {
   Badge,
   Divider,
   HStack,
-  Icon,
   Tooltip,
 } from "@chakra-ui/react";
-import { InfoIcon } from "@chakra-ui/icons";
 import styles from "./ToolsConfiguration.module.css";
 
 interface Tool {
@@ -47,35 +45,37 @@ export const AgentTools: React.FC<AgentToolsProps> = ({
       </Text>
       <Divider className={styles.toolsDivider} />
 
-      {tools.map((tool, index) => (
-        <React.Fragment key={`${agentName}-tool-${index}`}>
-          <Box className={styles.toolItem}>
-            <HStack spacing={1} mb={1}>
-              <Text className={styles.toolName}>{tool.name}</Text>
-              {tool.type && (
-                <Badge className={styles.toolTypeBadge}>{tool.type}</Badge>
-              )}
-              {tool.parameters && tool.parameters.length > 0 && (
-                <Tooltip
-                  label={`${tool.parameters.length} parameter${
-                    tool.parameters.length > 1 ? "s" : ""
-                  }`}
-                  placement="top"
-                >
-                  <Badge className={styles.parameterBadge}>
-                    {tool.parameters.length}
-                  </Badge>
-                </Tooltip>
-              )}
-            </HStack>
-            <Text className={styles.toolDescription}>{tool.description}</Text>
-          </Box>
+      <Box className={styles.toolsScrollArea}>
+        {tools.map((tool, index) => (
+          <React.Fragment key={`${agentName}-tool-${index}`}>
+            <Box className={styles.toolItem}>
+              <HStack spacing={1} mb={1}>
+                <Text className={styles.toolName}>{tool.name}</Text>
+                {tool.type && (
+                  <Badge className={styles.toolTypeBadge}>{tool.type}</Badge>
+                )}
+                {tool.parameters && tool.parameters.length > 0 && (
+                  <Tooltip
+                    label={`${tool.parameters.length} parameter${
+                      tool.parameters.length > 1 ? "s" : ""
+                    }`}
+                    placement="top"
+                  >
+                    <Badge className={styles.parameterBadge}>
+                      {tool.parameters.length}
+                    </Badge>
+                  </Tooltip>
+                )}
+              </HStack>
+              <Text className={styles.toolDescription}>{tool.description}</Text>
+            </Box>
 
-          {index < tools.length - 1 && (
-            <Divider className={styles.toolItemDivider} />
-          )}
-        </React.Fragment>
-      ))}
+            {index < tools.length - 1 && (
+              <Divider className={styles.toolItemDivider} />
+            )}
+          </React.Fragment>
+        ))}
+      </Box>
     </VStack>
   );
 };

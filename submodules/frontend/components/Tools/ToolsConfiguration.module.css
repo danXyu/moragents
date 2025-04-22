@@ -18,6 +18,8 @@
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 /* Modal Header */
@@ -98,7 +100,11 @@
 }
 
 .modalBody {
-  padding: 0 !important;
+  padding: 0 !important; /* existing line */
+  overflow-y: auto !important; /* ← NEW */
+  max-height: calc(80vh - 4rem) !important; /* header + tabs */
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
 }
 
 .modalFooter {
@@ -388,4 +394,54 @@
 
 .createButton:hover {
   background-color: #3a9660 !important;
+}
+
+/* Add these CSS rules to your ToolsConfiguration.module.css file */
+
+/* Update the popover content style to ensure it doesn't expand unnecessarily */
+.popoverContent {
+  background-color: #1a1a1a !important;
+  border-color: #333 !important;
+  border-width: 1px !important;
+  max-width: 320px !important;
+  max-height: calc(100vh - 100px) !important; /* Limit maximum height */
+  overflow: hidden !important; /* Hide overflow */
+}
+
+/* Make sure the tools container doesn't cause excessive height */
+.toolsContainer {
+  background-color: #1a1a1a !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 400px !important; /* Maximum height for the entire container */
+}
+
+/* You may already have these styles but ensure they're properly set */
+.popoverBody {
+  padding: 0 !important;
+  overflow: hidden !important; /* Prevent body from causing overflow */
+}
+
+/* Style for the scrollable area within the tools container */
+.toolsScrollArea {
+  overflow-y: auto !important;
+  max-height: 300px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #444 #232323 !important;
+}
+
+/* For Webkit browsers */
+.toolsScrollArea::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.toolsScrollArea::-webkit-scrollbar-track {
+  background: #232323 !important;
+}
+
+.toolsScrollArea::-webkit-scrollbar-thumb {
+  background-color: #444 !important;
+  border-radius: 6px !important;
 }

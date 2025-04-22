@@ -29,6 +29,9 @@ import { AgentCard } from "./AgentCard";
 import { CreateAgentModal } from "./CreateAgentModal/index";
 import styles from "./ToolsConfiguration.module.css";
 
+// LocalStorage key for selected agents
+const SELECTED_AGENTS_KEY = "selectedAgents";
+
 interface Agent {
   name: string;
   description: string;
@@ -58,6 +61,24 @@ export const ToolsConfigurationModal: React.FC<
   const [tabIndex, setTabIndex] = useState<number>(0);
   const createAgentModal = useDisclosure();
 
+  // Load selected agents from localStorage on initial render
+  useEffect(() => {
+    const loadSelectedAgentsFromLocalStorage = () => {
+      try {
+        const savedAgents = localStorage.getItem(SELECTED_AGENTS_KEY);
+        if (savedAgents) {
+          setSelectedAgents(JSON.parse(savedAgents));
+        }
+      } catch (err) {
+        console.error("Error loading selected agents from localStorage:", err);
+        // If there's an error loading from localStorage, just use an empty array
+        setSelectedAgents([]);
+      }
+    };
+
+    loadSelectedAgentsFromLocalStorage();
+  }, []);
+
   // Fetch agents when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -83,14 +104,26 @@ export const ToolsConfigurationModal: React.FC<
       }
 
       const data = await response.json();
-      setAgents(data.available_agents || []);
-      setSelectedAgents(data.selected_agents || []);
+      const availableAgents = data.available_agents || [];
+      setAgents(availableAgents);
+
+      // Check if we need to create default localStorage entry (all agents enabled)
+      const savedAgents = localStorage.getItem(SELECTED_AGENTS_KEY);
+      if (!savedAgents) {
+        // By default, enable all agents
+        const allAgentNames = availableAgents.map((agent: Agent) => agent.name);
+        localStorage.setItem(
+          SELECTED_AGENTS_KEY,
+          JSON.stringify(allAgentNames)
+        );
+        setSelectedAgents(allAgentNames);
+      }
 
       // Set filtered agents after setting agents
       if (searchQuery) {
         filterAgents();
       } else {
-        setFilteredAgents(data.available_agents || []);
+        setFilteredAgents(availableAgents);
       }
     } catch (err) {
       console.error("Error fetching agents:", err);

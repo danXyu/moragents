@@ -6,6 +6,9 @@ import { getOrCreateConversation } from "@/services/ChatManagement/storage";
 import { getStorageData } from "../LocalStorage/core";
 import { saveStorageData } from "../LocalStorage/core";
 
+// LocalStorage key for selected agents
+const SELECTED_AGENTS_KEY = "selectedAgents";
+
 /**
  * Send a message to the backend API and handle the response
  */
@@ -28,6 +31,17 @@ export const writeMessage = async (
   // Add user message to local storage
   addMessageToHistory(newMessage, convId);
 
+  // Get selected agents from localStorage
+  let selectedAgents: string[] = [];
+  try {
+    const savedAgents = localStorage.getItem(SELECTED_AGENTS_KEY);
+    if (savedAgents) {
+      selectedAgents = JSON.parse(savedAgents);
+    }
+  } catch (err) {
+    console.error("Error loading selected agents from localStorage:", err);
+  }
+
   try {
     // Send message along with conversation history to backend
     const response = await backendClient.post("/api/v1/chat", {
@@ -40,6 +54,7 @@ export const writeMessage = async (
       wallet_address: address,
       use_multiagent: false,
       use_realtime_search: true,
+      selected_agents: selectedAgents,
     });
 
     // Process response

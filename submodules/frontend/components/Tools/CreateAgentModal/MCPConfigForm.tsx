@@ -9,6 +9,7 @@ import {
   useToast,
   useClipboard,
   HStack,
+  Box,
 } from "@chakra-ui/react";
 import { AddIcon, DeleteIcon, CopyIcon, CheckIcon } from "@chakra-ui/icons";
 import styles from "./MCPConfigForm.module.css";
@@ -18,10 +19,12 @@ import { MCPConfig, FormErrors } from "./types";
 
 interface MCPConfigFormProps {
   onUrlUpdate: (url: string) => void;
+  onShowUrlInput: () => void;
 }
 
 export const MCPConfigForm: React.FC<MCPConfigFormProps> = ({
   onUrlUpdate,
+  onShowUrlInput,
 }) => {
   const toast = useToast();
   const [mcpConfig, setMcpConfig] = useState<MCPConfig>({
@@ -96,9 +99,13 @@ export const MCPConfigForm: React.FC<MCPConfigFormProps> = ({
 
     toast({
       title: "Script copied to clipboard",
+      description: "Now run this script to start your MCP server",
       status: "success",
       duration: 3000,
     });
+
+    // Switch to URL input view by toggling showUrlInput in parent component
+    onShowUrlInput();
   };
 
   const handleDownloadScript = () => {
@@ -107,9 +114,13 @@ export const MCPConfigForm: React.FC<MCPConfigFormProps> = ({
 
     toast({
       title: "Script downloaded",
+      description: "Now run this script to start your MCP server",
       status: "success",
       duration: 3000,
     });
+
+    // Switch to URL input view by toggling showUrlInput in parent component
+    onShowUrlInput();
   };
 
   // Check if the necessary fields are filled to enable buttons
@@ -191,7 +202,7 @@ export const MCPConfigForm: React.FC<MCPConfigFormProps> = ({
                     onChange={(e) =>
                       handleEnvChange(idx, "key", e.target.value)
                     }
-                    placeholder="Variable name"
+                    placeholder="Name"
                     className={styles.input}
                   />
                 </FormControl>
@@ -256,7 +267,7 @@ export const MCPConfigForm: React.FC<MCPConfigFormProps> = ({
           <FormControl>
             <FormHelperText>
               Note: you will need to make this script executable with chmod +x
-              before you are able to run it
+              start-mcp-server.sh
             </FormHelperText>
           </FormControl>
         </div>

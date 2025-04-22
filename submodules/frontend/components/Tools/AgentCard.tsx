@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Box,
   Text,
@@ -12,11 +12,13 @@ import {
   PopoverArrow,
   PopoverBody,
   useToast,
-  Tooltip,
 } from "@chakra-ui/react";
-import { FaRegCopy, FaWrench } from "react-icons/fa";
+import { FaWrench } from "react-icons/fa";
 import { AgentTools } from "./AgentTools";
 import styles from "./ToolsConfiguration.module.css";
+
+// LocalStorage key prefix for selected agents
+const SELECTED_AGENTS_KEY = "selectedAgents";
 
 interface Agent {
   name: string;
@@ -50,6 +52,11 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   // Use a ref to track if an operation is in progress to prevent duplicate toasts
   const isTogglingRef = useRef(false);
 
+  // Update local state when selectedAgents prop changes
+  useEffect(() => {
+    setIsEnabled(selectedAgents.includes(agent.name));
+  }, [selectedAgents, agent.name]);
+
   const toggleAgent = async () => {
     // If already processing a toggle, exit early
     if (isTogglingRef.current) return;
@@ -73,18 +80,11 @@ export const AgentCard: React.FC<AgentCardProps> = ({
         );
       }
 
-      // Update selected agents via API
-      const response = await fetch(`${apiBaseUrl}/agents/selected`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ agents: updatedSelectedAgents }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update agent status");
-      }
+      // Save to localStorage
+      localStorage.setItem(
+        SELECTED_AGENTS_KEY,
+        JSON.stringify(updatedSelectedAgents)
+      );
 
       // Update local state
       setIsEnabled(newState);
@@ -141,27 +141,6 @@ export const AgentCard: React.FC<AgentCardProps> = ({
         {agent.mcp_server_url && (
           <HStack spacing={1} alignItems="center">
             <Text className={styles.mcpUrlLabel}>MCP</Text>
-            <Tooltip label="Copy MCP URL" placement="top">
-              <IconButton
-                aria-label="Copy MCP URL"
-                icon={<FaRegCopy />}
-                size="sm"
-                variant="subtle"
-                onClick={() => {
-                  if (agent.mcp_server_url) {
-                    navigator.clipboard.writeText(agent.mcp_server_url);
-                    toast({
-                      title: "Copied to clipboard",
-                      status: "success",
-                      duration: 2000,
-                      isClosable: true,
-                      position: "bottom-right",
-                      variant: "subtle",
-                    });
-                  }
-                }}
-              />
-            </Tooltip>
           </HStack>
         )}
       </Box>
