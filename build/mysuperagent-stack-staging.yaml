@@ -362,17 +362,31 @@ Resources:
       Targets:
         - Id: !Ref EC2Instance
 
-  # HTTPS Listener for ALB using the existing wildcard certificate
+  # ACM certificate for staging.mysuperagent.io + api.staging.mysuperagent.io
+  StagingCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: staging.mysuperagent.io
+      SubjectAlternativeNames:
+        - api.staging.mysuperagent.io
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: staging.mysuperagent.io
+          HostedZoneId: Z0231843Q41D0UD9HQEI
+        - DomainName: api.staging.mysuperagent.io
+          HostedZoneId: Z0231843Q41D0UD9HQEI
+
+  # HTTPS Listener for ALB using the new certificate
   HTTPSListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: StagingCertificate
     Properties:
       LoadBalancerArn: !Ref ApplicationLoadBalancer
       Port: 443
       Protocol: HTTPS
       SslPolicy: ELBSecurityPolicy-2016-08
       Certificates:
-        # Use the existing wildcard certificate
-        - CertificateArn: arn:aws:acm:us-west-1:816069170416:certificate/366f913d-a93f-47d0-98f7-ec9461a81a60
+        - CertificateArn: !Ref StagingCertificate
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref FrontendTargetGroup
@@ -400,7 +414,7 @@ Resources:
       Conditions:
         - Field: host-header
           Values:
-            - "api-staging.mysuperagent.io"
+            - "api.staging.mysuperagent.io"
       Actions:
         - Type: forward
           TargetGroupArn: !Ref BackendTargetGroup
@@ -421,7 +435,7 @@ Resources:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: Z0231843Q41D0UD9HQEI
-      Name: "api-staging.mysuperagent.io."
+      Name: "api.staging.mysuperagent.io."
       Type: A
       AliasTarget:
         DNSName: !GetAtt ApplicationLoadBalancer.DNSName
@@ -456,13 +470,13 @@ Outputs:
 
   ApiURL:
     Description: API URL
-    Value: "https://api-staging.mysuperagent.io"
+    Value: "https://api.staging.mysuperagent.io"
     Export:
       Name: !Sub "${AWS::StackName}-ApiURL"
 
-  WildcardCertificateARN:
-    Description: The ARN of the wildcard certificate being used
-    Value: "arn:aws:acm:us-west-1:816069170416:certificate/366f913d-a93f-47d0-98f7-ec9461a81a60"
+  StagingCertificateArn:
+    Description: "ACM certificate ARN for staging"
+    Value: !Ref StagingCertificate
 
   CodeDeployApplication:
     Description: CodeDeploy Application Name

@@ -124,7 +124,9 @@ class AgentManager:
                 )
 
         agent_config["tools"] = tool_schemas
-        logger.info("Updated agent config for %s with %d tool schemas", agent_config["name"], len(tool_schemas))
+        logger.info(
+            "Updated agent config for %s with %d tool schemas", agent_config.get("name", "unknown"), len(tool_schemas)
+        )
 
     def _fetch_mcp_tools(self, agent_config: Dict) -> None:
         """Fetch remote tool metadata without falling foul of nested event‑loops.

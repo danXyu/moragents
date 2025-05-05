@@ -372,10 +372,12 @@ Resources:
     Properties:
       DomainName: mysuperagent.io
       SubjectAlternativeNames:
-        - "*.mysuperagent.io"
+        - api.mysuperagent.io
       ValidationMethod: DNS
       DomainValidationOptions:
         - DomainName: mysuperagent.io
+          HostedZoneId: Z0231843Q41D0UD9HQEI
+        - DomainName: api.mysuperagent.io
           HostedZoneId: Z0231843Q41D0UD9HQEI
 
   # HTTPS Listener for ALB
