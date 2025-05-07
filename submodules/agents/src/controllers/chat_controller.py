@@ -7,7 +7,7 @@ from langchain.schema import SystemMessage
 from models.service.chat_models import AgentResponse, ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from services.delegator.delegator import Delegator
-from services.orchestrator.orchestrator import Orchestrator
+from services.orchestrator.basic_orchestrator import BasicOrchestrator
 from stores.agent_manager import agent_manager_instance
 
 logger = setup_logging()
@@ -17,10 +17,10 @@ class ChatController:
     def __init__(
         self,
         delegator: Optional[Delegator] = None,
-        orchestrator: Optional[Orchestrator] = None,
+        orchestrator: Optional[BasicOrchestrator] = None,
     ):
         self.delegator = delegator
-        self.orchestrator = None
+        self.orchestrator = orchestrator
 
     async def handle_chat(self, chat_request: ChatRequest) -> JSONResponse:
         """Handle chat requests and delegate to appropriate agent"""

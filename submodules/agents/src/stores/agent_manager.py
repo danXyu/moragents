@@ -5,7 +5,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from config import load_agent_configs, setup_logging
 from langchain_ollama import ChatOllama
-from langchain_together import ChatTogether
+
+# from langchain_together import ChatTogether
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain.tools import StructuredTool
 from models.service.agent_config import AgentConfig
@@ -23,7 +24,7 @@ class AgentManager:
         self.selected_agents: List[str] = []
         self.config: List[Dict] = config
         self.agents: Dict[str, Any] = {}
-        self.llm: Optional[ChatOllama | ChatTogether] = LLM_AGENT
+        self.llm: Optional[ChatOllama] = LLM_AGENT
 
         # Load all agents (see note on async below).
         self._load_all_agents()

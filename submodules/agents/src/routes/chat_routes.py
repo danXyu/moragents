@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from models.service.chat_models import ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from services.delegator.delegator import Delegator
-from services.orchestrator.orchestrator import Orchestrator
+from services.orchestrator.basic_orchestrator import BasicOrchestrator
 from controllers.chat_controller import ChatController
 
 logger = setup_logging()
@@ -20,7 +20,7 @@ async def chat(chat_request: ChatRequest) -> JSONResponse:
 
     # Initialize new delegator and controller for each request
     delegator = Delegator(LLM_DELEGATOR)
-    orchestrator = Orchestrator(LLM_DELEGATOR)
+    orchestrator = BasicOrchestrator(LLM_DELEGATOR)
     controller = ChatController(delegator, orchestrator)
 
     try:

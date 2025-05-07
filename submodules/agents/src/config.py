@@ -2,10 +2,13 @@ import importlib.util
 import os
 from typing import Any, Dict, List, Optional
 
+from crewai import LLM
 from fastapi import APIRouter
-from langchain_cerebras import ChatCerebras
+
+# from langchain_cerebras import ChatCerebras
 from langchain_ollama import ChatOllama, OllamaEmbeddings
-from langchain_together import ChatTogether
+
+# from langchain_together import ChatTogether
 from logs import setup_logging
 from services.secrets import get_secret
 from services.vectorstore.together_embeddings import TogetherEmbeddings
@@ -169,15 +172,31 @@ except Exception as e:
 # Use cloud models if API keys are available, otherwise use local Ollama
 if has_together_api_key and has_cerebras_api_key:
     logger.info("Using cloud LLM providers (Together AI and Cerebras)")
-    LLM_AGENT = ChatTogether(
-        api_key=together_api_key,
-        model=AppConfig.LLM_AGENT_MODEL,
-        temperature=0.7,
+    LLM_AGENT = LLM(
+        model="openai/gpt-4o-mini",  # call model by provider/model_name
+        temperature=0.8,
+        max_tokens=1000,
+        top_p=0.9,
+        frequency_penalty=0.1,
+        presence_penalty=0.1,
+        stop=["END"],
+        seed=42,
     )
 
-    LLM_DELEGATOR = ChatCerebras(
-        api_key=cerebras_api_key,
-        model=AppConfig.LLM_DELEGATOR_MODEL,
+    # LLM_DELEGATOR = ChatCerebras(
+    #     api_key=cerebras_api_key,
+    #     model=AppConfig.LLM_DELEGATOR_MODEL,
+    # )
+
+    LLM_DELEGATOR = LLM(
+        model="openai/gpt-4o-mini",  # call model by provider/model_name
+        temperature=0.8,
+        max_tokens=1000,
+        top_p=0.9,
+        frequency_penalty=0.1,
+        presence_penalty=0.1,
+        stop=["END"],
+        seed=42,
     )
 
     embeddings = TogetherEmbeddings(

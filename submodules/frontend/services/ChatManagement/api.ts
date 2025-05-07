@@ -52,7 +52,7 @@ export const writeMessage = async (
       chat_history: currentHistory,
       chain_id: String(chainId),
       wallet_address: address,
-      use_multiagent: false,
+      use_multiagent: true,
       use_realtime_search: true,
       selected_agents: selectedAgents,
     });

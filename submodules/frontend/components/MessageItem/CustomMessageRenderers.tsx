@@ -1,3 +1,4 @@
+import React from "react";
 import { Text } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 import {
@@ -48,6 +49,9 @@ import { AccountSmartStatsMetadata } from "@/components/Agents/Elfa/AccountSmart
 import { TopHoldersMetadata } from "../Agents/Codex/TopHolders/CodexTopHoldersMessage.types";
 import { ElfaMentionsMessage } from "../Agents/Elfa/Mentions/MentionsMessage";
 import { MentionsMetadata } from "../Agents/Elfa/Mentions/MentionsMessage.types";
+
+// Crew Components
+import { CrewResponseMessage } from "@/components/Agents/Crew";
 
 type MessageRenderer = {
   check: (message: ChatMessage) => boolean;
@@ -257,6 +261,19 @@ const messageRenderers: MessageRenderer[] = [
       typeof message.content === "string" &&
       message.agentName === AgentType.TWEET_SIZZLER,
     render: (message) => <Tweet initialContent={message.content as string} />,
+  },
+
+  // Crew renderer
+  {
+    check: (message) =>
+      typeof message.content === "string" &&
+      message.agentName === AgentType.BASIC_CREW,
+    render: (message) => (
+      <CrewResponseMessage
+        content={message.content as string}
+        metadata={(message as AssistantMessage).metadata}
+      />
+    ),
   },
 
   // Search results renderer with clickable links
