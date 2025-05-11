@@ -190,6 +190,36 @@ test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypo
 trio = ["trio (>=0.26.1)"]
 
 [[package]]
+name = "apify-client"
+version = "1.10.0"
+description = "Apify API client for Python"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "apify_client-1.10.0-py3-none-any.whl", hash = "sha256:213c515f7dbcbf966351c31e47331e9895b0e9f3aee8ca62473c902431ec37af"},
+    {file = "apify_client-1.10.0.tar.gz", hash = "sha256:be846c466e898f838edffecff7ef07de99a184498bea0245b5709b4fa732415d"},
+]
+
+[package.dependencies]
+apify-shared = ">=1.4.1"
+httpx = ">=0.25"
+more-itertools = ">=10.0.0"
+
+[[package]]
+name = "apify-shared"
+version = "1.4.1"
+description = "Tools and constants shared across Apify projects."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "apify_shared-1.4.1-py3-none-any.whl", hash = "sha256:abac5712b6e8eb96693204cbb2702905e1971d9084b1716e7337852b5005290e"},
+    {file = "apify_shared-1.4.1.tar.gz", hash = "sha256:16e617c840fd27bf38d980f079c0b867c7378f68c7006b3d5a7d530d43930507"},
+]
+
+[package.extras]
+dev = ["build (>=1.0.3,<1.1.0)", "filelock (>=3.12.4,<3.13.0)", "mypy (>=1.7.1,<1.8.0)", "pre-commit (>=3.4.0,<3.5.0)", "pydoc-markdown (>=4.8.2,<4.9.0)", "pytest (>=7.4.2,<7.5.0)", "pytest-asyncio (>=0.21.0,<0.22.0)", "pytest-cov (>=4.1.0,<4.2.0)", "pytest-only (>=2.0.0,<2.1.0)", "pytest-timeout (>=2.2.0,<2.3.0)", "pytest-xdist (>=3.3.1,<3.4.0)", "respx (>=0.20.1,<0.21.0)", "ruff (>=0.1.13,<0.2.0)", "setuptools (>=68.0.0)", "twine (>=5.1.1,<5.2.0)"]
+
+[[package]]
 name = "appdirs"
 version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
@@ -3422,6 +3452,22 @@ SQLAlchemy = ">=1.4,<3"
 tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<10"
 
 [[package]]
+name = "langchain-apify"
+version = "0.1.2"
+description = "An integration package connecting Apify and LangChain"
+optional = false
+python-versions = "<4.0,>=3.9"
+files = [
+    {file = "langchain_apify-0.1.2-py3-none-any.whl", hash = "sha256:316c2b86c0f9e66a436af55ebe9cfe17f71b17fb657cf280e2b718759aa43c93"},
+    {file = "langchain_apify-0.1.2.tar.gz", hash = "sha256:be78f7dcc67fe2aaa83a3f7732303ee71b8b192b7bc949485f02135a5ff3ead1"},
+]
+
+[package.dependencies]
+apify-client = ">=1.8.1,<2.0.0"
+eval-type-backport = ">=0.2.2,<0.3.0"
+langchain-core = ">=0.3.15,<0.4.0"
+
+[[package]]
 name = "langchain-cohere"
 version = "0.3.5"
 description = "An integration package connecting Cohere and LangChain"
@@ -3963,6 +4009,17 @@ python-versions = "*"
 files = [
     {file = "monotonic-1.6-py2.py3-none-any.whl", hash = "sha256:68687e19a14f11f26d140dd5c86f3dba4bf5df58003000ed467e0e2a69bca96c"},
     {file = "monotonic-1.6.tar.gz", hash = "sha256:3a55207bcfed53ddd5c5bae174524062935efed17792e9de2ad0205ce9ad63f7"},
+]
+
+[[package]]
+name = "more-itertools"
+version = "10.7.0"
+description = "More routines for operating on iterables, beyond itertools"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "more_itertools-10.7.0-py3-none-any.whl", hash = "sha256:d43980384673cb07d2f7d2d918c616b30c659c089ee23953f601d6609c67510e"},
+    {file = "more_itertools-10.7.0.tar.gz", hash = "sha256:9fddd5403be01a94b204faadcff459ec3568cf110265d3c54323e1e866ad29d3"},
 ]
 
 [[package]]
@@ -8007,4 +8064,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "169e3ae6dce37d8f3da3e89bf8cdf05b8625680c3923722d1d6c25210b74249b"
+content-hash = "f2f07fd297163ae0d2b6975e081c568f231bd32dfafebaa3e55df77b264ca3ed"

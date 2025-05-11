@@ -36,6 +36,7 @@ boto3 = "1.34.162"
 together = "1.4.1"
 crewai = {extras = ["tools"], version = "^0.118.0"}
 pydantic = ">=2.5.3"
+langchain-apify = "^0.1.2"
 
 [tool.poetry.group.dev.dependencies]
 pycodestyle = "^2.10.0"

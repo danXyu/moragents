@@ -50,7 +50,7 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
             <AccordionButton>
               <Box flex="1" textAlign="left" fontSize="sm">
                 <Text fontSize="lg" fontWeight="medium">
-                  Crew Details
+                  Orchestration Details
                 </Text>
               </Box>
               <AccordionIcon />

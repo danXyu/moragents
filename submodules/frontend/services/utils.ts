@@ -5,6 +5,7 @@ export const getHumanReadableAgentName = (agentName?: string): string => {
     [AgentType.DEFAULT]: "Morpheus AI",
     [AgentType.IMAGEN]: "Image Generator Agent",
     [AgentType.CRYPTO_DATA]: "Crypto Data Agent",
+    [AgentType.BASIC_CREW]: "MySuperAgent Orchestration",
     [AgentType.TOKEN_SWAP]: "Metamask Swaps Agent",
     [AgentType.TWEET_SIZZLER]: "X Posts Generator Agent",
     [AgentType.DCA_AGENT]: "DCA Strategy Planning Agent",
