@@ -2,11 +2,10 @@ import secrets
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-
 from models import get_db
+from pydantic import BaseModel
 from services.auth.wallet_auth import UserService, WalletAuthService
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 

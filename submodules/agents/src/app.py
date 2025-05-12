@@ -1,10 +1,9 @@
 import os
 
 import uvicorn
+from config import load_agent_routes, setup_logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from config import load_agent_routes, setup_logging
 from models.config.config import Config
 
 # Configure routes

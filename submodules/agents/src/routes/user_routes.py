@@ -1,10 +1,9 @@
 from typing import Any, Dict
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
-
 from config import setup_logging
 from controllers.user_controller import UserController
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 
 logger = setup_logging()
 

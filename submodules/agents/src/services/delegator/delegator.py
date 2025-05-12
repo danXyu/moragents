@@ -2,12 +2,11 @@ import json
 import logging
 from typing import Any, List, Optional, Tuple
 
+from config import LLM_DELEGATOR
 from langchain.output_parsers import PydanticOutputParser
 from langchain.schema import BaseMessage, SystemMessage
-from pydantic import BaseModel, Field
-
-from config import LLM_DELEGATOR
 from models.service.chat_models import AgentResponse, ChatRequest, ResponseType
+from pydantic import BaseModel, Field
 from stores.agent_manager import agent_manager_instance
 
 from .system_prompt import get_system_prompt

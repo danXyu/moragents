@@ -6,7 +6,6 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from pydantic import BaseModel
-
 from stores.agent_manager import agent_manager_instance
 
 logger = logging.getLogger(__name__)

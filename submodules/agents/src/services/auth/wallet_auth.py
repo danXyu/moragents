@@ -4,11 +4,10 @@ from typing import Dict, Optional
 
 from eth_account import Account
 from eth_account.messages import encode_defunct
+from models.db.user_models import User
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from web3 import Web3
-
-from models.db.user_models import User
 
 
 class WalletAuthService:

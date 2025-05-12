@@ -5,7 +5,6 @@ from langchain.agents import AgentExecutor
 from langchain.tools import BaseTool
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.runnables import Runnable, RunnableConfig
-
 from models.service.chat_models import AgentResponse, ChatRequest
 
 T = TypeVar("T")

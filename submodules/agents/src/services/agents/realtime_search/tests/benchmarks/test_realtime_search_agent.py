@@ -3,7 +3,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 from langchain.schema import SystemMessage
-
 from models.service.chat_models import AgentResponse
 from services.agents.realtime_search.agent import RealtimeSearchAgent
 

@@ -1,11 +1,10 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
 from agents.src.models.service.user_service_models import UserModel, UserSettingModel
 from agents.src.routes.user_routes import router
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 app = FastAPI()
 app.include_router(router)

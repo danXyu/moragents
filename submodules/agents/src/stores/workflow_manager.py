@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import aiofiles
-
 from services.agents.dca_agent.tools import DCAActionHandler
 
 logger = logging.getLogger(__name__)

@@ -3,7 +3,6 @@ from typing import Any, Dict
 from unittest.mock import Mock, patch
 
 import pytest
-
 from models.service.chat_models import AgentResponse
 from services.agents.base_agent.agent import BaseAgent
 from stores.wallet_manager import wallet_manager_instance

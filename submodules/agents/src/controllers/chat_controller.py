@@ -1,10 +1,9 @@
 from typing import Optional
 
+from config import LLM_DELEGATOR, setup_logging
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from langchain.schema import SystemMessage
-
-from config import LLM_DELEGATOR, setup_logging
 from models.service.chat_models import AgentResponse, ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from services.delegator.delegator import Delegator
