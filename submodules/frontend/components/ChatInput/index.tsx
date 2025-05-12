@@ -1,11 +1,6 @@
 import React, { FC, useState, useEffect, useRef } from "react";
 import { Textarea, IconButton, useMediaQuery, Button } from "@chakra-ui/react";
-import {
-  AddIcon,
-  SearchIcon,
-  LinkIcon,
-  QuestionOutlineIcon,
-} from "@chakra-ui/icons";
+import { AddIcon, LinkIcon, QuestionOutlineIcon } from "@chakra-ui/icons";
 import { SendIcon } from "../CustomIcon/SendIcon";
 import { Command } from "./Commands";
 import { CommandsPortal } from "./CommandsPortal";
@@ -17,8 +12,7 @@ type ChatInputProps = {
   onSubmit: (
     message: string,
     file: File | null,
-    useMultiagent: boolean,
-    useRealtimeSearch: boolean
+    useResearch: boolean
   ) => Promise<void>;
   disabled: boolean;
   isSidebarOpen: boolean;
@@ -40,8 +34,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
   const [isMobile] = useMediaQuery("(max-width: 768px)");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [useMultiagent, setUseMultiagent] = useState(false);
-  const [useRealtimeSearch, setUseRealtimeSearch] = useState(false);
+  const [useResearch, setUseResearch] = useState(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -148,12 +141,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       setFile(null);
 
       // Submit the message with all flags
-      await onSubmit(
-        messageToSend,
-        fileToSend,
-        useMultiagent,
-        useRealtimeSearch
-      );
+      await onSubmit(messageToSend, fileToSend, useResearch);
     } catch (error) {
       console.error("Error submitting message:", error);
     } finally {
@@ -161,12 +149,8 @@ export const ChatInput: FC<ChatInputProps> = ({
     }
   };
 
-  const toggleMultiagent = () => {
-    setUseMultiagent((prev) => !prev);
-  };
-
-  const toggleRealtimeSearch = () => {
-    setUseRealtimeSearch((prev) => !prev);
+  const toggleResearch = () => {
+    setUseResearch((prev) => !prev);
   };
 
   return (
@@ -224,25 +208,15 @@ export const ChatInput: FC<ChatInputProps> = ({
                 onClick={handleFileUpload}
               />
               <Button
-                leftIcon={<SearchIcon />}
-                size="sm"
-                className={`${styles.actionButton} ${
-                  useRealtimeSearch ? styles.activeButton : ""
-                }`}
-                onClick={toggleRealtimeSearch}
-              >
-                Search
-              </Button>
-              {/* <Button
                 leftIcon={<LinkIcon />}
                 size="sm"
                 className={`${styles.actionButton} ${
-                  useMultiagent ? styles.activeButton : ""
+                  useResearch ? styles.activeButton : ""
                 }`}
-                onClick={toggleMultiagent}
+                onClick={toggleResearch}
               >
-                Multi-Agent
-              </Button> */}
+                Research
+              </Button>
               <Button
                 leftIcon={<QuestionOutlineIcon />}
                 size="sm"

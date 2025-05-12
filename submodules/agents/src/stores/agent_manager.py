@@ -237,6 +237,6 @@ class AgentManager:
 # Module‑level singleton (unchanged)
 # -------------------------------------------------------------------------
 
-agent_configs = load_agent_configs()
-logger.info("Loaded %d agents from configuration", len(agent_configs))
-agent_manager_instance = AgentManager(agent_configs)
+# agent_configs = load_agent_configs()
+# logger.info("Loaded %d agents from configuration", len(agent_configs))
+agent_manager_instance = AgentManager([])

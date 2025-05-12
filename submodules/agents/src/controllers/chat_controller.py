@@ -7,8 +7,8 @@ from langchain.schema import SystemMessage
 from models.service.chat_models import AgentResponse, ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from services.delegator.delegator import Delegator
-from services.orchestrator.basic_orchestrator import BasicOrchestrator
 from stores.agent_manager import agent_manager_instance
+from services.orchestrator.run_flow import run_flow
 
 logger = setup_logging()
 
@@ -17,16 +17,14 @@ class ChatController:
     def __init__(
         self,
         delegator: Optional[Delegator] = None,
-        orchestrator: Optional[BasicOrchestrator] = None,
     ):
         self.delegator = delegator
-        self.orchestrator = orchestrator
 
     async def handle_chat(self, chat_request: ChatRequest) -> JSONResponse:
         """Handle chat requests and delegate to appropriate agent"""
         logger.info(f"Received chat request for conversation {chat_request.conversation_id}")
 
-        assert self.delegator is not None or self.orchestrator is not None
+        assert self.delegator is not None
         logger.info(f"Delegator: {self.delegator}")
 
         try:
@@ -51,12 +49,14 @@ class ChatController:
                 current_agent = agent_name
 
             # Use orchestrator for multi-agent flow
-            if self.orchestrator and chat_request.use_multiagent:
-                logger.info("Using orchestrator flow")
-                current_agent, agent_response = await self.orchestrator.orchestrate(chat_request)
+            if chat_request.use_research:
+                logger.info("Using research flow")
+                # current_agent, agent_response = await self.orchestrator.orchestrate(chat_request)``
+                current_agent = "basic_crew"
+                agent_response = await run_flow(chat_request)
 
             # Otherwise use delegator to find appropriate agent
-            if self.delegator and not chat_request.use_multiagent:
+            if self.delegator and not chat_request.use_research:
                 logger.info("Using delegator flow")
                 current_agent, agent_response = await self.delegator.delegate_chat(chat_request)
 

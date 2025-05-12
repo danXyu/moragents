@@ -17,7 +17,8 @@ export const writeMessage = async (
   backendClient: any,
   chainId: number,
   address: string,
-  conversationId: string = DEFAULT_CONVERSATION_ID
+  conversationId: string = DEFAULT_CONVERSATION_ID,
+  useResearch: boolean = false
 ): Promise<ChatMessage[]> => {
   const convId = getOrCreateConversation(conversationId);
   const currentHistory = getMessagesHistory(convId);
@@ -52,8 +53,7 @@ export const writeMessage = async (
       chat_history: currentHistory,
       chain_id: String(chainId),
       wallet_address: address,
-      use_multiagent: true,
-      use_realtime_search: true,
+      use_research: useResearch,
       selected_agents: selectedAgents,
     });
 

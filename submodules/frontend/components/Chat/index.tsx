@@ -16,10 +16,14 @@ export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
   const isMobile = useBreakpointValue({ base: true, md: false });
   const showLoading = isLoading || localLoading;
 
-  const handleSubmit = async (message: string, file: File | null) => {
+  const handleSubmit = async (
+    message: string,
+    file: File | null,
+    useResearch: boolean
+  ) => {
     try {
       setLocalLoading(true);
-      await sendMessage(message, file);
+      await sendMessage(message, file, useResearch);
       setTimeout(() => setLocalLoading(false), 200);
     } catch (error) {
       console.error("Error sending message:", error);

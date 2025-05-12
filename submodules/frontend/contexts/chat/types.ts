@@ -28,7 +28,11 @@ export type ChatAction =
 export interface ChatContextType {
   state: ChatState;
   setCurrentConversation: (id: string) => void;
-  sendMessage: (message: string, file: File | null) => Promise<void>;
+  sendMessage: (
+    message: string,
+    file: File | null,
+    useResearch?: boolean
+  ) => Promise<void>;
   refreshMessages: () => Promise<void>;
   refreshAllTitles: () => Promise<void>;
   deleteChat: (conversationId: string) => Promise<void>;

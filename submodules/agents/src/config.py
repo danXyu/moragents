@@ -173,7 +173,7 @@ except Exception as e:
 if has_together_api_key and has_cerebras_api_key:
     logger.info("Using cloud LLM providers (Together AI and Cerebras)")
     LLM_AGENT = LLM(
-        model="openai/gpt-4o-mini",  # call model by provider/model_name
+        model="gemini/gemini-2.5-flash-preview-04-17",
         temperature=0.8,
         max_tokens=1000,
         top_p=0.9,
@@ -189,7 +189,7 @@ if has_together_api_key and has_cerebras_api_key:
     # )
 
     LLM_DELEGATOR = LLM(
-        model="openai/gpt-4o-mini",  # call model by provider/model_name
+        model="gemini/gemini-2.5-flash-preview-04-17",
         temperature=0.8,
         max_tokens=1000,
         top_p=0.9,

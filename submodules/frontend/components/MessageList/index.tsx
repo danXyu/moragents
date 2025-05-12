@@ -9,7 +9,11 @@ type MessageListProps = {
   messages: ChatMessage[];
   isLoading: boolean;
   isSidebarOpen: boolean;
-  onSubmit: (message: string, file: File | null) => Promise<void>;
+  onSubmit: (
+    message: string,
+    file: File | null,
+    useResearch?: boolean
+  ) => Promise<void>;
   disabled: boolean;
   showPrefilledOptions: boolean;
 };
@@ -54,7 +58,7 @@ export const MessageList: FC<MessageListProps> = ({
     if (isSubmitting || disabled) return;
     try {
       setIsSubmitting(true);
-      await onSubmit(selectedMessage, null);
+      await onSubmit(selectedMessage, null, false);
     } catch (error) {
       console.error("Error submitting prefilled message:", error);
     } finally {

@@ -17,6 +17,35 @@ export interface TaskSummary {
 }
 
 /**
+ * Types for processing time tracking.
+ */
+export interface ProcessingTime {
+  start_time?: number;
+  end_time?: number;
+  duration?: number;
+}
+
+/**
+ * Types for subtask telemetry information.
+ */
+export interface Telemetry {
+  token_usage?: TokenUsage;
+  processing_time?: ProcessingTime;
+}
+
+/**
+ * Types for subtask outputs from orchestration.
+ */
+export interface SubtaskOutput {
+  key?: string; // backward compatibility
+  value?: string; // backward compatibility
+  subtask?: string;
+  output?: string;
+  agents?: string[];
+  telemetry?: Telemetry;
+}
+
+/**
  * Metadata structure for crew responses as returned by BasicOrchestrator.
  */
 export interface CrewResponseMetadata {
@@ -39,6 +68,11 @@ export interface CrewResponseMetadata {
    * Summaries of each task executed by the crew
    */
   task_summaries?: TaskSummary[];
+
+  /**
+   * Outputs from subtasks in orchestration flows
+   */
+  subtask_outputs?: SubtaskOutput[];
 
   /**
    * Any additional metadata fields
