@@ -1,5 +1,4 @@
 import logging
-from decimal import Decimal
 
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest

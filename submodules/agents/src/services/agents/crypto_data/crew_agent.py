@@ -1,14 +1,9 @@
 import logging
-from typing import Any, Dict, List
 
-from crewai import Agent, Task, Crew, Process
+from crewai import Agent
 from crewai.tools import tool
 
-from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.crypto_data import tools
-from services.agents.crypto_data.config import Config
-from services.agents.crypto_data.tool_types import CryptoDataToolType
-
 
 logger = logging.getLogger(__name__)
 

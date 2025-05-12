@@ -3,19 +3,20 @@ Bootstrap tools for the agents.
 """
 
 from crewai_tools import (
-    BraveSearchTool,
     ApifyActorsTool,
-    YoutubeVideoSearchTool,
-    YoutubeChannelSearchTool,
-    WebsiteSearchTool,
-    VisionTool,
-    TXTSearchTool,
-    SeleniumScrapingTool,
-    PDFSearchTool,
-    CodeInterpreterTool,
+    BraveSearchTool,
     CodeDocsSearchTool,
+    CodeInterpreterTool,
     DallETool,
+    PDFSearchTool,
+    SeleniumScrapingTool,
+    TXTSearchTool,
+    VisionTool,
+    WebsiteSearchTool,
+    YoutubeChannelSearchTool,
+    YoutubeVideoSearchTool,
 )
+
 from services.orchestrator.registry.tool_registry import ToolRegistry
 
 

@@ -3,6 +3,7 @@ from typing import Any, Dict
 from unittest.mock import patch
 
 import pytest
+
 from models.service.chat_models import AgentResponse
 from services.agents.rugcheck.agent import RugcheckAgent
 from services.agents.rugcheck.tool_types import RugcheckToolType

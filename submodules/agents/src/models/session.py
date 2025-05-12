@@ -3,11 +3,12 @@
 import logging
 import re
 
-from agents.src.models.config.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
+
+from agents.src.models.config.config import Config
 
 logger = logging.getLogger(__name__)
 

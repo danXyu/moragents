@@ -1,12 +1,13 @@
-import logging
 import asyncio
-from typing import Optional
+import logging
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from stores.agent_manager import agent_manager_instance
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from pydantic import BaseModel
+
+from stores.agent_manager import agent_manager_instance
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +100,74 @@ async def create_agent(agent_data: CreateAgentRequest) -> JSONResponse:
 async def reset_agent_manager() -> JSONResponse:
     """Reset the agent manager to its initial state"""
     agent_manager_instance.reset()
-
     return JSONResponse(content={"status": "success", "message": "Agent manager reset to initial state"})
+
+
+def _get_error_suggestion(error_message: str) -> tuple[str, str]:
+    """Get error suggestion based on error message pattern"""
+    suggestions = {
+        "Connection refused": "Make sure the server is running and accessible.",
+        "404": "The endpoint was not found. Try adding '/sse' to the URL if it's missing.",
+        "502": "Received a Bad Gateway error. The server might be temporarily unavailable or misconfigured.",
+        "Bad Gateway": "Received a Bad Gateway error. The server might be temporarily unavailable or misconfigured.",
+        "Timeout": "Connection timed out. Check if the server is responding to tool requests.",
+        "timed out": "Connection timed out. Check if the server is responding to tool requests.",
+        "SSE": "This URL doesn't support Server-Sent Events (SSE). Ensure the endpoint supports SSE.",
+        "EventSource": "This URL doesn't support Server-Sent Events (SSE). Ensure the endpoint supports SSE.",
+    }
+
+    for pattern, suggestion in suggestions.items():
+        if pattern in error_message:
+            return error_message, suggestion
+
+    if "TaskGroup" in error_message and "sub-exception" in error_message:
+        return "Failed to establish connection with the MCP server", (
+            "The server returned an error. This might be due to server unavailability or misconfiguration."
+        )
+
+    return error_message, ""
+
+
+def _process_tool_schema(tool: Any) -> Dict[str, Any]:
+    """Process a single tool to extract its schema"""
+    try:
+        logger.info(f"Tool: {tool.name}, Description: {tool.description}")
+
+        schema_dict = None
+        if hasattr(tool, "args_schema") and tool.args_schema is not None:
+            if hasattr(tool.args_schema, "model_json_schema"):
+                schema_dict = tool.args_schema.model_json_schema()
+
+        if schema_dict:
+            return {
+                "name": tool.name,
+                "description": tool.description,
+                "properties": schema_dict.get("properties", {}),
+                "required": schema_dict.get("required", []),
+            }
+        return {"name": tool.name, "description": tool.description}
+
+    except Exception as e:
+        logger.warning(f"Error processing tool {getattr(tool, 'name', 'unknown')}: {str(e)}")
+        return {
+            "name": getattr(tool, "name", "unknown"),
+            "description": getattr(tool, "description", ""),
+        }
+
+
+async def _verify_mcp_connection(url: str, agent_name: str) -> List[Dict[str, Any]]:
+    """Verify MCP connection and retrieve tools"""
+    test_client = MultiServerMCPClient({agent_name: {"url": url, "transport": "sse"}})
+
+    async with asyncio.timeout(5):
+        async with test_client as client:
+            tools = client.get_tools()
+            logger.info(f"Retrieved {len(tools)} tools from MCP server")
+
+            tool_schemas = [_process_tool_schema(tool) for tool in tools]
+            logger.info(f"Successfully verified MCP URL: {url}, found {len(tools)} tools")
+
+            return tool_schemas
 
 
 @router.post("/verify-url")
@@ -112,117 +179,38 @@ async def verify_mcp_url(request: Request) -> JSONResponse:
 
         if not url:
             raise HTTPException(status_code=400, detail="URL is required")
-
         if not url.startswith("http"):
             raise HTTPException(status_code=400, detail="URL must start with http:// or https://")
 
-        # Create a temporary name for the agent
-        agent_name = "test_agent_" + str(hash(url))[:8]
-
-        # Test connection and get tools from the MCP server
-        test_client = MultiServerMCPClient(
-            {
-                agent_name: {
-                    "url": url,
-                    "transport": "sse",
-                }
-            }
-        )
+        agent_name = f"test_agent_{str(hash(url))[:8]}"
 
         try:
-            # Set a timeout of 5 seconds for the connection attempt
-            async with asyncio.timeout(5):
-                async with test_client as client:
-                    # Get the tools from the MCP server
-                    tools = client.get_tools()
-
-                    # Log the tools for debugging
-                    logger.info(f"Retrieved {len(tools)} tools from MCP server")
-
-                    # Extract tool schemas properly from StructuredTools
-                    tool_schemas = []
-                    for tool in tools:
-                        try:
-                            logger.info(f"Tool: {tool.name}, Description: {tool.description}")
-
-                            # Extract schema based on tool type
-                            schema_dict = None
-
-                            # For StructuredTool with Pydantic schema
-                            if hasattr(tool, "args_schema") and tool.args_schema is not None:
-                                if hasattr(tool.args_schema, "model_json_schema"):
-                                    schema_dict = tool.args_schema.model_json_schema()
-
-                            # Add the tool schema with available information
-                            if schema_dict:
-                                tool_schemas.append(
-                                    {
-                                        "name": tool.name,
-                                        "description": tool.description,
-                                        "properties": schema_dict.get("properties", {}),
-                                        "required": schema_dict.get("required", []),
-                                    }
-                                )
-                            else:
-                                # Fallback if we can't get schema directly
-                                tool_schemas.append({"name": tool.name, "description": tool.description})
-
-                        except Exception as e:
-                            logger.warning(f"Error processing tool {getattr(tool, 'name', 'unknown')}: {str(e)}")
-                            # Ensure we at least capture the name and description
-                            tool_schemas.append(
-                                {
-                                    "name": getattr(tool, "name", "unknown"),
-                                    "description": getattr(tool, "description", ""),
-                                }
-                            )
-
-                    logger.info(f"Successfully verified MCP URL: {url}, found {len(tools)} tools")
-
-                    return JSONResponse(
-                        content={
-                            "status": "success",
-                            "message": f"Successfully connected to MCP server",
-                            "tools": tool_schemas,
-                        }
-                    )
+            tool_schemas = await _verify_mcp_connection(url, agent_name)
+            return JSONResponse(
+                content={
+                    "status": "success",
+                    "message": "Successfully connected to MCP server",
+                    "tools": tool_schemas,
+                }
+            )
 
         except asyncio.TimeoutError:
             logger.warning(f"MCP URL verification timed out after 5 seconds: {url}")
             raise HTTPException(
                 status_code=400,
-                detail="Connection to MCP server timed out after 5 seconds. This likely indicates a misconfiguration. Please check your MCP server logs for errors.",
+                detail=(
+                    "Connection to MCP server timed out after 5 seconds. "
+                    "This likely indicates a misconfiguration. Please check your MCP server logs for errors."
+                ),
             )
+
         except Exception as e:
-            error_message = str(e)
-            suggestion = ""
-
-            # Provide helpful suggestions based on common error patterns
-            if "Connection refused" in error_message:
-                suggestion = "Make sure the server is running and accessible."
-            elif "404" in error_message:
-                suggestion = "The endpoint was not found. Try adding '/sse' to the URL if it's missing."
-            elif "502" in error_message or "Bad Gateway" in error_message:
-                suggestion = (
-                    "Received a Bad Gateway error. The server might be temporarily unavailable or misconfigured."
-                )
-            elif "Timeout" in error_message or "timed out" in error_message:
-                suggestion = "Connection timed out. Check if the server is responding to tool requests."
-            elif "SSE" in error_message or "EventSource" in error_message:
-                suggestion = "This URL doesn't support Server-Sent Events (SSE). Ensure the endpoint supports SSE."
-            elif "TaskGroup" in error_message and "sub-exception" in error_message:
-                # Handle the specific error from the logs
-                suggestion = (
-                    "The server returned an error. This might be due to server unavailability or misconfiguration."
-                )
-                error_message = "Failed to establish connection with the MCP server"
-
+            error_message, suggestion = _get_error_suggestion(str(e))
             detailed_message = f"Failed to connect to MCP server: {error_message}"
             if suggestion:
                 detailed_message += f" {suggestion}"
 
             logger.warning(f"MCP URL verification failed: {url}. Error: {error_message}")
-
             raise HTTPException(status_code=400, detail=detailed_message)
 
     except HTTPException:

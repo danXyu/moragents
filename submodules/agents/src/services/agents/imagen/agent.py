@@ -4,8 +4,6 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional
 
 import requests
-from models.service.agent_core import AgentCore
-from models.service.chat_models import AgentResponse, ChatRequest
 from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -13,6 +11,9 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
 
 logger = logging.getLogger(__name__)
 

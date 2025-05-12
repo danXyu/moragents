@@ -2,8 +2,9 @@
 # pydantic models for flow state & LLM tool schemas
 # --------------------------------------------------------------------- #
 
-from pydantic import BaseModel
 from typing import List
+
+from pydantic import BaseModel
 
 
 class TokenUsage(BaseModel):

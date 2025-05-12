@@ -1,14 +1,10 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-from crewai import Agent, Task, Crew, Process
+from crewai import Agent
 from crewai.tools import tool
 
-from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.codex import tools
-from services.agents.codex.config import Config
-from services.agents.codex.utils.tool_types import CodexToolType
-
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +49,9 @@ def search_nfts_tool(
 codex_agent = Agent(
     role="Codex Market Analyst",
     goal="Provide accurate cryptocurrency market data and NFT collection analysis",
-    backstory="You are a specialized market analyst with expertise in cryptocurrency tokens, holder analysis, and NFT collections data from Codex.io.",
+    backstory="You are a specialized market analyst with expertise in "
+    "cryptocurrency tokens, holder analysis, and NFT collections data from "
+    "Codex.io.",
     verbose=True,
     tools=[list_top_tokens_tool, get_top_holders_percent_tool, search_nfts_tool],
     allow_delegation=False,

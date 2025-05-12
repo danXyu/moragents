@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.tools import BaseTool, Tool
 from langchain_core.language_models import BaseLanguageModel
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.base_agent.tool_types import BaseAgentToolType
@@ -48,7 +48,8 @@ class BaseAgent(LangChainAgent):
 
             tool_result = tools.get_balance(wallet, asset_id=asset_id.lower())
             return (
-                f"Your wallet {tool_result['address']} has a balance of {tool_result['balance']} {tool_result['asset']}"
+                f"Your wallet {tool_result['address']} has a balance of "
+                f"{tool_result['balance']} {tool_result['asset']}"
             )
 
         # Create the tools using the Tool class directly
@@ -139,12 +140,13 @@ class BaseAgent(LangChainAgent):
                     # Handle action required tools
                     if tool_name == BaseAgentToolType.SWAP_ASSETS.value:
                         return AgentResponse.action_required(
-                            content=f"Ready to swap {tool_args.get('amount')} {tool_args.get('from_asset_id')} to {tool_args.get('to_asset_id')}",
+                            content=f"Ready to swap {tool_args.get('amount')} "
+                            f"{tool_args.get('from_asset_id')} to {tool_args.get('to_asset_id')}",
                             action_type="swap",
                         )
                     elif tool_name == BaseAgentToolType.TRANSFER_ASSET.value:
                         return AgentResponse.action_required(
-                            content=f"Ready to transfer {tool_args.get('amount')} {tool_args.get('asset_id')}",
+                            content=f"Ready to transfer {tool_args.get('amount')} " f"{tool_args.get('asset_id')}",
                             action_type="transfer",
                         )
 

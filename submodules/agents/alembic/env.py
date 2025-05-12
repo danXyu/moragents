@@ -1,22 +1,16 @@
-import sys
 import os
+import sys
 from logging.config import fileConfig
+
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
 # add your model's MetaData object here
 from src.models import Base
-from sqlalchemy import engine_from_config, pool
 
 # Make the src directory available for imports regardless of where alembic is run from
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Import Base first
-from src.models import Base
-
-# Now import all models that need to be included in migrations
-# This ensures they're registered with Base.metadata
-from src.models.core.user_models import User, UserSetting
 
 # Print debugging information
 print("Models imported, available tables:", [table for table in Base.metadata.tables.keys()])

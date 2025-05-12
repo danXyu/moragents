@@ -1,9 +1,10 @@
 import logging
 import os
 
-from config import RAG_VECTOR_STORE
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
+
+from config import RAG_VECTOR_STORE
 from models.service.chat_models import AgentResponse
 
 logger = logging.getLogger(__name__)

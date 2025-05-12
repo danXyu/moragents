@@ -1,14 +1,15 @@
 import os
 
 import uvicorn
-from config import load_agent_routes, setup_logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from config import load_agent_routes, setup_logging
 from models.config.config import Config
 
 # Configure routes
-from routes import agent_manager_routes, wallet_manager_routes
 from routes import chat_routes  # workflow_manager_routes,
+from routes import agent_manager_routes, wallet_manager_routes
 
 # Configure logging
 logger = setup_logging()

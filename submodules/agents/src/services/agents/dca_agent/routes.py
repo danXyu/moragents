@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+
 from services.agents.dca_agent.tools import DCAParams, create_dca_workflow
 from stores.wallet_manager import wallet_manager_instance
 from stores.workflow_manager import workflow_manager_instance

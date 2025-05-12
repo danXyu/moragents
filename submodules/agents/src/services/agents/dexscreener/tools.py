@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import aiohttp
+
 from services.agents.dexscreener.config import Config
 from services.agents.dexscreener.models import (
     BoostedToken,

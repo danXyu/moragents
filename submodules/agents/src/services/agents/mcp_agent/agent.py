@@ -1,10 +1,11 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
+from langchain.schema import SystemMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
+
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
-from langchain.schema import SystemMessage
 
 logger = logging.getLogger(__name__)
 

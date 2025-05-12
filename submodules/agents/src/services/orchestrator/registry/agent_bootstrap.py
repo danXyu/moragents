@@ -1,9 +1,9 @@
 from crewai import Agent
 
-from services.orchestrator.registry.agent_registry import AgentRegistry
-from services.orchestrator.registry.tool_registry import ToolRegistry
-from services.orchestrator.registry.tool_bootstrap import bootstrap_tools
 from services.agents.crypto_data.crew_agent import crypto_data_agent
+from services.orchestrator.registry.agent_registry import AgentRegistry
+from services.orchestrator.registry.tool_bootstrap import bootstrap_tools
+from services.orchestrator.registry.tool_registry import ToolRegistry
 
 
 def _register_agent(
@@ -113,8 +113,9 @@ def bootstrap_agents(llm):
         agent_name="document_analyzer",
         role="Document Analysis Expert",
         goal="Extract, search, and analyze information from various document formats",
-        backstory="A specialist in document analysis with expertise in extracting insights from different file formats. "
-        "Combines technical knowledge with analytical skills to process text-based information efficiently.",
+        backstory="A specialist in document analysis with expertise in extracting insights from different "
+        "file formats. Combines technical knowledge with analytical skills to process text-based information "
+        "efficiently.",
         tool_names=["txt_search", "pdf_search", "article_extractor_smart"],
         llm=llm,
         max_iter=2,
@@ -279,8 +280,9 @@ def bootstrap_agents(llm):
         agent_name="travel_intelligence",
         role="Travel & Hospitality Analyst",
         goal="Analyze travel destinations, accommodations, and traveler sentiment",
-        backstory="A travel industry expert who specializes in analyzing destination popularity, accommodation quality, "
-        "and traveler experiences. Provides comprehensive insights on travel trends and hospitality performance.",
+        backstory="A travel industry expert who specializes in analyzing destination popularity, "
+        "accommodation quality, and traveler experiences. Provides comprehensive insights on travel trends "
+        "and hospitality performance.",
         tool_names=["tripadvisor_reviews_scraper", "tripadvisor_scraper", "booking_reviews_scraper"],
         llm=llm,
         max_iter=3,
@@ -292,9 +294,9 @@ def bootstrap_agents(llm):
         agent_name="real_estate_analyst",
         role="Real Estate Market Specialist",
         goal="Analyze property listings, market trends, and location value",
-        backstory="A real estate intelligence expert who specializes in property market analysis. Skilled at extracting "
-        "and interpreting property listing data to identify market trends, pricing patterns, and investment "
-        "opportunities.",
+        backstory="A real estate intelligence expert who specializes in property market analysis. "
+        "Skilled at extracting and interpreting property listing data to identify market trends, "
+        "pricing patterns, and investment opportunities.",
         tool_names=["zillow_scraper", "google_places_scraper"],
         llm=llm,
         max_iter=2,

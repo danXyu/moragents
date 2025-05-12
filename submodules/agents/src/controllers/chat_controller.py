@@ -1,14 +1,15 @@
 from typing import Optional
 
-from config import LLM_DELEGATOR, setup_logging
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from langchain.schema import SystemMessage
+
+from config import LLM_DELEGATOR, setup_logging
 from models.service.chat_models import AgentResponse, ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from services.delegator.delegator import Delegator
-from stores.agent_manager import agent_manager_instance
 from services.orchestrator.run_flow import run_flow
+from stores.agent_manager import agent_manager_instance
 
 logger = setup_logging()
 

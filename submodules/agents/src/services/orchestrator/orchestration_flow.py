@@ -8,24 +8,25 @@ CrewAI Flow that:
 """
 
 from __future__ import annotations
+
 import logging
-from typing import Dict, List, Any
-from asyncio import gather, wait_for, TimeoutError
+from asyncio import TimeoutError, gather, wait_for
+from typing import Any, Dict, List
 
-from crewai.flow.flow import Flow, start, listen
-from crewai import Crew, Task, Process, LLM
+from crewai import LLM, Crew, Process, Task
+from crewai.flow.flow import Flow, listen, start
 
-from .utils import parse_llm_structured_output
-from .registry.agent_registry import AgentRegistry
 from .orchestration_state import (
-    OrchestrationState,
-    SubtaskOutput,
-    Telemetry,
-    ProcessingTime,
-    TokenUsage,
     AssignmentPlan,
+    OrchestrationState,
+    ProcessingTime,
+    SubtaskOutput,
     SubtaskPlan,
+    Telemetry,
+    TokenUsage,
 )
+from .registry.agent_registry import AgentRegistry
+from .utils import parse_llm_structured_output
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +194,8 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                 logger.warning(f"Task timed out: {subtask}")
                 return SubtaskOutput(
                     subtask=subtask,
-                    output=f"This task could not be completed within the allotted time. Partial information: {DEFAULT_TASK_OUTPUT}",
+                    output=f"This task could not be completed within the allotted time. "
+                    f"Partial information: {DEFAULT_TASK_OUTPUT}",
                     agents=agents,
                     telemetry=telemetry,
                 )

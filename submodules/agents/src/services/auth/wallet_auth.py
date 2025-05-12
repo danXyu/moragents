@@ -1,13 +1,14 @@
-from datetime import datetime
-from typing import Optional, Dict
 import secrets
-from eth_account.messages import encode_defunct
+from datetime import datetime
+from typing import Dict, Optional
+
 from eth_account import Account
+from eth_account.messages import encode_defunct
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 from web3 import Web3
 
-from models.db.user_models import User, UserSetting
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from models.db.user_models import User
 
 
 class WalletAuthService:

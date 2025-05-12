@@ -1,8 +1,9 @@
 import logging
 from typing import Any, Dict
 
-from config import RAG_VECTOR_STORE
 from langchain.schema import HumanMessage
+
+from config import RAG_VECTOR_STORE
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 

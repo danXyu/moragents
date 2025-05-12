@@ -1,14 +1,10 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-from crewai import Agent, Task, Crew, Process
+from crewai import Agent
 from crewai.tools import tool
 
-from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.elfa import tools
-from services.agents.elfa.config import Config
-from services.agents.elfa.tool_types import ElfaToolType
-
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +54,15 @@ def get_account_smart_stats_tool(username: str) -> str:
 elfa_agent = Agent(
     role="Elfa Social Analyst",
     goal="Provide accurate cryptocurrency social media data and sentiment analysis",
-    backstory="You are a specialized social media analyst with expertise in cryptocurrency mentions, trending tokens, and influential accounts across social platforms.",
+    backstory="You are a specialized social media analyst with expertise in "
+    "cryptocurrency mentions, trending tokens, and influential accounts "
+    "across social platforms.",
     verbose=True,
-    tools=[get_top_mentions_tool, search_mentions_tool, get_trending_tokens_tool, get_account_smart_stats_tool],
+    tools=[
+        get_top_mentions_tool,
+        search_mentions_tool,
+        get_trending_tokens_tool,
+        get_account_smart_stats_tool,
+    ],
     allow_delegation=False,
 )

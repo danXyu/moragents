@@ -3,6 +3,7 @@ from typing import Any, Dict
 from unittest.mock import patch
 
 import pytest
+
 from models.service.chat_models import AgentResponse
 from services.agents.token_swap.agent import TokenSwapAgent
 from services.agents.token_swap.models import SwapQuoteResponse, TransactionResponse

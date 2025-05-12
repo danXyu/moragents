@@ -4,7 +4,7 @@ from functools import wraps
 from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar
 
 from crewai import Agent as CrewAgent
-from crewai import Task, Crew, Process
+from crewai import Crew, Process, Task
 from crewai.tools import Tool as CrewTool
 
 from models.service.chat_models import AgentResponse, ChatRequest
@@ -121,10 +121,10 @@ class CrewAgentCore(ABC):
 
         return f"""
         {system_prompt}
-        
+
         Process the following user request and provide a helpful response:
         "{request.prompt}"
-        
+
         If you need to use tools, use them to gather information before responding.
         Return your final answer in a clear, helpful format.
         """

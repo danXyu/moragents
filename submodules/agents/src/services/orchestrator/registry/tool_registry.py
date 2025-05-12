@@ -4,7 +4,8 @@ metadata so the LLM can decide which ones to use for each sub‑task.
 """
 
 from __future__ import annotations
-from typing import Dict, List, Any, Type
+
+from typing import Any, Dict, List, Type
 
 
 class ToolRegistry:
