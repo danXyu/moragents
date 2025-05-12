@@ -10,7 +10,6 @@ from crewai_tools import (
     WebsiteSearchTool,
     VisionTool,
     TXTSearchTool,
-    SpiderTool,
     SeleniumScrapingTool,
     PDFSearchTool,
     CodeInterpreterTool,
@@ -76,6 +75,12 @@ def bootstrap_tools():
     # Truth Social content scraper
     _register_tool("truth_social_scraper", ApifyActorsTool, actor_name="muhammetakkurtt/truth-social-scraper")
 
+    # LinkedIn profile scraper
+    _register_tool("linkedin_profile_scraper", ApifyActorsTool, actor_name="dev_fusion/Linkedin-Profile-Scraper")
+
+    # LinkedIn people finder
+    _register_tool("linkedin_people_finder", ApifyActorsTool, actor_name="anchor/LinkedIn-people-finder")
+
     # ======== BUSINESS & LOCATION DATA SCRAPERS ========
     # Google Places business data scraper
     _register_tool("google_places_scraper", ApifyActorsTool, actor_name="compass/crawler-google-places")
@@ -88,6 +93,9 @@ def bootstrap_tools():
 
     # Website traffic & analytics scraper
     _register_tool("similarweb_scraper", ApifyActorsTool, actor_name="tri_angle/similarweb-scraper")
+
+    # LinkedIn company posts scraper
+    _register_tool("linkedin_company_posts_scraper", ApifyActorsTool, actor_name="apimaestro/linkedin-company-posts")
 
     # ======== E-COMMERCE SCRAPERS ========
     # Amazon product data scraper
@@ -111,12 +119,6 @@ def bootstrap_tools():
     # Glassdoor job listings scraper
     _register_tool("glassdoor_jobs_scraper", ApifyActorsTool, actor_name="bebity/glassdoor-jobs-scraper")
 
-    # Indeed job listings scraper
-    _register_tool("indeed_scraper", ApifyActorsTool, actor_name="miscellanea/indeed-scraper")
-
-    # LinkedIn profile scraper
-    _register_tool("linkedin_profile_scraper", ApifyActorsTool, actor_name="dev-fusion/Linkedin-Profile-Scraper")
-
     # ======== CONTENT EXTRACTION TOOLS ========
     # Smart article content extractor
     _register_tool("article_extractor_smart", ApifyActorsTool, actor_name="lukaskrivka/article-extractor-smart")
@@ -128,12 +130,12 @@ def bootstrap_tools():
     # YouTube channel content search
     _register_tool("youtube_channel_search", YoutubeChannelSearchTool)
 
+    # YouTube transcript scraper
+    _register_tool("youtube_transcript_scraper", ApifyActorsTool, actor_name="pintostudio/youtube-transcript-scraper")
+
     # ======== WEBSITE & WEB CONTENT TOOLS ========
     # Website content semantic search
     _register_tool("website_search", WebsiteSearchTool)
-
-    # Generic web scraping and crawling
-    _register_tool("spider_scraper", SpiderTool)
 
     # Browser-based web scraping (for JavaScript-heavy sites)
     _register_tool("selenium_scraper", SeleniumScrapingTool)

@@ -299,7 +299,7 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
             <AccordionButton>
               <Box flex="1" textAlign="left" fontSize="sm">
                 <Text fontSize="lg" fontWeight="medium">
-                  Orchestration Details
+                  Research & Orchestration
                 </Text>
               </Box>
               <AccordionIcon />
@@ -310,8 +310,8 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
             {metadata.subtask_outputs &&
               metadata.subtask_outputs.length > 0 && (
                 <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={1}>
-                    Subtask Outputs:
+                  <Text fontSize="sm" fontWeight="medium" mb={2}>
+                    Here are all of the tasks that were completed:
                   </Text>
                   {metadata.subtask_outputs.map(
                     (subtask: SubtaskOutput, idx: number) => {

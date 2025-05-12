@@ -180,6 +180,7 @@ if has_together_api_key and has_cerebras_api_key:
         frequency_penalty=0.1,
         presence_penalty=0.1,
         stop=["END"],
+        verbose=False,
         seed=42,
     )
 
@@ -196,6 +197,7 @@ if has_together_api_key and has_cerebras_api_key:
         frequency_penalty=0.1,
         presence_penalty=0.1,
         stop=["END"],
+        verbose=False,
         seed=42,
     )
 
