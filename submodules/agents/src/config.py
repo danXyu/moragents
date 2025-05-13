@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 from crewai import LLM
 from fastapi import APIRouter
 
-# from langchain_cerebras import ChatCerebras
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 
 # from langchain_together import ChatTogether
@@ -156,6 +155,7 @@ class AppConfig:
 # Check if API keys are available
 has_together_api_key = False
 has_cerebras_api_key = False
+has_gemini_api_key = False
 
 try:
     together_api_key = get_secret("TogetherApiKey")
@@ -169,36 +169,39 @@ try:
 except Exception as e:
     logger.warning(f"Failed to get CerebrasApiKey: {str(e)}")
 
+try:
+    gemini_api_key = get_secret("GeminiApiKey")
+    has_gemini_api_key = gemini_api_key is not None and gemini_api_key != ""
+except Exception as e:
+    logger.warning(f"Failed to get GeminiApiKey: {str(e)}")
+
 # Use cloud models if API keys are available, otherwise use local Ollama
-if has_together_api_key and has_cerebras_api_key:
-    logger.info("Using cloud LLM providers (Together AI and Cerebras)")
+if has_together_api_key and has_cerebras_api_key and has_gemini_api_key:
+    logger.info("Using cloud LLM providers (Together AI, Cerebras, and Gemini)")
     LLM_AGENT = LLM(
         model="gemini/gemini-2.5-flash-preview-04-17",
         temperature=0.8,
-        max_tokens=1000,
+        max_tokens=2000,
         top_p=0.9,
         frequency_penalty=0.1,
         presence_penalty=0.1,
         stop=["END"],
         verbose=False,
         seed=42,
+        api_key=gemini_api_key,
     )
-
-    # LLM_DELEGATOR = ChatCerebras(
-    #     api_key=cerebras_api_key,
-    #     model=AppConfig.LLM_DELEGATOR_MODEL,
-    # )
 
     LLM_DELEGATOR = LLM(
         model="gemini/gemini-2.5-flash-preview-04-17",
         temperature=0.8,
-        max_tokens=1000,
+        max_tokens=2000,
         top_p=0.9,
         frequency_penalty=0.1,
         presence_penalty=0.1,
         stop=["END"],
         verbose=False,
         seed=42,
+        api_key=gemini_api_key,
     )
 
     embeddings = TogetherEmbeddings(

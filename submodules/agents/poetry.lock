@@ -3554,18 +3554,18 @@ langchain-core = ">=0.3.28,<0.4.0"
 
 [[package]]
 name = "langchain-mcp-adapters"
-version = "0.0.6"
+version = "0.0.11"
 description = "Make Anthropic Model Context Protocol (MCP) tools compatible with LangChain and LangGraph agents."
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "langchain_mcp_adapters-0.0.6-py3-none-any.whl", hash = "sha256:260fca11facd6f51a9ec0593e6b159709b893714f7e5b0b6059e79bca8c652a0"},
-    {file = "langchain_mcp_adapters-0.0.6.tar.gz", hash = "sha256:87cc456cbbe565717512f27f6ad0d2415c3c72f0728f042c181e41f8b739360e"},
+    {file = "langchain_mcp_adapters-0.0.11-py3-none-any.whl", hash = "sha256:e10a5ee6b5823fe51d93439011bfc92d9d929ff16b8e982ba5bf51d0bcf650af"},
+    {file = "langchain_mcp_adapters-0.0.11.tar.gz", hash = "sha256:664b0aac83f0b41c2a0d00344a608a59df55b07e27cde303a26334c7e3ea4051"},
 ]
 
 [package.dependencies]
 langchain-core = ">=0.3.36,<0.4"
-mcp = ">=1.4.1,<1.5"
+mcp = ">=1.7"
 
 [[package]]
 name = "langchain-ollama"
@@ -3845,13 +3845,13 @@ files = [
 
 [[package]]
 name = "mcp"
-version = "1.4.1"
+version = "1.8.1"
 description = "Model Context Protocol SDK"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "mcp-1.4.1-py3-none-any.whl", hash = "sha256:a7716b1ec1c054e76f49806f7d96113b99fc1166fc9244c2c6f19867cb75b593"},
-    {file = "mcp-1.4.1.tar.gz", hash = "sha256:b9655d2de6313f9d55a7d1df62b3c3fe27a530100cc85bf23729145b0dba4c7a"},
+    {file = "mcp-1.8.1-py3-none-any.whl", hash = "sha256:948e03783859fa35abe05b9b6c0a1d5519be452fc079dc8d7f682549591c1770"},
+    {file = "mcp-1.8.1.tar.gz", hash = "sha256:ec0646271d93749f784d2316fb5fe6102fb0d1be788ec70a9e2517e8f2722c0e"},
 ]
 
 [package.dependencies]
@@ -3860,9 +3860,10 @@ httpx = ">=0.27"
 httpx-sse = ">=0.4"
 pydantic = ">=2.7.2,<3.0.0"
 pydantic-settings = ">=2.5.2"
+python-multipart = ">=0.0.9"
 sse-starlette = ">=1.6.1"
 starlette = ">=0.27"
-uvicorn = ">=0.23.1"
+uvicorn = {version = ">=0.23.1", markers = "sys_platform != \"emscripten\""}
 
 [package.extras]
 cli = ["python-dotenv (>=1.0.0)", "typer (>=0.12.4)"]
@@ -7057,13 +7058,13 @@ blobfile = ["blobfile (>=2)"]
 
 [[package]]
 name = "together"
-version = "1.4.1"
+version = "1.5.8"
 description = "Python client for Together's Cloud Platform!"
 optional = false
-python-versions = "<4.0,>=3.9"
+python-versions = "<4.0,>=3.10"
 files = [
-    {file = "together-1.4.1-py3-none-any.whl", hash = "sha256:10106ec81f73557c4d0b4e6b02614124c393c12b01466889615b0fa7758d6c1d"},
-    {file = "together-1.4.1.tar.gz", hash = "sha256:0fd69ae5afa1054e945036b3aa1b01e22a7a6a709f22c994119558062e85ff37"},
+    {file = "together-1.5.8-py3-none-any.whl", hash = "sha256:4386d55383e7fba6976d31b4febec8f820de2a68314c3b0b53c0ee4c34aae20a"},
+    {file = "together-1.5.8.tar.gz", hash = "sha256:feb67ba8751fa8abb8d4ae16e2e34c5265ee707ac6a28caa1ada01d49f87d168"},
 ]
 
 [package.dependencies]
@@ -7076,7 +7077,7 @@ pillow = ">=11.1.0,<12.0.0"
 pyarrow = ">=10.0.1"
 pydantic = ">=2.6.3,<3.0.0"
 requests = ">=2.31.0,<3.0.0"
-rich = ">=13.8.1,<14.0.0"
+rich = ">=13.8.1,<15.0.0"
 tabulate = ">=0.9.0,<0.10.0"
 tqdm = ">=4.66.2,<5.0.0"
 typer = ">=0.9,<0.16"
@@ -8064,4 +8065,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "f2f07fd297163ae0d2b6975e081c568f231bd32dfafebaa3e55df77b264ca3ed"
+content-hash = "f173442d4a26acca8f20d164c424fe4b8b5f64e614a9d0ab47f5dd1c6985c010"

@@ -1,4 +1,4 @@
-from config import LLM_DELEGATOR, setup_logging
+from config import setup_logging
 from controllers.chat_controller import ChatController
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
@@ -17,7 +17,7 @@ async def chat(chat_request: ChatRequest) -> JSONResponse:
     logger.info(f"Received chat request for conversation {chat_request.conversation_id}")
 
     # Initialize new delegator and controller for each request
-    delegator = Delegator(LLM_DELEGATOR)
+    delegator = Delegator()
     controller = ChatController(delegator)
 
     try:

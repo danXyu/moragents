@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 class MCPAgent(AgentCore):
     """Agent for interacting with MCP-based tools."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any):
-        super().__init__(config, llm)
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
         self.agent_name = config.get("name", "mcp_agent")
         self.mcp_url = config.get("mcp_server_url")
         self.tools_provided = config.get("tools", [])

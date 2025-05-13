@@ -75,7 +75,7 @@ class AgentManager:
 
             module = importlib.import_module(agent_config["path"])
             agent_class = getattr(module, agent_config["class_name"])
-            self.agents[agent_config["name"]] = agent_class(agent_config, self.llm)
+            self.agents[agent_config["name"]] = agent_class(agent_config)
             logger.info("Loaded agent: %s", agent_config["name"])
             return True
         except Exception as exc:  # noqa: BLE001 – want the *message* logged
@@ -89,10 +89,19 @@ class AgentManager:
 
     async def _gather_tools_async(self, agent_name: str, url: str) -> List[StructuredTool]:
         logger.info("Connecting to MCP server at %s for %s", url, agent_name)
-        async with MultiServerMCPClient({agent_name: {"url": url, "transport": "sse"}}) as client:
-            tools = client.get_tools()
-            logger.info("Retrieved %d tools from MCP server for %s", len(tools), agent_name)
-            return tools
+        try:
+            # Add a 5-second timeout for the entire client connection and operation
+            async with asyncio.timeout(5.0):
+                async with MultiServerMCPClient({agent_name: {"url": url, "transport": "sse"}}) as client:
+                    tools = await client.get_tools()
+                    logger.info("Retrieved %d tools from MCP server for %s", len(tools), agent_name)
+                    return tools
+        except asyncio.TimeoutError:
+            logger.warning("Timeout (5s) while connecting to or retrieving tools from MCP server for %s", agent_name)
+            return []
+        except Exception as e:
+            logger.error("Error retrieving tools from MCP server for %s: %s", agent_name, str(e))
+            return []
 
     def _update_config_with_tools(self, agent_config: Dict, tools: List[StructuredTool]) -> None:
         tool_schemas: List[Dict] = []
@@ -235,6 +244,6 @@ class AgentManager:
 # Module‑level singleton (unchanged)
 # -------------------------------------------------------------------------
 
-# agent_configs = load_agent_configs()
-# logger.info("Loaded %d agents from configuration", len(agent_configs))
-agent_manager_instance = AgentManager([])
+agent_configs = load_agent_configs()
+logger.info("Loaded %d agents from configuration", len(agent_configs))
+agent_manager_instance = AgentManager(agent_configs)

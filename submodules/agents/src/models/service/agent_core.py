@@ -1,11 +1,33 @@
+import json
 import logging
+import os
+from typing import Union
+
 from abc import ABC, abstractmethod
 from functools import wraps
-from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
+
+from together import Together
+from pydantic import BaseModel, Field
 
 from models.service.chat_models import AgentResponse, ChatRequest
 
 T = TypeVar("T")
+
+
+class ToolCall(BaseModel):
+    """Model for a tool call from an LLM."""
+
+    name: str = Field(..., description="The name of the tool to call")
+    args: Dict[str, Any] = Field(default_factory=dict, description="Arguments for the tool call")
+
+
+class LLMResponse(BaseModel):
+    """Structured response format for LLM output."""
+
+    content: Optional[str] = Field(None, description="Direct text response if no tool is used")
+    tool_calls: Optional[List[ToolCall]] = Field(None, description="Tool calls to execute")
 
 
 def handle_exceptions(func: Callable[..., Awaitable[AgentResponse]]) -> Callable[..., Awaitable[AgentResponse]]:
@@ -30,10 +52,11 @@ def handle_exceptions(func: Callable[..., Awaitable[AgentResponse]]) -> Callable
 class AgentCore(ABC):
     """Enhanced core agent functionality that all specialized agents inherit from."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any):
+    def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.llm = llm
         self._setup_logging()
+        self.together_client = Together(api_key=os.environ.get("TOGETHER_API_KEY"))
+        self.model = self.config.get("llm_model", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 
     def _setup_logging(self) -> None:
         """Set up logging for the agent"""
@@ -65,6 +88,23 @@ class AgentCore(ABC):
 
         return response
 
+    def _convert_tools_for_api(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Convert tools to Together API format for function calling"""
+        api_tools = []
+
+        for tool in tools:
+            api_tool = {
+                "type": "function",
+                "function": {
+                    "name": tool["name"],
+                    "description": tool["description"],
+                    "parameters": tool["parameters"],
+                },
+            }
+            api_tools.append(api_tool)
+
+        return api_tools
+
     @abstractmethod
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """
@@ -78,25 +118,63 @@ class AgentCore(ABC):
         """
         raise NotImplementedError("Subclasses must implement _process_request")
 
-    async def _handle_llm_response(self, response: Any) -> AgentResponse:
+    async def _call_llm_with_tools(
+        self, messages: List[Union[SystemMessage, HumanMessage, AIMessage]], tools: List[Dict[str, Any]]
+    ) -> LLMResponse:
+        """Call LLM with tools using Together API"""
+        try:
+            # Convert tools to Together API format
+            api_tools = self._convert_tools_for_api(tools)
+
+            # Convert messages to Together API format
+            together_messages = []
+            for message in messages:
+                if isinstance(message, dict):
+                    # Already in Together format
+                    together_messages.append(message)
+                elif isinstance(message, SystemMessage):
+                    together_messages.append({"role": "system", "content": message.content})
+                elif isinstance(message, HumanMessage):
+                    together_messages.append({"role": "user", "content": message.content})
+                elif isinstance(message, AIMessage):
+                    together_messages.append({"role": "assistant", "content": message.content})
+
+            # Call the Together API
+            response = self.together_client.chat.completions.create(
+                model=self.model,
+                messages=together_messages,
+                tools=api_tools,
+                temperature=0.7,
+            )
+
+            # Check if there are tool calls
+            if response.choices[0].message.tool_calls:
+                tool_calls = []
+                for tool_call in response.choices[0].message.tool_calls:
+                    args = json.loads(tool_call.function.arguments)
+                    tool_calls.append(ToolCall(name=tool_call.function.name, args=args))
+
+                return LLMResponse(content=None, tool_calls=tool_calls)
+            else:
+                # Return content response
+                return LLMResponse(content=response.choices[0].message.content, tool_calls=None)
+
+        except Exception as e:
+            self.logger.error(f"Error calling Together API: {str(e)}")
+            raise
+
+    async def _handle_llm_response(self, response: LLMResponse) -> AgentResponse:
         """Handle LLM response and convert to appropriate AgentResponse"""
         try:
-            if not response:
-                return AgentResponse.error(
-                    error_message="I couldn't process that request. Could you please rephrase it?"
-                )
-
-            # Extract relevant information from LLM response
-            content = getattr(response, "content", None)
-            tool_calls = getattr(response, "tool_calls", [])
-            if tool_calls:
+            # Check for tool calls first
+            if response.tool_calls and len(response.tool_calls) > 0:
                 # Handle tool calls
-                self.logger.info(f"Processing tool calls: {tool_calls}")
-                return await self._process_tool_calls(tool_calls)
-            elif content:
+                self.logger.info(f"Processing tool calls: {response.tool_calls}")
+                return await self._process_tool_calls(response.tool_calls)
+            elif response.content:
                 # Direct response from LLM
-                self.logger.info(f"Received direct response from LLM: {content}")
-                return AgentResponse.success(content=content)
+                self.logger.info(f"Received direct response from LLM: {response.content}")
+                return AgentResponse.success(content=response.content)
             else:
                 self.logger.warning("Received invalid response format from LLM")
                 return AgentResponse.error(error_message="Received invalid response format from LLM")
@@ -105,18 +183,17 @@ class AgentCore(ABC):
             self.logger.error(f"Error processing LLM response: {str(e)}", exc_info=True)
             return AgentResponse.error(error_message="Error processing the response")
 
-    async def _process_tool_calls(self, tool_calls: list) -> AgentResponse:
+    async def _process_tool_calls(self, tool_calls: List[ToolCall]) -> AgentResponse:
         """Process tool calls from LLM response"""
         try:
             tool_call = tool_calls[0]  # Get first tool call
-            func_name = tool_call.get("name")
-            args = tool_call.get("args", {})
+            func_name = tool_call.name
+            args = tool_call.args
 
             if not func_name:
                 return AgentResponse.error(error_message="Invalid tool call format - no function name provided")
 
             # Execute tool and handle response
-            # This should be implemented by subclasses based on their specific tools
             return await self._execute_tool(func_name, args)
 
         except Exception as e:
