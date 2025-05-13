@@ -86,14 +86,15 @@ class AgentManager:
     # -----------------------------
     # Async MCP helpers
     # -----------------------------
-
     async def _gather_tools_async(self, agent_name: str, url: str) -> List[StructuredTool]:
         logger.info("Connecting to MCP server at %s for %s", url, agent_name)
         try:
             # Add a 5-second timeout for the entire client connection and operation
             async with asyncio.timeout(5.0):
                 async with MultiServerMCPClient({agent_name: {"url": url, "transport": "sse"}}) as client:
-                    tools = await client.get_tools()
+                    # The error occurs because get_tools() returns a list directly, not a coroutine
+                    # Change from "await client.get_tools()" to just "client.get_tools()"
+                    tools = client.get_tools()
                     logger.info("Retrieved %d tools from MCP server for %s", len(tools), agent_name)
                     return tools
         except asyncio.TimeoutError:

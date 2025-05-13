@@ -1,77 +1,58 @@
 import os
-
 import uvicorn
-from config import load_agent_routes, setup_logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from config import load_agent_routes, setup_logging
 from models.config.config import Config
-
-# Configure routes
-from routes import chat_routes  # workflow_manager_routes,
-from routes import agent_manager_routes, wallet_manager_routes
-
-# Configure logging
-logger = setup_logging()
-logger.info("Logging configured successfully")
+from routes import chat_routes, agent_manager_routes, wallet_manager_routes
 
 CONF = Config.get_instance()
-
-# Initialize FastAPI app
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Setup upload directory
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-logger.info(f"Upload folder created at {UPLOAD_FOLDER}")
-
-# Include core routers
-ROUTERS = [
-    chat_routes.router,
-    agent_manager_routes.router,
-    wallet_manager_routes.router,
-    # workflow_manager_routes.router,
-]
-
-# Dynamically load and add agent routers
-# Load and include all routers
-agent_routers = load_agent_routes()
-routers = agent_routers + ROUTERS
-
-for router in routers:
-    app.include_router(router)
+logger = setup_logging()
 
 
-# Temporary disable workflow manager
-# TODO: Re-enable workflow manager
-#
-# @asynccontextmanager
-# async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-#     """Lifespan context manager for FastAPI application"""
-#     # Startup
-#     logger.info("Starting workflow manager initialization")
-#     await workflow_manager_instance.initialize()
-#     logger.info("Workflow manager initialized successfully")
-#     yield
-#     # Shutdown
-#     # Add any cleanup code here if needed
+def create_app() -> FastAPI:
+    """Factory function that builds and returns a fully‑configured FastAPI app."""
+    app = FastAPI()
+
+    # CORS configuration
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Create /uploads directory once per process
+    upload_folder = os.path.join(os.getcwd(), "uploads")
+    os.makedirs(upload_folder, exist_ok=True)
+    logger.info("Upload folder created at %s", upload_folder)
+
+    # Core routers
+    routers = [
+        chat_routes.router,
+        agent_manager_routes.router,
+        wallet_manager_routes.router,
+        *load_agent_routes(),  # dynamically discovered agent routers
+    ]
+
+    for router in routers:
+        app.include_router(router)
+
+    return app
 
 
-# app.router.lifespan_context = lifespan
+# The ASGI application object that Uvicorn imports
+app: FastAPI = create_app()
 
 
 if __name__ == "__main__":
-    logger.info("Starting FastAPI application")
+    # Running directly (e.g. `python src/app.py`) — *no* auto‑reload here
     uvicorn.run(
-        "app:app",
+        app,
         host=CONF.get("host", "default"),
         port=CONF.get_int("port", "default"),
         workers=CONF.get_int("workers", "default"),
-        reload=CONF.get_bool("reload", "default"),
+        reload=False,  # avoid the double‑import issue
     )

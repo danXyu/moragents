@@ -8,7 +8,7 @@ from functools import wraps
 from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
-from together import Together
+from config import TOGETHER_CLIENT
 from pydantic import BaseModel, Field
 
 from models.service.chat_models import AgentResponse, ChatRequest
@@ -55,7 +55,7 @@ class AgentCore(ABC):
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self._setup_logging()
-        self.together_client = Together(api_key=os.environ.get("TOGETHER_API_KEY"))
+        self.together_client = TOGETHER_CLIENT
         self.model = self.config.get("llm_model", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 
     def _setup_logging(self) -> None:

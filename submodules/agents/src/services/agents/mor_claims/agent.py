@@ -13,10 +13,9 @@ logger = logging.getLogger(__name__)
 class MorClaimsAgent(AgentCore):
     """Agent for handling MOR token claims and rewards."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any):
-        super().__init__(config, llm)
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
         self.tools_provided = tools.get_tools()
-        self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for MOR claims."""
@@ -79,8 +78,8 @@ class MorClaimsAgent(AgentCore):
                 HumanMessage(content=request.prompt.content),
             ]
 
-            result = self.tool_bound_llm.invoke(messages)
-            return await self._handle_llm_response(result)
+            response = await self._call_llm_with_tools(messages, self.tools_provided)
+            return await self._handle_llm_response(response)
 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}", exc_info=True)

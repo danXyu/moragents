@@ -13,34 +13,39 @@ logger = logging.getLogger(__name__)
 
 
 class TokenSwapAgent(AgentCore):
-    """Agent for token swapping operations."""
+    """Agent for handling token swap transactions."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any):
-        super().__init__(config, llm)
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
         self.tools_provided = Config.tools
-        self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
-        self.wallet_address = None
-        self.chain_id = None
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
-        """Process the validated chat request for token swap operations."""
+        """Process the validated chat request for swap transactions."""
+        # Check CDP client initialization
+        if not wallet_manager_instance.configure_cdp_client():
+            # Return user-friendly error for missing credentials
+            return AgentResponse.success(
+                content="I'm not able to help with swaps right now because the CDP client is not initialized. "
+                "Please set up your API credentials first."
+            )
+
+        # Check for active wallet
+        active_wallet = wallet_manager_instance.get_active_wallet()
+        if not active_wallet:
+            # Return user-friendly error for missing wallet
+            return AgentResponse.success(
+                content="You'll need to select or create a wallet before I can help with swaps. "
+                "Please set up a wallet first."
+            )
+
         try:
             messages = [Config.system_message, *request.messages_for_llm]
-
-            # Store wallet and chain information
-            self.wallet_address = request.wallet_address
-            self.chain_id = request.chain_id
-
-            # Validate wallet connection
-            if not self.wallet_address or not self.chain_id:
-                return AgentResponse.needs_info(content="Please connect your wallet to enable swap functionality")
-
-            result = self.tool_bound_llm.invoke(messages)
-            return await self._handle_llm_response(result)
+            response = await self._call_llm_with_tools(messages, self.tools_provided)
+            return await self._handle_llm_response(response)
 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}", exc_info=True)
-            return AgentResponse.error(error_message=f"Failed to process request: {str(e)}")
+            return AgentResponse.error(error_message=str(e))
 
     async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate token swap tool based on function name."""

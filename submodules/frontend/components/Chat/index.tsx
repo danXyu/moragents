@@ -19,11 +19,11 @@ export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
   const handleSubmit = async (
     message: string,
     file: File | null,
-    useResearch: boolean
+    useResearch?: boolean
   ) => {
     try {
       setLocalLoading(true);
-      await sendMessage(message, file, useResearch);
+      await sendMessage(message, file, useResearch ?? false);
       setTimeout(() => setLocalLoading(false), 200);
     } catch (error) {
       console.error("Error sending message:", error);

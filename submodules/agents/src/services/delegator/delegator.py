@@ -1,9 +1,9 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-from together import Together
+from config import TOGETHER_CLIENT
 from models.service.chat_models import AgentResponse, ChatRequest, ResponseType
 from pydantic import BaseModel, Field
 from stores.agent_manager import agent_manager_instance
@@ -21,7 +21,7 @@ class RankAgentsOutput(BaseModel):
 
 class Delegator:
     def __init__(self, model: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo"):
-        self.together_client = Together(api_key=os.environ.get("TOGETHER_API_KEY"))
+        self.together_client = TOGETHER_CLIENT
         self.model = model
         self.attempted_agents: set[str] = set()
         self.selected_agents_for_request: list[str] = []

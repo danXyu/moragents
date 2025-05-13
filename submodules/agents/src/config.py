@@ -6,6 +6,7 @@ from crewai import LLM
 from fastapi import APIRouter
 
 from langchain_ollama import ChatOllama, OllamaEmbeddings
+from together import Together
 
 # from langchain_together import ChatTogether
 from logs import setup_logging
@@ -160,20 +161,50 @@ has_gemini_api_key = False
 try:
     together_api_key = get_secret("TogetherApiKey")
     has_together_api_key = together_api_key is not None and together_api_key != ""
+    if has_together_api_key:
+        os.environ["TOGETHER_API_KEY"] = together_api_key
 except Exception as e:
     logger.warning(f"Failed to get TogetherApiKey: {str(e)}")
 
 try:
     cerebras_api_key = get_secret("CerebrasApiKey")
     has_cerebras_api_key = cerebras_api_key is not None and cerebras_api_key != ""
+    if has_cerebras_api_key:
+        os.environ["CEREBRAS_API_KEY"] = cerebras_api_key
 except Exception as e:
     logger.warning(f"Failed to get CerebrasApiKey: {str(e)}")
 
 try:
     gemini_api_key = get_secret("GeminiApiKey")
     has_gemini_api_key = gemini_api_key is not None and gemini_api_key != ""
+    if has_gemini_api_key:
+        os.environ["GEMINI_API_KEY"] = gemini_api_key
 except Exception as e:
     logger.warning(f"Failed to get GeminiApiKey: {str(e)}")
+
+try:
+    openai_api_key = get_secret("OpenaiApiKey")
+    has_openai_api_key = openai_api_key is not None and openai_api_key != ""
+    if has_openai_api_key:
+        os.environ["OPENAI_API_KEY"] = openai_api_key
+except Exception as e:
+    logger.warning(f"Failed to get OpenaiApiKey: {str(e)}")
+
+try:
+    apify_api_key = get_secret("ApifyApiKey")
+    has_apify_api_key = apify_api_key is not None and apify_api_key != ""
+    if has_apify_api_key:
+        os.environ["APIFY_API_TOKEN"] = apify_api_key
+except Exception as e:
+    logger.warning(f"Failed to get ApifyApiKey: {str(e)}")
+
+try:
+    brave_api_key = get_secret("BraveApiKey")
+    has_brave_api_key = brave_api_key is not None and brave_api_key != ""
+    if has_brave_api_key:
+        os.environ["BRAVE_API_KEY"] = brave_api_key
+except Exception as e:
+    logger.warning(f"Failed to get BraveApiKey: {str(e)}")
 
 # Use cloud models if API keys are available, otherwise use local Ollama
 if has_together_api_key and has_cerebras_api_key and has_gemini_api_key:
@@ -183,8 +214,6 @@ if has_together_api_key and has_cerebras_api_key and has_gemini_api_key:
         temperature=0.8,
         max_tokens=2000,
         top_p=0.9,
-        frequency_penalty=0.1,
-        presence_penalty=0.1,
         stop=["END"],
         verbose=False,
         seed=42,
@@ -196,8 +225,6 @@ if has_together_api_key and has_cerebras_api_key and has_gemini_api_key:
         temperature=0.8,
         max_tokens=2000,
         top_p=0.9,
-        frequency_penalty=0.1,
-        presence_penalty=0.1,
         stop=["END"],
         verbose=False,
         seed=42,
@@ -208,6 +235,8 @@ if has_together_api_key and has_cerebras_api_key and has_gemini_api_key:
         model_name="togethercomputer/m2-bert-80M-8k-retrieval",
         api_key=together_api_key,
     )
+
+    TOGETHER_CLIENT = Together(api_key=together_api_key)
 else:
     logger.info("Using local Ollama models")
     LLM_AGENT = ChatOllama(
@@ -225,6 +254,8 @@ else:
         model=AppConfig.OLLAMA_EMBEDDING_MODEL,
         base_url=AppConfig.OLLAMA_URL,
     )
+
+    TOGETHER_CLIENT = None
 
 # Vector store path for persistence
 VECTOR_STORE_PATH = os.path.join(os.getcwd(), "data", "vector_store")

@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 class MorRewardsAgent(AgentCore):
-    def __init__(self, config, llm):
-        super().__init__(config, llm)
+    def __init__(self, config):
+        super().__init__(config)
         self.tools_provided = tools.get_tools()
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:

@@ -20,15 +20,18 @@ logger = logging.getLogger(__name__)
 class ImagenAgent(AgentCore):
     """Agent for handling image generation requests."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any):
-        super().__init__(config, llm)
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
         self.tools_provided: List[str] = []  # No tools needed for image generation
-        self.tool_bound_llm = self.llm
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for image generation."""
         try:
             # For image generation, we'll directly use the prompt content
+            # But to follow convention, call _call_llm_with_tools with empty tools
+            messages = request.messages_for_llm if hasattr(request, "messages_for_llm") else []
+            response = await self._call_llm_with_tools(messages, self.tools_provided)
+            # Ignore LLM response, use internal image generation
             result = self.generate_image(request.prompt.content)
 
             if result["success"]:

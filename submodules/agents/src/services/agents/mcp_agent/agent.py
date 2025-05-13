@@ -29,7 +29,6 @@ class MCPAgent(AgentCore):
         }
 
         self.mcp_client = None
-        self.tool_bound_llm = None
 
         self.logger.info(f"Created MCPAgent for {self.agent_name} with URL {self.mcp_url}")
 
@@ -50,14 +49,6 @@ class MCPAgent(AgentCore):
             # Get tools from the MCP server
             tools = self.mcp_client.get_tools()
             self.tools_provided = tools
-
-            # Bind tools to the LLM if available
-            if self.llm:
-                self.tool_bound_llm = self.llm.bind_tools(tools)
-                self.logger.info(f"Bound {len(tools)} tools to LLM for {self.agent_name}")
-            else:
-                return AgentResponse.error(error_message="LLM is not available for tool binding")
-
             self.logger.info(f"Successfully initialized MCP agent {self.agent_name}")
 
             # Now proceed with the normal chat flow
@@ -83,11 +74,11 @@ class MCPAgent(AgentCore):
             # Build messages for the LLM
             messages = [self.system_message, *request.messages_for_llm]
 
-            # Invoke the LLM with bound tools
-            result = self.tool_bound_llm.invoke(messages)
+            # Call LLM with tools
+            response = await self._call_llm_with_tools(messages, self.tools_provided)
 
             # Handle the response
-            return await self._handle_llm_response(result)
+            return await self._handle_llm_response(response)
 
         except Exception as e:
             self.logger.error(f"Error processing request: {str(e)}", exc_info=True)

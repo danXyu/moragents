@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 class DefaultAgent(AgentCore):
     """Agent for handling general conversation and providing information about Morpheus agents."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any):
-        super().__init__(config, llm)
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for general conversation."""
@@ -44,8 +44,14 @@ class DefaultAgent(AgentCore):
                 *request.messages_for_llm,
             ]
 
-            result = self.llm.invoke(messages)
-            return AgentResponse.success(content=result.content.strip())
+            # Default agent doesn't use tools, so pass empty tools list
+            response = await self._call_llm_with_tools(messages, [])
+
+            # For default agent that doesn't use tools, we expect content in the response
+            if response.content:
+                return AgentResponse.success(content=response.content.strip())
+            else:
+                return AgentResponse.error(error_message="Failed to generate a response")
 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}", exc_info=True)

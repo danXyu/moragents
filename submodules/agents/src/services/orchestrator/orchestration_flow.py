@@ -28,6 +28,9 @@ from .orchestration_state import (
 from .registry.agent_registry import AgentRegistry
 from .utils import parse_llm_structured_output
 
+from services.secrets import get_secret
+from config import LLM_DELEGATOR
+
 logger = logging.getLogger(__name__)
 
 # Constants to control execution flow
@@ -43,6 +46,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
     def __init__(self, llm_model: str = "gemini/gemini-2.5-flash-preview-04-17"):
         super().__init__()
         self.llm_model = llm_model
+        self.llm_api_key = get_secret("GeminiApiKey")
 
     # 1️⃣  Summarise recent chat -----------------------------------------
     @start()
@@ -53,7 +57,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         self.state.chat_prompt = chat_prompt
 
         history_text = "\n".join(chat_history)
-        llm = LLM(model=self.llm_model)
+        llm = LLM(model=self.llm_model, api_key=self.llm_api_key)
         resp = llm.call("Summarise the following dialogue in ≤4 sentences.\n" + history_text)
         self.state.chat_history_summary = resp.strip()
 
@@ -68,7 +72,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             "Return ONLY valid JSON matching the SubtaskPlan schema.\n"
             f"Goal: {self.state.chat_prompt}\n\nChat history summary: {self.state.chat_history_summary}"
         )
-        llm = LLM(model=self.llm_model, response_format=SubtaskPlan)
+        llm = LLM(model=self.llm_model, response_format=SubtaskPlan, api_key=self.llm_api_key)
         plan = llm.call(prompt)
         plan = parse_llm_structured_output(plan, SubtaskPlan, logger, "SubtaskPlan")
 
@@ -94,7 +98,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             "Return ONLY valid JSON matching the AssignmentPlan schema.\n"
             f"Subtasks: {self.state.subtasks}"
         )
-        llm = LLM(model=self.llm_model, response_format=AssignmentPlan)
+        llm = LLM(model=self.llm_model, response_format=AssignmentPlan, api_key=self.llm_api_key)
         mapping = llm.call(prompt)
         mapping = parse_llm_structured_output(mapping, AssignmentPlan, logger, "AssignmentPlan")
 
@@ -148,7 +152,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                     )
                 ],
                 process=Process.sequential,
-                manager_llm=self.llm_model,
+                manager_llm=LLM_DELEGATOR,
                 verbose=False,
             )
 
@@ -226,6 +230,8 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             "Combine the following sub‑task results into one clear answer for the user. "
             "If some sub-tasks failed or produced limited results, focus on the successful ones. "
             "Always provide the most helpful answer possible with the available information. "
+            "Give a direct, synthesized response without prefacing with phrases like 'Based on the available information' "
+            "or summarizing that you're providing information. Just present the answer clearly and concisely. "
             "\n\nUser prompt:\n"
             f"{self.state.chat_prompt}\n\n"
             "Sub‑task outputs:\n"
@@ -233,7 +239,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         for subtask_output in self.state.subtask_outputs:
             prompt += f"\n### {subtask_output.subtask}\n{subtask_output.output}\n"
 
-        llm = LLM(model=self.llm_model)
+        llm = LLM(model=self.llm_model, api_key=self.llm_api_key)
         resp = llm.call(prompt)
         self.state.final_answer = resp.strip()
 
