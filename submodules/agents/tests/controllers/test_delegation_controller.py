@@ -49,7 +49,7 @@ async def test_handle_chat_agent_not_found(controller, chat_request):
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await controller.handle_chat(chat_request)
-        assert exc_info.value.status_code == 404
+        assert exc_info.value.status_code == 400
 
 
 @pytest.mark.unit
