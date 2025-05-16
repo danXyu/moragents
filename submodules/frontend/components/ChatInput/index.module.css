@@ -41,9 +41,12 @@
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
   resize: none;
-  min-height: 24px !important;
+  min-height: 36px !important;
+  max-height: 120px !important;
   padding: 0 !important;
   outline: none !important;
+  line-height: 1.5 !important;
+  overflow-y: auto !important;
 }
 
 .messageInput:focus {

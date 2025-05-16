@@ -218,6 +218,8 @@ if has_together_api_key and has_cerebras_api_key and has_gemini_api_key:
         verbose=False,
         seed=42,
         api_key=gemini_api_key,
+        frequency_penalty=None,
+        presence_penalty=None,
     )
 
     LLM_DELEGATOR = LLM(
@@ -229,6 +231,8 @@ if has_together_api_key and has_cerebras_api_key and has_gemini_api_key:
         verbose=False,
         seed=42,
         api_key=gemini_api_key,
+        frequency_penalty=None,
+        presence_penalty=None,
     )
 
     embeddings = TogetherEmbeddings(

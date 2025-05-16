@@ -3,7 +3,7 @@ CrewAI Flow that:
 1. Summarises recent chat.
 2. Lets an LLM break the user prompt into sub‑tasks (structured output).
 3. Lets the same LLM map each sub‑task to the best agent (structured output).
-4. Runs sub‑crews in parallel.
+4. Runs sub‑crews sequentially, feeding context from previous subtasks into subsequent ones.
 5. Synthesises the final answer.
 """
 
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from asyncio import TimeoutError, gather, wait_for
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from crewai import LLM, Crew, Process, Task
 from crewai.flow.flow import Flow, listen, start
@@ -66,9 +66,11 @@ class OrchestrationFlow(Flow[OrchestrationState]):
     def create_subtasks(self):
         prompt = (
             "You are an expert project planner. "
-            "Break the user's goal into minimal action-oriented subtasks. "
+            "Break the user's goal into minimal, sequential action-oriented subtasks. "
             "Prioritize quality over quantity. We want as few high quality subtasks as possible. "
             "Each subtask must be specific, clear, and directly actionable. "
+            "Make each subtask DISTINCTLY DIFFERENT, avoiding repetition or overlapping responsibilities. "
+            "Design subtasks as a clear progression where each builds on the work of previous ones. "
             "Return ONLY valid JSON matching the SubtaskPlan schema.\n"
             f"Goal: {self.state.chat_prompt}\n\nChat history summary: {self.state.chat_history_summary}"
         )
@@ -94,6 +96,8 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             "A given subtask might need multiple agents to complete. "
             "Prefer more specific agents over generalists. "
             "Assemble complementary crews where each agent contributes unique strengths. "
+            "IMPORTANT: Avoid using the same agents for different subtasks when possible. "
+            "Different subtasks should use different specialized agents when appropriate. "
             "Each crew should contain 1-3 agents with relevant skills for the subtask. "
             "Return ONLY valid JSON matching the AssignmentPlan schema.\n"
             f"Subtasks: {self.state.subtasks}"
@@ -104,12 +108,14 @@ class OrchestrationFlow(Flow[OrchestrationState]):
 
         self.state.assignments = mapping.assignments
 
-    # 4️⃣  Run each sub‑task in parallel ----------------------------------
+    # 4️⃣  Run each sub‑task sequentially ----------------------------------
     @listen(assign_agents)
     async def run_sub_crews(self):
         import time
 
-        async def _execute(subtask: str, agents: List[str]) -> SubtaskOutput:
+        async def _execute(
+            subtask: str, agents: List[str], previous_outputs: Optional[List[SubtaskOutput]] = None
+        ) -> SubtaskOutput:
             # Get all agents assigned to this subtask
             crew_agents = [AgentRegistry.get(agent_name) for agent_name in agents]
 
@@ -125,17 +131,29 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                     ),
                 )
 
+            # Include previous subtask outputs in the context if available
+            previous_context = ""
+            if previous_outputs is None:
+                previous_outputs = []
+
+            if len(previous_outputs) > 0:
+                previous_context = "PREVIOUSLY COMPLETED WORK (DO NOT REPEAT THESE TASKS):\n"
+                for prev_output in previous_outputs:
+                    previous_context += f"### COMPLETED: {prev_output.subtask}\n{prev_output.output}\n\n"
+                previous_context += "YOUR TASK SHOULD BUILD ON THE ABOVE COMPLETED WORK.\n\n"
+
             # Enhance the subtask description with direct guidance, original chat prompt, summarized chat history
             enhanced_subtask = (
                 f"Original user prompt: {self.state.chat_prompt}\n"
                 f"Summary of chat history: {self.state.chat_history_summary}\n\n"
-                f"Subtask: {subtask}\n\n"
+                f"{previous_context}"
+                f"YOUR SPECIFIC TASK: {subtask}\n\n"
                 "IMPORTANT INSTRUCTIONS:\n"
-                "1. Complete this task with the fewest possible steps\n"
-                "2. Use your tools directly and efficiently\n"
-                "3. Avoid unnecessary reasoning loops\n"
-                "4. Focus only on the specific task - do not expand the scope\n"
-                "5. Return a clear, concise answer without additional questions\n"
+                "1. Focus ONLY on completing the specific task described above - ignore the broader context\n"
+                "2. Do NOT repeat work done in previous subtasks\n"
+                "3. Use your tools directly and efficiently\n"
+                "4. Avoid unnecessary reasoning loops\n"
+                "5. Return a clear, concise answer addressing only your specific task\n"
                 "6. Do not use the same tool more than once"
             )
 
@@ -220,8 +238,13 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                     telemetry=telemetry,
                 )
 
-        coros = [_execute(assignment.subtask, assignment.agents) for assignment in self.state.assignments]
-        self.state.subtask_outputs = await gather(*coros)
+        # Execute subtasks sequentially and accumulate results
+        completed_outputs = []
+        for assignment in self.state.assignments:
+            output = await _execute(assignment.subtask, assignment.agents, completed_outputs)
+            completed_outputs.append(output)
+
+        self.state.subtask_outputs = completed_outputs
 
     # 5️⃣  Synthesise final answer ---------------------------------------
     @listen(run_sub_crews)

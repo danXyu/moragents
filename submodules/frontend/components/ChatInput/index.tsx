@@ -34,7 +34,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
   const [isMobile] = useMediaQuery("(max-width: 768px)");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [useResearch, setUseResearch] = useState(false);
+  const [useResearch, setUseResearch] = useState(true);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -178,9 +178,11 @@ export const ChatInput: FC<ChatInputProps> = ({
               placeholder={
                 file ? "Click the arrow to process your file" : "Ask anything"
               }
-              rows={1}
+              minH="36px"
+              maxH="240px"
               resize="none"
               overflow="hidden"
+              autoComplete="off"
             />
 
             <IconButton
