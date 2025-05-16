@@ -9,8 +9,13 @@ type MessageListProps = {
   messages: ChatMessage[];
   isLoading: boolean;
   isSidebarOpen: boolean;
-  onSubmit: (message: string, file: File | null) => Promise<void>;
+  onSubmit: (
+    message: string,
+    file: File | null,
+    useResearch?: boolean
+  ) => Promise<void>;
   disabled: boolean;
+  showPrefilledOptions: boolean;
 };
 
 export const MessageList: FC<MessageListProps> = ({
@@ -19,6 +24,7 @@ export const MessageList: FC<MessageListProps> = ({
   isSidebarOpen,
   onSubmit,
   disabled,
+  showPrefilledOptions,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +58,7 @@ export const MessageList: FC<MessageListProps> = ({
     if (isSubmitting || disabled) return;
     try {
       setIsSubmitting(true);
-      await onSubmit(selectedMessage, null);
+      await onSubmit(selectedMessage, null, false);
     } catch (error) {
       console.error("Error submitting prefilled message:", error);
     } finally {
@@ -65,7 +71,7 @@ export const MessageList: FC<MessageListProps> = ({
       position="relative"
       display="flex"
       flexDirection="column"
-      height="calc(var(--vh, 1vh) * 100 - 120px)"
+      height="calc(var(--vh, 1vh) * 100 - 185px)"
       width="100%"
     >
       <Box
@@ -100,12 +106,16 @@ export const MessageList: FC<MessageListProps> = ({
           <div ref={messagesEndRef} /> {/* Scroll target */}
         </VStack>
       </Box>
-      <Box width="100%" bg="black" mt="auto" position="relative" zIndex={2}>
-        <PrefilledOptions
-          onSelect={handlePrefilledSelect}
-          isSidebarOpen={isSidebarOpen}
-        />
-      </Box>
+
+      {/* Only render PrefilledOptions when showPrefilledOptions is true */}
+      {showPrefilledOptions && (
+        <Box width="100%" bg="black" mt="auto" position="relative" zIndex={2}>
+          <PrefilledOptions
+            onSelect={handlePrefilledSelect}
+            isSidebarOpen={isSidebarOpen}
+          />
+        </Box>
+      )}
     </Box>
   );
 };

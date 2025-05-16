@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from fastapi import HTTPException
 from langchain.schema import AIMessage, HumanMessage
-from src.controllers.delegation_controller import DelegationController
+from src.controllers.chat_controller import ChatController
 from src.models.service.chat_models import AgentResponse, ChatMessage, ChatRequest
 from src.models.service.service_models import GenerateConversationTitleRequest
 from src.services.delegator.delegator import Delegator
@@ -16,7 +16,7 @@ def mock_delegator():
 
 @pytest.fixture
 def controller(mock_delegator):
-    return DelegationController(delegator=mock_delegator)
+    return ChatController(delegator=mock_delegator)
 
 
 @pytest.fixture
@@ -41,15 +41,15 @@ async def test_handle_chat_agent_not_found(controller, chat_request):
     chat_request.prompt.content = "/nonexistent_agent test message"
 
     with patch(
-        "stores.agent_manager_instance.parse_command",
+        "src.stores.agent_manager.agent_manager_instance.parse_command",
         return_value=("nonexistent_agent", "test message"),
-    ), patch("stores.agent_manager_instance.get_agent", return_value=None), patch(
-        "stores.agent_manager_instance.set_active_agent"
+    ), patch("src.stores.agent_manager.agent_manager_instance.get_agent", return_value=None), patch(
+        "src.stores.agent_manager.agent_manager_instance.set_active_agent"
     ):
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await controller.handle_chat(chat_request)
-        assert exc_info.value.status_code == 404
+        assert exc_info.value.status_code == 400
 
 
 @pytest.mark.unit
@@ -58,8 +58,8 @@ async def test_handle_chat_invalid_response(controller, chat_request, mock_deleg
     # Setup
     mock_delegator.delegate_chat = AsyncMock(return_value=("test_agent", "invalid response type"))
 
-    with patch("stores.agent_manager_instance.parse_command", return_value=(None, None)), patch(
-        "stores.agent_manager_instance.clear_active_agent"
+    with patch("src.stores.agent_manager.agent_manager_instance.parse_command", return_value=(None, None)), patch(
+        "src.stores.agent_manager.agent_manager_instance.clear_active_agent"
     ):
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
@@ -73,8 +73,8 @@ async def test_handle_chat_timeout(controller, chat_request, mock_delegator):
     # Setup
     mock_delegator.delegate_chat = AsyncMock(side_effect=TimeoutError())
 
-    with patch("stores.agent_manager_instance.parse_command", return_value=(None, None)), patch(
-        "stores.agent_manager_instance.clear_active_agent"
+    with patch("src.stores.agent_manager.agent_manager_instance.parse_command", return_value=(None, None)), patch(
+        "src.stores.agent_manager.agent_manager_instance.clear_active_agent"
     ):
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
@@ -93,7 +93,7 @@ async def test_generate_conversation_title(controller):
     mock_llm = Mock()
     mock_llm.invoke = Mock(return_value=AIMessage(content="Test Conversation Title"))
 
-    with patch("src.controllers.delegation_controller.LLM_DELEGATOR", mock_llm):
+    with patch("src.controllers.chat_controller.LLM_DELEGATOR", mock_llm):
         # Execute
         title = await controller.generate_conversation_title(request)
 
@@ -113,7 +113,7 @@ async def test_generate_conversation_title_failure(controller):
     mock_llm = Mock()
     mock_llm.invoke = Mock(side_effect=Exception("Test error"))
 
-    with patch("src.controllers.delegation_controller.LLM_DELEGATOR", mock_llm):
+    with patch("src.controllers.chat_controller.LLM_DELEGATOR", mock_llm):
         # Execute and verify
         with pytest.raises(HTTPException) as exc_info:
             await controller.generate_conversation_title(request)

@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 class MorRewardsAgent(AgentCore):
-    def __init__(self, config, llm):
-        super().__init__(config, llm)
+    def __init__(self, config):
+        super().__init__(config)
         self.tools_provided = tools.get_tools()
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
@@ -20,17 +20,21 @@ class MorRewardsAgent(AgentCore):
 
             logger.info(f"Checking rewards for wallet address: {request.wallet_address}")
 
-            rewards = {
+            # Get rewards
+            rewards_decimal = {
                 0: tools.get_current_user_reward(request.wallet_address, 0),
                 1: tools.get_current_user_reward(request.wallet_address, 1),
             }
 
+            # Convert Decimal objects to float for JSON serialization
+            rewards_json_serializable = {pool_id: float(amount) for pool_id, amount in rewards_decimal.items()}
+
             response = "Your current MOR rewards:\n"
-            response += f"Capital Providers Pool (Pool 0): {rewards[0]} MOR\n"
-            response += f"Code Providers Pool (Pool 1): {rewards[1]} MOR"
+            response += f"Capital Providers Pool (Pool 0): {rewards_decimal[0]} MOR\n"
+            response += f"Code Providers Pool (Pool 1): {rewards_decimal[1]} MOR"
 
             logger.info(f"Rewards retrieved successfully for {request.wallet_address}")
-            return AgentResponse.success(content=response, metadata={"rewards": rewards})
+            return AgentResponse.success(content=response, metadata={"rewards": rewards_json_serializable})
 
         except Exception as e:
             logger.error(f"Error occurred while checking rewards: {str(e)}")

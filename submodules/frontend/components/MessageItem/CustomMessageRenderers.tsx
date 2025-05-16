@@ -1,3 +1,4 @@
+import React from "react";
 import { Text } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 import {
@@ -48,6 +49,9 @@ import { AccountSmartStatsMetadata } from "@/components/Agents/Elfa/AccountSmart
 import { TopHoldersMetadata } from "../Agents/Codex/TopHolders/CodexTopHoldersMessage.types";
 import { ElfaMentionsMessage } from "../Agents/Elfa/Mentions/MentionsMessage";
 import { MentionsMetadata } from "../Agents/Elfa/Mentions/MentionsMessage.types";
+
+// Crew Components
+import { CrewResponseMessage } from "@/components/Agents/Crew";
 
 type MessageRenderer = {
   check: (message: ChatMessage) => boolean;
@@ -259,6 +263,49 @@ const messageRenderers: MessageRenderer[] = [
     render: (message) => <Tweet initialContent={message.content as string} />,
   },
 
+  // Crew renderer
+  {
+    check: (message) =>
+      typeof message.content === "string" &&
+      message.agentName === AgentType.BASIC_CREW,
+    render: (message) => (
+      <CrewResponseMessage
+        content={message.content as string}
+        metadata={(message as AssistantMessage).metadata}
+      />
+    ),
+  },
+
+  // Search results renderer with clickable links
+  {
+    check: (message) =>
+      typeof message.content === "string" &&
+      message.content.includes("Title:") &&
+      message.content.includes("URL:"),
+    render: (message) => {
+      const content = message.content as string;
+      return (
+        <div className="search-results">
+          {content.split("\n").map((line, i) => {
+            // Check if this is a URL line
+            if (line.startsWith("URL:")) {
+              const url = line.substring(5).trim();
+              return (
+                <div key={i}>
+                  URL:{" "}
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    {url}
+                  </a>
+                </div>
+              );
+            }
+            // For other lines, preserve HTML formatting
+            return <div key={i} dangerouslySetInnerHTML={{ __html: line }} />;
+          })}
+        </div>
+      );
+    },
+  },
   // Default string content renderer
   {
     check: (message) => typeof message.content === "string",
@@ -267,10 +314,18 @@ const messageRenderers: MessageRenderer[] = [
     ),
   },
 
-  // Fallback renderer
+  // Fallback renderer for non-string content
   {
     check: () => true,
-    render: (message) => <Text>{JSON.stringify(message.content)}</Text>,
+    render: (message) => {
+      // Convert non-string content to string for ReactMarkdown
+      const contentString =
+        typeof message.content === "object"
+          ? JSON.stringify(message.content, null, 2)
+          : String(message.content);
+
+      return <ReactMarkdown>{contentString}</ReactMarkdown>;
+    },
   },
 ];
 

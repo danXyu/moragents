@@ -7,13 +7,17 @@ from langchain.schema import SystemMessage
 from models.service.chat_models import AgentResponse, ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from services.delegator.delegator import Delegator
-from stores import agent_manager_instance
+from services.orchestrator.run_flow import run_flow
+from stores.agent_manager import agent_manager_instance
 
 logger = setup_logging()
 
 
-class DelegationController:
-    def __init__(self, delegator: Optional[Delegator] = None):
+class ChatController:
+    def __init__(
+        self,
+        delegator: Optional[Delegator] = None,
+    ):
         self.delegator = delegator
 
     async def handle_chat(self, chat_request: ChatRequest) -> JSONResponse:
@@ -44,10 +48,16 @@ class DelegationController:
                 agent_response = await agent.chat(chat_request)
                 current_agent = agent_name
 
+            # Use orchestrator for multi-agent flow
+            if chat_request.use_research:
+                logger.info("Using research flow")
+                # current_agent, agent_response = await self.orchestrator.orchestrate(chat_request)``
+                current_agent = "basic_crew"
+                agent_response = await run_flow(chat_request)
+
             # Otherwise use delegator to find appropriate agent
-            else:
+            if self.delegator and not chat_request.use_research:
                 logger.info("Using delegator flow")
-                # self.delegator.reset_attempted_agents()
                 current_agent, agent_response = await self.delegator.delegate_chat(chat_request)
 
             # We only critically fail if we don't get an AgentResponse

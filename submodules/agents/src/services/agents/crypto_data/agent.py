@@ -13,17 +13,16 @@ logger = logging.getLogger(__name__)
 class CryptoDataAgent(AgentCore):
     """Agent for handling cryptocurrency-related queries and data retrieval."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any) -> None:
-        super().__init__(config, llm)
+    def __init__(self, config: Dict[str, Any]) -> None:
+        super().__init__(config)
         self.tools_provided = Config.tools
-        self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for crypto-related queries."""
         try:
             messages = [Config.system_message, *request.messages_for_llm]
-            result = self.tool_bound_llm.invoke(messages)
-            return await self._handle_llm_response(result)
+            response = await self._call_llm_with_tools(messages, self.tools_provided)
+            return await self._handle_llm_response(response)
 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}", exc_info=True)

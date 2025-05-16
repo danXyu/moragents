@@ -241,7 +241,11 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
   // Send message or file
   const sendMessage = useCallback(
-    async (message: string, file: File | null) => {
+    async (
+      message: string,
+      file: File | null,
+      useResearch: boolean = false
+    ) => {
       if (!message && !file) return;
 
       const { currentConversationId } = state;
@@ -272,7 +276,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             getHttpClient(),
             chainId,
             address || "",
-            currentConversationId
+            currentConversationId,
+            useResearch
           );
         } else {
           // File upload flow

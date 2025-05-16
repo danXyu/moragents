@@ -11,23 +11,21 @@ from .tools import fetch_most_viewed, fetch_most_voted, fetch_token_report, reso
 logger = logging.getLogger(__name__)
 
 
-class RugcheckAgent(AgentCore):
-    """Agent for analyzing token safety and trends using the Rugcheck API."""
+class RugCheckAgent(AgentCore):
+    """Agent for analyzing smart contracts for potential rug pulls."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any):
-        super().__init__(config, llm)
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
         self.tools_provided = Config.tools
-        self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
         self.api_base_url = "https://api.rugcheck.xyz/v1"
         self.token_registry = TokenRegistry()
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
-        """Process the validated chat request for token analysis."""
+        """Process the validated chat request for rug checks."""
         try:
             messages = [Config.system_message, *request.messages_for_llm]
-
-            result = self.tool_bound_llm.invoke(messages)
-            return await self._handle_llm_response(result)
+            response = await self._call_llm_with_tools(messages, self.tools_provided)
+            return await self._handle_llm_response(response)
 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}", exc_info=True)

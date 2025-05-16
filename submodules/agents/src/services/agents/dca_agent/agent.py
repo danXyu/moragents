@@ -3,7 +3,7 @@ from typing import Any, Dict
 
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
-from stores import wallet_manager_instance
+from stores.wallet_manager import wallet_manager_instance
 
 logger = logging.getLogger(__name__)
 

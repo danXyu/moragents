@@ -1,14 +1,11 @@
-import importlib
 import json
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-from config import LLM_AGENT, LLM_DELEGATOR, load_agent_config
-from langchain.output_parsers import PydanticOutputParser
-from langchain.schema import BaseMessage, SystemMessage
+from config import TOGETHER_CLIENT
 from models.service.chat_models import AgentResponse, ChatRequest, ResponseType
 from pydantic import BaseModel, Field
-from stores import agent_manager_instance
+from stores.agent_manager import agent_manager_instance
 
 from .system_prompt import get_system_prompt
 
@@ -22,24 +19,22 @@ class RankAgentsOutput(BaseModel):
 
 
 class Delegator:
-    def __init__(self, llm: Any):
-        self.llm = LLM_DELEGATOR
+    def __init__(self, model: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo"):
+        self.together_client = TOGETHER_CLIENT
+        self.model = model
         self.attempted_agents: set[str] = set()
         self.selected_agents_for_request: list[str] = []
-        self.parser = PydanticOutputParser(pydantic_object=RankAgentsOutput)
 
     async def _try_agent(self, agent_name: str, chat_request: ChatRequest) -> Optional[AgentResponse]:
         """Attempt to use a single agent, with error handling"""
         try:
-            agent_config = load_agent_config(agent_name)
-            if not agent_config:
-                logger.error(f"Could not load config for agent {agent_name}")
-
+            logger.info(f"Attempting agent: {agent_name}")
+            logger.info(f"Agent manager agents: {agent_manager_instance.agents}")
+            logger.info(f"Agent manager config: {agent_manager_instance.config}")
+            agent = agent_manager_instance.get_agent(agent_name)
+            if not agent:
+                logger.error(f"Agent {agent_name} not found")
                 return None
-
-            module = importlib.import_module(agent_config["path"])
-            agent_class = getattr(module, agent_config["class_name"])
-            agent = agent_class(agent_config, LLM_AGENT)
 
             result: AgentResponse = await agent.chat(chat_request)
 
@@ -54,10 +49,21 @@ class Delegator:
             logger.error(f"Error using agent {agent_name}: {str(e)}")
             return None
 
-    def get_delegator_response(self, prompt: ChatRequest, max_retries: int = 3) -> List[str]:
+    def get_delegator_response(self, chat_request: ChatRequest, max_retries: int = 3) -> List[str]:
         """Get ranked list of appropriate agents with retry logic"""
-        available_agents = agent_manager_instance.get_available_agents()
-        logger.info(f"Available agents: {available_agents}")
+        # Get all available agents
+        all_available_agents = agent_manager_instance.get_available_agents()
+        logger.info(f"All available agents: {all_available_agents}")
+
+        # Filter by selected agents if specified in the request
+        available_agents = all_available_agents
+        if chat_request.selected_agents:
+            # Filter available agents to only include those that were selected
+            available_agents = [
+                agent for agent in all_available_agents if agent.get("name") in chat_request.selected_agents
+            ]
+            logger.info(f"Filtered to selected agents: {chat_request.selected_agents}")
+            logger.info(f"Available selected agents: {available_agents}")
 
         if not available_agents:
             if "default" not in self.attempted_agents:
@@ -66,42 +72,79 @@ class Delegator:
 
         system_prompt = get_system_prompt(available_agents)
 
-        # Build message history from chat history
-        messages: List[BaseMessage] = [SystemMessage(content=system_prompt)]
-        messages.extend(prompt.messages_for_llm)
+        # Build a proper message list for Together API
+        messages = [{"role": "system", "content": system_prompt}]
+
+        # Add chat history
+        for msg in chat_request.chat_history[-5:]:
+            messages.append({"role": msg.role, "content": msg.content})
+
+        # Add current prompt
+        messages.append({"role": "user", "content": chat_request.prompt.content})
+
+        # Define the tool that will return agent rankings
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "rank_agents",
+                    "description": "Rank the most appropriate agents for this request",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "agents": {
+                                "type": "array",
+                                "description": "List of up to 3 agent names, ordered by relevance",
+                                "items": {"type": "string"},
+                            }
+                        },
+                        "required": ["agents"],
+                    },
+                },
+            }
+        ]
 
         for attempt in range(max_retries):
             try:
-                response = self.llm(messages)
-                try:
-                    # First try parsing as JSON directly
-                    json_response = json.loads(response.content)
-                    if isinstance(json_response, dict) and "agents" in json_response:
-                        agents = json_response["agents"]
-                        if isinstance(agents, list) and all(isinstance(a, str) for a in agents):
+                # Use Together's function calling without forcing tool choice
+                response = self.together_client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    tools=tools,
+                    temperature=0.7,
+                )
+
+                # Extract tool calls
+                tool_calls = response.choices[0].message.tool_calls
+
+                if tool_calls and len(tool_calls) > 0:
+                    # Extract the arguments from the function call
+                    tool_call = tool_calls[0]
+                    function_args = json.loads(tool_call.function.arguments)
+
+                    if "agents" in function_args and isinstance(function_args["agents"], list):
+                        agents = function_args["agents"]
+                        if all(isinstance(a, str) for a in agents):
                             self.selected_agents_for_request = agents
                             logger.info(f"Selected agents (attempt {attempt+1}): {agents}")
                             return agents
-                except json.JSONDecodeError:
-                    pass
 
-                # Fallback to pydantic parser
-                parsed = self.parser.parse(response.content)
-                self.selected_agents_for_request = parsed.agents
-                logger.info(f"Selected agents (attempt {attempt+1}): {parsed.agents}")
-                return parsed.agents
+                logger.warning(f"Failed to parse agent selection from tool call on attempt {attempt+1}")
 
             except Exception as e:
                 logger.warning(f"Attempt {attempt+1} failed: {str(e)}")
-                if attempt == max_retries - 1:
-                    logger.error("All retries failed")
-                    return ["default"]
+
+            if attempt == max_retries - 1:
+                logger.error("All retries failed")
+                return ["default"]
+
         return []
 
     async def delegate_chat(self, chat_request: ChatRequest) -> Tuple[Optional[str], AgentResponse]:
         """Delegate chat to ranked agents with fallback"""
         attempts = 0
         try:
+            # Get ranked agents based on LLM delegation
             ranked_agents = self.get_delegator_response(chat_request)
 
             for agent_name in ranked_agents:

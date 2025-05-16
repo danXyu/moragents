@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "MySuperAgent Staging Infrastructure"
+Description: "MySuperAgent Staging Infrastructure with CodeDeploy Integration"
 
 Resources:
   # Security Group for EC2
@@ -21,6 +21,9 @@ Resources:
           FromPort: 8888
           ToPort: 8888
           CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
 
   # ALB Security Group
   ALBSecurityGroup:
@@ -36,6 +39,9 @@ Resources:
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
           CidrIp: 0.0.0.0/0
 
   # S3 Bucket for Deployment Artifacts
@@ -97,6 +103,7 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
       Policies:
         - PolicyName: ECRAccess
           PolicyDocument:
@@ -108,6 +115,7 @@ Resources:
                   - ecr:BatchCheckLayerAvailability
                   - ecr:GetDownloadUrlForLayer
                   - ecr:BatchGetImage
+                  - ecr:DescribeImages
                 Resource: "*"
         - PolicyName: CodeDeployS3Access
           PolicyDocument:
@@ -121,6 +129,16 @@ Resources:
                   - !Sub "arn:aws:s3:::${DeploymentBucket}"
                   - !Sub "arn:aws:s3:::${DeploymentBucket}/*"
                   - "arn:aws:s3:::aws-codedeploy-us-west-1/*"
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource:
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
 
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -154,10 +172,15 @@ Resources:
             - !Ref InstanceSecurityGroup
           SubnetId: subnet-0a4ab4cec37708368
       UserData:
-        Fn::Base64: |
+        Fn::Base64: !Sub |
           #!/bin/bash
           yum update -y
-          yum install -y docker jq aws-cli ruby wget
+          yum install -y docker jq aws-cli ruby wget bind-utils
+
+          # Configure system DNS settings for reliability (from prod)
+          echo "options timeout:2 attempts:5 rotate" >> /etc/resolv.conf
+          echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+          echo "nameserver 8.8.4.4" >> /etc/resolv.conf
 
           # Install CodeDeploy Agent
           cd /home/ec2-user
@@ -172,46 +195,118 @@ Resources:
           chmod +x /usr/local/bin/docker-compose
           ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 
-          # Setup Docker
+          # Setup Docker with proper DNS configuration (from prod)
+          mkdir -p /etc/docker
+          cat > /etc/docker/daemon.json << 'EOL'
+          {
+            "dns": ["8.8.8.8", "8.8.4.4"],
+            "dns-search": ["us-west-1.compute.internal"],
+            "max-concurrent-downloads": 10,
+            "max-concurrent-uploads": 10
+          }
+          EOL
+
           systemctl start docker
           systemctl enable docker
           usermod -aG docker ec2-user
-
-          # Set environment variable
-          echo "ENVIRONMENT=staging" >> /etc/environment
 
           # Create application directory
           mkdir -p /home/ec2-user/mysuperagent
           chown -R ec2-user:ec2-user /home/ec2-user/mysuperagent
 
-          # Initial deployment with docker run (will be replaced by CodeDeploy)
-          aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 816069170416.dkr.ecr.us-west-1.amazonaws.com
-          docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:staging
-          docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:staging
+          # Test DNS resolution before proceeding (from prod)
+          echo "Testing DNS resolution..."
+          for i in {1..5}; do
+            if dig +short google.com > /dev/null; then
+              echo "DNS resolution working properly."
+              break
+            else
+              echo "DNS resolution attempt $i failed, retrying..."
+              sleep 2
+            fi
+          done
 
-          # Create initial docker-compose.yml
+          # Set environment variables
+          cat > /home/ec2-user/mysuperagent/.env << 'EOL'
+          ENV=staging
+          AWS_DEFAULT_REGION=us-west-1
+          NODE_ENV=production
+          APP_ENV=staging
+          AWS_DEFAULT_REGION=us-west-1
+          EOL
+
+          # Configure Docker network (from prod)
+          cat > /home/ec2-user/mysuperagent/docker-network.sh << 'EOL'
+          #!/bin/bash
+          docker network create --driver bridge --subnet 172.28.0.0/16 --gateway 172.28.0.1 --opt "com.docker.network.bridge.name"="docker1" mysuperagent-network
+          EOL
+          chmod +x /home/ec2-user/mysuperagent/docker-network.sh
+          /home/ec2-user/mysuperagent/docker-network.sh
+
+          # Login to ECR
+          aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 816069170416.dkr.ecr.us-west-1.amazonaws.com
+
+          # Pull the staging images
+          docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:latest
+          docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
+
+          # Create docker-compose.yml with proper network configuration (similar to prod)
           cat > /home/ec2-user/mysuperagent/docker-compose.yml << 'EOL'
           version: '3'
           services:
             backend:
-              image: 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:staging
+              container_name: backend
+              image: 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:latest
               restart: always
               ports:
                 - "8888:5000"
               environment:
-                - NODE_ENV=staging
-                - ENVIRONMENT=staging
+                - ENV=staging
+                - AWS_DEFAULT_REGION=us-west-1
+                - AWS_REGION=us-west-1
+              dns:
+                - 8.8.8.8
+                - 8.8.4.4
+              tty: true
+              stdin_open: true
+            
             frontend:
-              image: 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:staging
+              container_name: frontend
+              image: 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
               restart: always
               ports:
                 - "3333:80"
-              depends_on:
-                - backend
+              environment:
+                - NODE_ENV=production
+                - APP_ENV=staging
+                - AWS_DEFAULT_REGION=us-west-1
+                - AWS_REGION=us-west-1
+              dns:
+                - 8.8.8.8
+                - 8.8.4.4
+              tty: true
+              stdin_open: true
+
+          networks:
+            default:
+              external:
+                name: mysuperagent-network
           EOL
 
+          # Start containers
           cd /home/ec2-user/mysuperagent
           docker-compose up -d
+
+          # Create a simple startup script to run after reboots (from prod)
+          cat > /home/ec2-user/mysuperagent/startup.sh << 'EOL'
+          #!/bin/bash
+          cd /home/ec2-user/mysuperagent
+          docker-compose up -d
+          EOL
+          chmod +x /home/ec2-user/mysuperagent/startup.sh
+
+          # Set up auto-restart on reboot (from prod)
+          echo "@reboot /home/ec2-user/mysuperagent/startup.sh" | crontab -u ec2-user -
 
   # Application Load Balancer (ALB)
   ApplicationLoadBalancer:
@@ -267,29 +362,31 @@ Resources:
       Targets:
         - Id: !Ref EC2Instance
 
-  # Create ACM Certificate
-  Certificate:
+  # ACM certificate for staging.mysuperagent.io + api.staging.mysuperagent.io
+  StagingCertificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
-      DomainName: "staging.mysuperagent.io"
+      DomainName: staging.mysuperagent.io
       SubjectAlternativeNames:
-        - "api.staging.mysuperagent.io"
+        - api.staging.mysuperagent.io
       ValidationMethod: DNS
       DomainValidationOptions:
-        - DomainName: "staging.mysuperagent.io"
+        - DomainName: staging.mysuperagent.io
+          HostedZoneId: Z0231843Q41D0UD9HQEI
+        - DomainName: api.staging.mysuperagent.io
           HostedZoneId: Z0231843Q41D0UD9HQEI
 
-  # HTTPS Listener for ALB
+  # HTTPS Listener for ALB using the new certificate
   HTTPSListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
-    DependsOn: Certificate
+    DependsOn: StagingCertificate
     Properties:
       LoadBalancerArn: !Ref ApplicationLoadBalancer
       Port: 443
       Protocol: HTTPS
       SslPolicy: ELBSecurityPolicy-2016-08
       Certificates:
-        - CertificateArn: !Ref Certificate
+        - CertificateArn: !Ref StagingCertificate
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref FrontendTargetGroup
@@ -348,6 +445,8 @@ Outputs:
   InstanceId:
     Description: ID of the EC2 instance
     Value: !Ref EC2Instance
+    Export:
+      Name: !Sub "${AWS::StackName}-InstanceId"
 
   InstancePublicDNS:
     Description: Public DNS of the EC2 instance
@@ -357,17 +456,27 @@ Outputs:
     Description: DNS of the ALB
     Value: !GetAtt ApplicationLoadBalancer.DNSName
 
+  LoadBalancerName:
+    Description: Name of the ALB for CloudWatch metrics
+    Value: !GetAtt ApplicationLoadBalancer.LoadBalancerFullName
+    Export:
+      Name: !Sub "${AWS::StackName}-LoadBalancerName"
+
   FrontendURL:
     Description: Frontend URL
     Value: "https://staging.mysuperagent.io"
+    Export:
+      Name: !Sub "${AWS::StackName}-FrontendURL"
 
   ApiURL:
     Description: API URL
     Value: "https://api.staging.mysuperagent.io"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiURL"
 
-  CertificateARN:
-    Description: The ARN of the created certificate
-    Value: !Ref Certificate
+  StagingCertificateArn:
+    Description: "ACM certificate ARN for staging"
+    Value: !Ref StagingCertificate
 
   CodeDeployApplication:
     Description: CodeDeploy Application Name

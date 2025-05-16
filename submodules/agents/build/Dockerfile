@@ -1,10 +1,28 @@
-FROM --platform=linux/arm64 python:3.12-bullseye
+FROM python:3.12-bullseye
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y gcc g++ procps curl && rm -rf /var/lib/apt/lists/*
+# Install system dependencies and a newer SQLite3
+RUN apt-get update && apt-get install -y \
+    gcc g++ procps curl wget build-essential \
+    libreadline-dev libncursesw5-dev libssl-dev \
+    libsqlite3-dev tk-dev libgdbm-dev libc6-dev \
+    libbz2-dev libffi-dev zlib1g-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install newer SQLite3 from source
+RUN wget https://www.sqlite.org/2023/sqlite-autoconf-3410200.tar.gz && \
+    tar -xf sqlite-autoconf-3410200.tar.gz && \
+    cd sqlite-autoconf-3410200 && \
+    ./configure --prefix=/usr/local && \
+    make && \
+    make install && \
+    cd .. && \
+    rm -rf sqlite-autoconf-3410200 sqlite-autoconf-3410200.tar.gz
+
+# Update library path
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
@@ -20,12 +38,10 @@ RUN poetry lock --no-update || true
 COPY poetry.lock* ./
 
 # Install Python dependencies using Poetry
-# Remove the virtualenvs.create false line and let Poetry use its default virtualenv
 RUN poetry install --no-interaction --no-ansi --no-root
 
 # Chrome installation for Debian Bullseye
 RUN apt-get update && apt-get install -y \
-    wget \
     gnupg2 \
     apt-transport-https \
     ca-certificates \

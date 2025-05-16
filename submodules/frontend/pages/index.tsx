@@ -2,7 +2,7 @@ import type { NextPage } from "next";
 import { Box, Flex, useBreakpointValue } from "@chakra-ui/react";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { Chat } from "@/components/Chat";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { HeaderBar } from "@/components/HeaderBar";
 import { ChatProvider } from "@/contexts/chat/ChatProvider";
 import styles from "./index.module.css";
@@ -19,12 +19,6 @@ const HomeWithProvider: NextPage = () => {
 const Home = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isMobile = useBreakpointValue({ base: true, md: false });
-
-  useEffect(() => {
-    if (!isMobile) {
-      setIsSidebarOpen(true);
-    }
-  }, [isMobile]);
 
   return (
     <Box className={styles.container}>

@@ -1,8 +1,7 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 
-from config import RAG_VECTOR_STORE
-from langchain.schema import HumanMessage
+from langchain.schema import StructuredTool
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 
@@ -11,29 +10,24 @@ from .config import Config
 logger = logging.getLogger(__name__)
 
 
-class RagAgent(AgentCore):
-    """Agent for handling document Q&A using RAG."""
+class RAGAgent(AgentCore):
+    """Agent for handling retrieval-augmented generation."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any) -> None:
-        super().__init__(config, llm)
+    def __init__(self, config: Dict[str, Any]) -> None:
+        super().__init__(config)
+        self.tools_provided: List[StructuredTool] = []
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
-        """Process the validated chat request for RAG."""
+        """Process the validated chat request for RAG-based responses."""
         try:
-            if RAG_VECTOR_STORE.retriever is None:
-                return AgentResponse.needs_info(content="Please upload a file first")
+            # Simple example for direct RAG response
+            messages = [Config.system_message, *request.messages_for_llm]
+            response = await self._call_llm_with_tools(messages, self.tools_provided)
 
-            retrieved_docs = await RAG_VECTOR_STORE.retrieve(request.prompt.content)
-            formatted_context = "\n\n".join(doc.page_content for doc in retrieved_docs)
-
-            messages = [
-                Config.system_message,
-                HumanMessage(content=f"Context from documents:\n{formatted_context}"),
-                *request.messages_for_llm,
-            ]
-
-            result = self.llm.invoke(messages)
-            return AgentResponse.success(content=result.content.strip())
+            if response.content:
+                return AgentResponse.success(content=response.content)
+            else:
+                return AgentResponse.error(error_message="Failed to generate a response")
 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}", exc_info=True)

@@ -63,9 +63,15 @@ else
     esac
 fi
 
-# Authenticate with AWS ECR
+# Function to refresh AWS ECR authentication
+refresh_aws_auth() {
+    echo "Refreshing AWS ECR authentication..."
+    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URL || handle_error "Failed to authenticate with AWS ECR"
+}
+
+# Initial authentication with AWS ECR
 echo "Logging into AWS ECR..."
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URL || handle_error "Failed to authenticate with AWS ECR"
+refresh_aws_auth
 
 # Function to build and push an image
 build_and_push_image() {
@@ -101,55 +107,26 @@ build_and_push_image() {
     echo "Tagging $image_name..."
     docker tag "$image_name:latest" "$ECR_URL/$image_name:latest" || handle_error "Failed to tag $image_name"
 
-    # Push the image with retry logic
+    # Push the image with improved retry logic
     echo "Pushing $image_name to ECR..."
     
     # Set retry parameters
-    MAX_RETRIES=3
+    MAX_RETRIES=5  # Increased from 3 to 5
     RETRY_COUNT=0
     PUSH_SUCCESS=false
     
     while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$PUSH_SUCCESS" = false ]; do
         if [ $RETRY_COUNT -gt 0 ]; then
             echo "Retry attempt $RETRY_COUNT for pushing $image_name..."
-            # Small delay before retry
-            sleep 5
+            # Refresh AWS credentials before retry
+            refresh_aws_auth
+            # Longer delay before retry - increases with each attempt
+            sleep $((5 * RETRY_COUNT))
         fi
         
-        # Push with a background process and kill after timeout
-        push_pid=""
-        push_output_file=$(mktemp)
-        
-        # Start the push in background and capture its PID
-        docker push "$ECR_URL/$image_name:latest" > "$push_output_file" 2>&1 &
-        push_pid=$!
-        
-        # Wait for push to complete with timeout
-        push_timeout=300
-        elapsed=0
-        push_status=0
-        
-        while kill -0 $push_pid 2>/dev/null && [ $elapsed -lt $push_timeout ]; do
-            sleep 5
-            elapsed=$((elapsed + 5))
-        done
-        
-        # Check if process is still running after timeout
-        if kill -0 $push_pid 2>/dev/null; then
-            echo "Push operation timed out after ${push_timeout}s"
-            kill -9 $push_pid 2>/dev/null || true
-            push_status=1
-        else
-            # Process completed, get its exit status
-            wait $push_pid
-            push_status=$?
-        fi
-        
-        # Check output for success
-        cat "$push_output_file"
-        
-        if [ $push_status -eq 0 ] && ! grep -q "error\|fail\|timeout" "$push_output_file"; then
-            rm -f "$push_output_file"
+        # Direct push without background process or timeout
+        # Simplified approach that relies on Docker's built-in retry mechanism
+        if docker push "$ECR_URL/$image_name:latest"; then
             PUSH_SUCCESS=true
             echo "$image_name pushed successfully!"
         else
@@ -161,9 +138,6 @@ build_and_push_image() {
                 echo "Push attempt failed. Will retry ($RETRY_COUNT/$MAX_RETRIES)..."
             fi
         fi
-        
-        # Clean up temp file if it still exists
-        [ -f "$push_output_file" ] && rm -f "$push_output_file"
     done
 }
 

@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Any, Dict, Optional
 
 from services.agents.base_agent.tools import get_balance, swap_assets
-from stores import wallet_manager_instance
+from stores.wallet_manager import wallet_manager_instance
 
 logger = logging.getLogger(__name__)
 

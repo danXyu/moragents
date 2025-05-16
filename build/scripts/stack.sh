@@ -11,9 +11,10 @@ function show_usage {
     echo "Usage: $0 [prod|staging|monitoring] [--delete]"
     echo ""
     echo "Options:"
-    echo "  prod        Manage the production stack (MySuperAgent-Infrastructure)"
-    echo "  staging     Manage the staging stack (MySuperAgent-Infrastructure-Staging)"
+    echo "  prod        Manage the production stack (MSA-Infrastructure-Production)"
+    echo "  staging     Manage the staging stack (MSA-Infrastructure-Staging)"
     echo "  monitoring  Manage the monitoring stack (MySuperAgent-Monitoring)"
+    echo "  jenkins     Manage the Jenkins stack (MySuperAgent-Jenkins)"
     echo "  --delete    Delete the specified stack instead of creating/updating it"
     echo ""
     exit 1
@@ -36,13 +37,13 @@ fi
 # Set variables based on the argument
 case "$1" in
     prod)
-        STACK_NAME="MySuperAgent-Infrastructure"
+        STACK_NAME="MSA-Infrastructure-Production"
         TEMPLATE_FILE="${SCRIPT_DIR}/../mysuperagent-stack-prod.yaml"
         echo "Selected: Production stack"
         echo "Using template file: $TEMPLATE_FILE"
         ;;
     staging)
-        STACK_NAME="MySuperAgent-Infrastructure-Staging"
+        STACK_NAME="MSA-Infrastructure-Staging"
         TEMPLATE_FILE="${SCRIPT_DIR}/../mysuperagent-stack-staging.yaml"
         echo "Selected: Staging stack"
         echo "Using template file: $TEMPLATE_FILE"
@@ -51,6 +52,12 @@ case "$1" in
         STACK_NAME="MySuperAgent-Monitoring"
         TEMPLATE_FILE="${SCRIPT_DIR}/../mysuperagent-cloudwatch.yaml"
         echo "Selected: Monitoring stack"
+        echo "Using template file: $TEMPLATE_FILE"
+        ;;
+    jenkins)
+        STACK_NAME="MySuperAgent-Jenkins"
+        TEMPLATE_FILE="${SCRIPT_DIR}/../mysuperagent-jenkins.yaml"
+        echo "Selected: Jenkins stack"
         echo "Using template file: $TEMPLATE_FILE"
         ;;
     *)
@@ -215,21 +222,7 @@ else
         --change-set-name $CHANGE_SET_NAME \
         --region $REGION
     
-    # Prompt for confirmation
-    read -p "Do you want to execute the change set? (y/n): " CONFIRM
-    if [[ $CONFIRM != [Yy] ]]; then
-        echo "Update canceled."
-        
-        # Clean up the change set
-        aws cloudformation delete-change-set \
-            --stack-name $STACK_NAME \
-            --change-set-name $CHANGE_SET_NAME \
-            --region $REGION
-        
-        exit 0
-    fi
-    
-    # Execute the change set
+    # Execute the change set without confirmation
     echo "Executing change set..."
     aws cloudformation execute-change-set \
         --stack-name $STACK_NAME \

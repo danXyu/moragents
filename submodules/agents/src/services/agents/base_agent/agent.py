@@ -7,7 +7,7 @@ from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.base_agent import tools
 from services.agents.base_agent.config import Config
 from services.agents.base_agent.tool_types import BaseAgentToolType
-from stores import wallet_manager_instance
+from stores.wallet_manager import wallet_manager_instance
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +15,9 @@ logger = logging.getLogger(__name__)
 class BaseAgent(AgentCore):
     """Agent for handling Base blockchain transactions."""
 
-    def __init__(self, config: Dict[str, Any], llm: Any):
-        super().__init__(config, llm)
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
         self.tools_provided = Config.tools
-        self.tool_bound_llm = self.llm.bind_tools(self.tools_provided)
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for Base transactions."""
@@ -50,8 +49,8 @@ class BaseAgent(AgentCore):
                 *request.messages_for_llm,
             ]
 
-            result = self.tool_bound_llm.invoke(messages)
-            return await self._handle_llm_response(result)
+            response = await self._call_llm_with_tools(messages, self.tools_provided)
+            return await self._handle_llm_response(response)
 
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}", exc_info=True)

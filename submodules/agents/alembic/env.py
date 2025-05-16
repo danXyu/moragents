@@ -1,13 +1,18 @@
+import os
 import sys
 from logging.config import fileConfig
 
 from alembic import context
-
-# add your model's MetaData object here
-from models.models import Base
 from sqlalchemy import engine_from_config, pool
 
-sys.path.append("./src")
+# add your model's MetaData object here
+from src.models import Base
+
+# Make the src directory available for imports regardless of where alembic is run from
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Print debugging information
+print("Models imported, available tables:", [table for table in Base.metadata.tables.keys()])
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -19,6 +24,13 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = [Base.metadata]
+
+# Add this debugging code
+print("Available tables:", [table for table in Base.metadata.tables.keys()])
+print(
+    "Metadata contains User table:",
+    "user" in Base.metadata.tables or "users" in Base.metadata.tables,
+)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

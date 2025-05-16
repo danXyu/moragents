@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from services.agents.base_agent.tools import swap_assets, transfer_asset
-from stores import wallet_manager_instance
+from stores.wallet_manager import wallet_manager_instance
 
 router = APIRouter(prefix="/base", tags=["base"])
 logger = logging.getLogger(__name__)

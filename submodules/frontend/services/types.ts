@@ -222,6 +222,11 @@ export enum AgentType {
   RUGCHECK = "rugcheck",
 
   /**
+   * The BasicOrchestrator crew combining multiple agents
+   */
+  BASIC_CREW = "basic_crew",
+
+  /**
    * The DEFAULT agent
    */
   DEFAULT = "default",

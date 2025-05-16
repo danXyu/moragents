@@ -11,15 +11,19 @@ export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
   const { state, sendMessage } = useChatContext();
   const { messages, currentConversationId, isLoading } = state;
   const [localLoading, setLocalLoading] = useState(false);
-
+  const [showPrefilledOptions, setShowPrefilledOptions] = useState(false);
   const currentMessages = messages[currentConversationId] || [];
   const isMobile = useBreakpointValue({ base: true, md: false });
   const showLoading = isLoading || localLoading;
 
-  const handleSubmit = async (message: string, file: File | null) => {
+  const handleSubmit = async (
+    message: string,
+    file: File | null,
+    useResearch?: boolean
+  ) => {
     try {
       setLocalLoading(true);
-      await sendMessage(message, file);
+      await sendMessage(message, file, useResearch ?? false);
       setTimeout(() => setLocalLoading(false), 200);
     } catch (error) {
       console.error("Error sending message:", error);
@@ -42,6 +46,7 @@ export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
         isSidebarOpen={isSidebarOpen}
         onSubmit={handleSubmit}
         disabled={showLoading}
+        showPrefilledOptions={showPrefilledOptions}
       />
       <Box position="sticky" bottom={0} bg="black" pt={2} pb={2} zIndex="1">
         {/* Give ChatInput a higher z-index than sidebar to ensure it's always accessible */}
@@ -49,6 +54,8 @@ export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
           onSubmit={handleSubmit}
           disabled={showLoading}
           isSidebarOpen={isSidebarOpen}
+          onToggleHelp={() => setShowPrefilledOptions(!showPrefilledOptions)}
+          showPrefilledOptions={showPrefilledOptions}
         />
       </Box>
     </Box>

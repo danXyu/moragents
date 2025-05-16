@@ -2,9 +2,10 @@ import { AgentType } from "@/services/types";
 
 export const getHumanReadableAgentName = (agentName?: string): string => {
   const agentNameMap: Record<AgentType | string, string> = {
-    [AgentType.DEFAULT]: "Morpheus AI",
+    [AgentType.DEFAULT]: "MySuperAgent",
     [AgentType.IMAGEN]: "Image Generator Agent",
     [AgentType.CRYPTO_DATA]: "Crypto Data Agent",
+    [AgentType.BASIC_CREW]: "MySuperAgent Research",
     [AgentType.TOKEN_SWAP]: "Metamask Swaps Agent",
     [AgentType.TWEET_SIZZLER]: "X Posts Generator Agent",
     [AgentType.DCA_AGENT]: "DCA Strategy Planning Agent",
@@ -22,7 +23,7 @@ export const getHumanReadableAgentName = (agentName?: string): string => {
   };
 
   if (!agentName) {
-    return "Morpheus AI";
+    return "MySuperAgent";
   }
 
   return agentNameMap[agentName] || agentName;
