@@ -2,7 +2,6 @@ import axios from "axios";
 import { getAvailableAgents } from "@/services/apiHooks";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8888";
-// const BASE_URL = "https://api.staging.mysuperagent.io";
 
 export default BASE_URL;
 

@@ -1,10 +1,6 @@
 import { ethers } from "ethers";
 import { LitNodeClient } from "@lit-protocol/lit-node-client";
 import { LIT_NETWORK } from "@lit-protocol/constants";
-import { SecretsManager } from "@aws-sdk/client-secrets-manager";
-
-// Secret name for Lit Protocol secrets
-const LIT_PROTOCOL_SECRET_NAME = "LitProtocolPaymentDelegationSecrets";
 
 // Initialization state
 let isInitialized = false;
@@ -33,21 +29,12 @@ export const getRelayerUrl = (endpoint: string) => {
   return `https://${network}-relayer.getlit.dev/${endpoint}`;
 };
 
-// Get secrets from AWS Secrets Manager
+// Get secrets directly from environment variables
 export const getSecrets = async () => {
-  console.log("[LIT] Getting secrets from AWS Secrets Manager");
-  const secretsManager = new SecretsManager({
-    region: process.env.AWS_REGION || "us-west-1",
-  });
-
-  const response = await secretsManager.getSecretValue({
-    SecretId: LIT_PROTOCOL_SECRET_NAME,
-  });
-
-  const secrets = JSON.parse(response.SecretString || "{}");
+  console.log("[LIT] Getting secrets from environment variables");
   return {
-    LIT_RELAYER_API_KEY: secrets.LIT_RELAYER_API_KEY,
-    LIT_PAYER_SECRET_KEY: secrets.LIT_PAYER_SECRET_KEY,
+    LIT_RELAYER_API_KEY: process.env.LIT_RELAYER_API_KEY || "",
+    LIT_PAYER_SECRET_KEY: process.env.LIT_PAYER_SECRET_KEY || "",
   };
 };
 
@@ -70,7 +57,7 @@ export const initializeLitProtocol = async (): Promise<void> => {
 
     // Verify we have the API key
     if (!LIT_RELAYER_API_KEY) {
-      throw new Error("LIT_RELAYER_API_KEY not found in secrets");
+      throw new Error("LIT_RELAYER_API_KEY not found in environment variables");
     }
 
     isInitialized = true;
