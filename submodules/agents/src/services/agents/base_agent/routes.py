@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+
 from services.agents.base_agent.tools import swap_assets, transfer_asset
 from stores.wallet_manager import wallet_manager_instance
 

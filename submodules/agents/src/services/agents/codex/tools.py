@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import aiohttp
+
 from services.secrets import get_secret
 
 from .config import Config

@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional
 
 from crewai import LLM
 from fastapi import APIRouter
-
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from together import Together
 

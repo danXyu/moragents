@@ -2,7 +2,8 @@ import logging
 from typing import Any, Dict, List
 
 import pyshorteners
-from langchain.schema import SystemMessage, HumanMessage
+from langchain.schema import HumanMessage, SystemMessage
+
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.agents.news_agent.config import Config

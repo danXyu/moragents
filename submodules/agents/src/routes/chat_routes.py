@@ -1,7 +1,8 @@
-from config import setup_logging
-from controllers.chat_controller import ChatController
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
+
+from config import setup_logging
+from controllers.chat_controller import ChatController
 from models.service.chat_models import ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from services.delegator.delegator import Delegator

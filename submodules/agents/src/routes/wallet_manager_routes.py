@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+
 from stores.wallet_manager import wallet_manager_instance
 
 logger = logging.getLogger(__name__)

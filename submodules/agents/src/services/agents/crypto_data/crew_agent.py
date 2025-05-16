@@ -2,6 +2,7 @@ import logging
 
 from crewai import Agent
 from crewai.tools import tool
+
 from services.agents.crypto_data import tools
 
 logger = logging.getLogger(__name__)

@@ -3,6 +3,7 @@ from typing import List
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from src.models import Base
 from src.models.core.user_service_models import UserModel, UserSettingModel
 

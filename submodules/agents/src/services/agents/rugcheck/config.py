@@ -2,6 +2,7 @@ import re
 from typing import Dict, List, Optional, Pattern
 
 from langchain.schema import SystemMessage
+
 from models.service.agent_config import AgentConfig
 from services.agents.rugcheck.tool_types import RugcheckToolType
 

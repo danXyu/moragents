@@ -1,12 +1,12 @@
 from typing import Any, Dict
 
+from config import LLM_AGENT
 from models.service.chat_models import AgentResponse, ChatRequest
 
 # ------------------------------------------------------------
 # 1.  Import flow + registry
 from services.orchestrator.orchestration_flow import OrchestrationFlow
 from services.orchestrator.registry.agent_bootstrap import bootstrap_agents
-from config import LLM_AGENT
 
 
 # -------------------------------------------------------------------

@@ -1,16 +1,14 @@
 import json
 import logging
 import os
-from typing import Union
-
 from abc import ABC, abstractmethod
 from functools import wraps
-from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar
-from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar, Union
 
-from config import TOGETHER_CLIENT
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
+from config import TOGETHER_CLIENT
 from models.service.chat_models import AgentResponse, ChatRequest
 
 T = TypeVar("T")

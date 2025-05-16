@@ -4,11 +4,11 @@ import pytest
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
+from submodules.agents.src.routes.chat_routes import router
+
 from src.models.service.chat_models import ChatMessage, ChatRequest
 from src.models.service.service_models import GenerateConversationTitleRequest
 from src.services.delegator.delegator import Delegator
-
-from submodules.agents.src.routes.chat_routes import router
 
 app = FastAPI()
 app.include_router(router)
