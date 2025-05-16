@@ -1,5 +1,4 @@
 from crewai import Agent
-
 from services.agents.crypto_data.crew_agent import crypto_data_agent
 from services.orchestrator.registry.agent_registry import AgentRegistry
 from services.orchestrator.registry.tool_bootstrap import bootstrap_tools

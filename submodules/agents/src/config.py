@@ -5,13 +5,13 @@ from typing import Any, Dict, List, Optional
 from crewai import LLM
 from fastapi import APIRouter
 from langchain_ollama import ChatOllama, OllamaEmbeddings
-from together import Together
 
 # from langchain_together import ChatTogether
 from logs import setup_logging
 from services.secrets import get_secret
 from services.vectorstore.together_embeddings import TogetherEmbeddings
 from services.vectorstore.vector_store_service import VectorStoreService
+from together import Together
 
 logger = setup_logging()
 

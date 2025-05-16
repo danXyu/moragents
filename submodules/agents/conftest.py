@@ -2,10 +2,9 @@ import asyncio
 import sys
 
 import pytest
+from config import AppConfig
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_ollama import ChatOllama
-
-from config import AppConfig
 from src.models.service.chat_models import ChatMessage, ChatRequest
 
 

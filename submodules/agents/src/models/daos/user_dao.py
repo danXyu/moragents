@@ -1,10 +1,9 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from models.core.user_models import User, UserSetting
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-from models.core.user_models import User, UserSetting
 
 
 class UserDAO:

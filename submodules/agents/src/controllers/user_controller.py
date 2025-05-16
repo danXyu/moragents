@@ -1,11 +1,10 @@
 import logging
 from typing import Any, Dict, List, Optional, Self
 
-from sqlalchemy.orm import Session
-
 from models.daos.user_dao import UserDAO
 from models.service.user_service_models import UserModel, UserSettingModel
 from models.session import DBSessionFactory
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 

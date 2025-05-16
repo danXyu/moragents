@@ -1,12 +1,11 @@
 import json
 import logging
-import os
-from typing import List, Optional, Tuple
 
-from pydantic import BaseModel, Field
+from typing import List, Optional, Tuple
 
 from config import TOGETHER_CLIENT
 from models.service.chat_models import AgentResponse, ChatRequest, ResponseType
+from pydantic import BaseModel, Field
 from stores.agent_manager import agent_manager_instance
 
 from .system_prompt import get_system_prompt

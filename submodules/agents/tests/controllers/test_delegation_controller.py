@@ -3,11 +3,11 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from fastapi import HTTPException
 from langchain.schema import AIMessage, HumanMessage
-from submodules.agents.src.controllers.chat_controller import DelegationController
-
 from src.models.service.chat_models import AgentResponse, ChatMessage, ChatRequest
 from src.models.service.service_models import GenerateConversationTitleRequest
 from src.services.delegator.delegator import Delegator
+
+from submodules.agents.src.controllers.chat_controller import DelegationController
 
 
 @pytest.fixture

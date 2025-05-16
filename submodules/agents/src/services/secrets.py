@@ -8,7 +8,6 @@ from functools import lru_cache
 
 import boto3
 from botocore.exceptions import ClientError
-
 from logs import setup_logging
 from models.config.config import Config
 

@@ -3,7 +3,6 @@ from typing import List, Optional
 
 from crewai import Agent
 from crewai.tools import tool
-
 from services.agents.codex import tools
 
 logger = logging.getLogger(__name__)

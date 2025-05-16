@@ -2,7 +2,6 @@ import logging
 from typing import Any, Dict, List
 
 from langchain.schema import StructuredTool
-
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 

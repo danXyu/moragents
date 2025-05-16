@@ -4,6 +4,8 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional
 
 import requests
+from models.service.agent_core import AgentCore
+from models.service.chat_models import AgentResponse, ChatRequest
 from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -11,9 +13,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-
-from models.service.agent_core import AgentCore
-from models.service.chat_models import AgentResponse, ChatRequest
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +29,6 @@ class ImagenAgent(AgentCore):
         try:
             # For image generation, we'll directly use the prompt content
             # But to follow convention, call _call_llm_with_tools with empty tools
-            messages = request.messages_for_llm if hasattr(request, "messages_for_llm") else []
-            response = await self._call_llm_with_tools(messages, self.tools_provided)
             # Ignore LLM response, use internal image generation
             result = self.generate_image(request.prompt.content)
 

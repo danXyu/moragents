@@ -2,10 +2,9 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
+from services.agents.crypto_data.config import Config
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-from services.agents.crypto_data.config import Config
 
 
 def get_most_similar(text: str, data: List[str]) -> List[str]:

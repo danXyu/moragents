@@ -1,6 +1,5 @@
-from web3 import Web3
-
 from services.agents.mor_rewards.config import Config
+from web3 import Web3
 
 
 def get_current_user_reward(wallet_address, pool_id):

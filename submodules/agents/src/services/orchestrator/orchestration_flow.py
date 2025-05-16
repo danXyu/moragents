@@ -10,13 +10,12 @@ CrewAI Flow that:
 from __future__ import annotations
 
 import logging
-from asyncio import TimeoutError, gather, wait_for
+from asyncio import TimeoutError, wait_for
 from typing import Any, Dict, List, Optional
 
+from config import LLM_DELEGATOR
 from crewai import LLM, Crew, Process, Task
 from crewai.flow.flow import Flow, listen, start
-
-from config import LLM_DELEGATOR
 from services.secrets import get_secret
 
 from .orchestration_state import (
@@ -253,8 +252,9 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             "Combine the following sub‑task results into one clear answer for the user. "
             "If some sub-tasks failed or produced limited results, focus on the successful ones. "
             "Always provide the most helpful answer possible with the available information. "
-            "Give a direct, synthesized response without prefacing with phrases like 'Based on the available information' "
-            "or summarizing that you're providing information. Just present the answer clearly and concisely. "
+            "Give a direct, synthesized response without prefacing with phrases like 'Based on "
+            "the available information' or summarizing that you're providing information. Just "
+            "present the answer clearly and concisely. "
             "\n\nUser prompt:\n"
             f"{self.state.chat_prompt}\n\n"
             "Sub‑task outputs:\n"

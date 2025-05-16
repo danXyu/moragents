@@ -1,9 +1,8 @@
 from typing import List
 
 from langchain.schema import AIMessage, BaseMessage, HumanMessage
-from pydantic import BaseModel, Field
-
 from models.service.chat_models import ChatMessage
+from pydantic import BaseModel, Field
 
 
 class GenerateConversationTitleRequest(BaseModel):

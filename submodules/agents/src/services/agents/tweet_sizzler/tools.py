@@ -1,8 +1,7 @@
 import logging
 
-from langchain.schema import HumanMessage
-
 from config import LLM_AGENT
+from langchain.schema import HumanMessage
 from services.agents.tweet_sizzler.config import Config
 
 logger = logging.getLogger(__name__)

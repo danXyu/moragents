@@ -3,7 +3,6 @@ from typing import Any, Dict
 from unittest.mock import patch
 
 import pytest
-
 from models.service.chat_models import AgentResponse
 from services.agents.crypto_data.agent import CryptoDataAgent
 

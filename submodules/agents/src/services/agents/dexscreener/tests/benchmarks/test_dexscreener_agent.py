@@ -3,7 +3,6 @@ from typing import Any, Dict
 from unittest.mock import patch
 
 import pytest
-
 from models.service.chat_models import AgentResponse
 from services.agents.dexscreener.agent import DexScreenerAgent
 from services.agents.dexscreener.models import BoostedTokenResponse, DexPairSearchResponse, TokenProfileResponse

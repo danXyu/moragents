@@ -4,7 +4,6 @@ from typing import Any, List, Optional
 from urllib.parse import urlencode
 
 import aiohttp
-
 from services.secrets import get_secret
 
 from .config import Config
