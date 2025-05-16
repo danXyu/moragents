@@ -9,7 +9,6 @@ const nextConfig = {
         ? "https://api-staging.mysuperagent.io"
         : "http://localhost:8888",
   },
-  output: "export",
   images: {
     unoptimized: true,
   },
