@@ -8,7 +8,7 @@ from src.models.service.chat_models import ChatMessage, ChatRequest
 from src.models.service.service_models import GenerateConversationTitleRequest
 from src.services.delegator.delegator import Delegator
 
-from submodules.agents.src.routes.chat_routes import router
+from src.routes.chat_routes import router
 
 app = FastAPI()
 app.include_router(router)

@@ -3,5 +3,6 @@
   "buildCommand": "cd submodules/frontend && npm run build",
   "installCommand": "cd submodules/frontend && npm install",
   "outputDirectory": "submodules/frontend/.next",
-  "devCommand": "cd submodules/frontend && npm run dev"
+  "devCommand": "cd submodules/frontend && npm run dev",
+  "rootDirectory": "submodules/frontend"
 }

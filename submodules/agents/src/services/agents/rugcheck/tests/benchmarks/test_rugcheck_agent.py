@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from models.service.chat_models import AgentResponse
-from services.agents.rugcheck.agent import RugcheckAgent
+from services.agents.rugcheck.agent import RugCheckAgent
 from services.agents.rugcheck.tool_types import RugcheckToolType
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ def rugcheck_agent(llm):
         "name": "rugcheck",
         "description": "Agent for analyzing token safety",
     }
-    return RugcheckAgent(config, llm)
+    return RugCheckAgent(config, llm)
 
 
 @pytest.mark.benchmark

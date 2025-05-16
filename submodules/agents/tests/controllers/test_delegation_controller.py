@@ -7,7 +7,7 @@ from src.models.service.chat_models import AgentResponse, ChatMessage, ChatReque
 from src.models.service.service_models import GenerateConversationTitleRequest
 from src.services.delegator.delegator import Delegator
 
-from submodules.agents.src.controllers.chat_controller import DelegationController
+from src.controllers.chat_controller import ChatController
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def mock_delegator():
 
 @pytest.fixture
 def controller(mock_delegator):
-    return DelegationController(delegator=mock_delegator)
+    return ChatController(delegator=mock_delegator)
 
 
 @pytest.fixture
