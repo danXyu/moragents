@@ -1,6 +1,5 @@
 import json
 import logging
-
 from typing import List, Optional, Tuple
 
 from config import TOGETHER_CLIENT

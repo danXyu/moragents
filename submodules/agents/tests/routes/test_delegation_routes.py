@@ -6,9 +6,8 @@ from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from src.models.service.chat_models import ChatMessage, ChatRequest
 from src.models.service.service_models import GenerateConversationTitleRequest
-from src.services.delegator.delegator import Delegator
-
 from src.routes.chat_routes import router
+from src.services.delegator.delegator import Delegator
 
 app = FastAPI()
 app.include_router(router)
