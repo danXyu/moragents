@@ -35,16 +35,17 @@ export const MessageList: FC<MessageListProps> = ({
   const { state } = useChatContext();
   const streamingState = state.streamingState;
 
-  // Effect for scrolling to bottom when new messages arrive
+  // Effect for scrolling to bottom when new messages arrive or streaming state changes
   useEffect(() => {
     if (
-      messages.length > prevMessagesLength.current &&
+      (messages.length > prevMessagesLength.current ||
+       streamingState?.status !== 'idle') &&
       messagesEndRef.current
     ) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
     prevMessagesLength.current = messages.length;
-  }, [messages]);
+  }, [messages, streamingState]);
 
   // Fix for mobile viewport height
   useEffect(() => {

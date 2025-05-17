@@ -70,11 +70,11 @@ class OrchestrationFlow(Flow[OrchestrationState]):
     @start()
     async def initialise(self) -> None:
         print(f"Initialising flow with state: {self.state}")
-        
+
         # Emit flow start event if streaming
         if self.request_id:
             await emit_flow_start(self.request_id)
-        
+
         chat_prompt = self.state.chat_prompt
         chat_history = self.state.chat_history
         self.state.chat_prompt = chat_prompt
@@ -328,13 +328,39 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             # Emit dispatch event if streaming
             if self.request_id:
                 await emit_subtask_dispatch(self.request_id, assignment.subtask, assignment.agents)
-            
+
             output = await _execute(assignment.subtask, assignment.agents, completed_outputs)
             completed_outputs.append(output)
-            
-            # Emit result event if streaming
+
+            # Emit result event if streaming with telemetry data
             if self.request_id:
-                await emit_subtask_result(self.request_id, assignment.subtask, output.output, assignment.agents)
+                # Convert telemetry to dict format for JSON serialization
+                telemetry_dict = None
+                if output.telemetry:
+                    telemetry_dict = {
+                        "processing_time": (
+                            {
+                                "start_time": output.telemetry.processing_time.start_time,
+                                "end_time": output.telemetry.processing_time.end_time,
+                                "duration": output.telemetry.processing_time.duration,
+                            }
+                            if output.telemetry.processing_time
+                            else None
+                        ),
+                        "token_usage": (
+                            {
+                                "total_tokens": output.telemetry.token_usage.total_tokens,
+                                "prompt_tokens": output.telemetry.token_usage.prompt_tokens,
+                                "completion_tokens": output.telemetry.token_usage.completion_tokens,
+                                "cached_prompt_tokens": output.telemetry.token_usage.cached_prompt_tokens,
+                            }
+                            if output.telemetry.token_usage
+                            else None
+                        ),
+                    }
+                await emit_subtask_result(
+                    self.request_id, assignment.subtask, output.output, assignment.agents, telemetry_dict
+                )
 
         # Store outputs in state
         self.state.subtask_outputs = completed_outputs
@@ -345,13 +371,15 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         # Emit synthesis start event if streaming
         if self.request_id:
             await emit_synthesis_start(self.request_id)
-        
-        # Create concise synthesis prompt
+
+        # Create comprehensive synthesis prompt
         prompt = (
-            "Synthesize these results into a direct answer. "
-            "Do not include any other text or commentary like based on the results. "
-            "Just return the synthesized answer in the clearest manner possible. "
-            "Be concise and focus on key information.\n\n"
+            "Synthesize these results into a clear and thorough answer that directly addresses the user's request. "
+            "Ensure your response is well-structured and covers all relevant information from the results. "
+            "While being comprehensive, maintain clarity by organizing key points logically. "
+            "Focus on providing actionable insights and complete explanations where needed. "
+            "Do not include meta-commentary or phrases like 'based on the results'. "
+            "Simply provide the synthesized answer in a natural, informative way.\n\n"
             f"User request: {self.state.chat_prompt}\n\n"
             "Results:\n"
         )
@@ -384,7 +412,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             await emit_synthesis_complete(self.request_id, self.state.final_answer)
             await emit_flow_end(self.request_id)
             await emit_final_complete(self.request_id)
-        
+
         return {
             "final_answer": self.state.final_answer,
             "subtask_outputs": self.state.subtask_outputs,

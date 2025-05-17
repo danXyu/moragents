@@ -164,6 +164,14 @@ export interface StreamingEvent {
     task?: string;
     agent?: string;
     final_answer?: string;
+    processing_time?: number;
+    token_usage?: {
+      prompt?: number;
+      response?: number;
+      total?: number;
+    };
+    current_agent_index?: number;
+    total_agents?: number;
   };
 }
 
@@ -240,6 +248,14 @@ export const writeMessageStream = async (
     let finalAnswer: string | null = null;
     let subtaskOutputs: any[] = [];
     let contributingAgents: string[] = [];
+    let globalTelemetry = {
+      total_processing_time: 0,
+      total_token_usage: {
+        prompt: 0,
+        response: 0,
+        total: 0,
+      }
+    };
 
     while (true) {
       const { done, value } = await reader.read();
@@ -300,18 +316,40 @@ export const writeMessageStream = async (
             switch (event.type) {
               case "subtask_dispatch":
               case "subtask_result":
-                // Collect subtask outputs
-                const subtaskOutput = {
+                // Extract telemetry from event data
+                let telemetry = undefined;
+                if (event.data.telemetry) {
+                  console.log("Raw telemetry from event:", JSON.stringify(event.data.telemetry, null, 2));
+                  telemetry = event.data.telemetry;
+                  
+                  // Accumulate global telemetry
+                  if (event.data.telemetry.processing_time?.duration) {
+                    globalTelemetry.total_processing_time += event.data.telemetry.processing_time.duration;
+                  }
+                  
+                  if (event.data.telemetry.token_usage) {
+                    const usage = event.data.telemetry.token_usage;
+                    globalTelemetry.total_token_usage.prompt += usage.prompt_tokens || 0;
+                    globalTelemetry.total_token_usage.response += usage.completion_tokens || 0;
+                    globalTelemetry.total_token_usage.total += usage.total_tokens || 0;
+                  }
+                  console.log("Accumulated global telemetry:", JSON.stringify(globalTelemetry, null, 2));
+                }
+                
+                // Collect subtask outputs with proper telemetry format
+                const subtaskOutput: any = {
                   subtask: event.data.subtask,
                   output: event.data.output || "",
                   agents: event.data.agents || [],
-                  telemetry: {
-                    processing_time: event.data.processing_time ? {
-                      duration: event.data.processing_time,
-                    } : undefined,
-                    token_usage: event.data.token_usage,
-                  }
                 };
+                
+                // Add properly formatted telemetry
+                if (telemetry) {
+                  subtaskOutput.telemetry = {
+                    processing_time: telemetry.processing_time,
+                    token_usage: telemetry.token_usage,
+                  };
+                }
                 
                 // Check if we already have this subtask
                 const existingIndex = subtaskOutputs.findIndex(
@@ -343,7 +381,7 @@ export const writeMessageStream = async (
                 finalAnswer = event.data.final_answer;
                 break;
               case "stream_complete":
-                // Create final assistant message with metadata
+                // Create final assistant message with metadata including telemetry
                 const assistantMessage: ChatMessage = {
                   role: "assistant",
                   content: finalAnswer || "Request completed.",
@@ -353,6 +391,15 @@ export const writeMessageStream = async (
                     collaboration: "orchestrated",
                     contributing_agents: contributingAgents,
                     subtask_outputs: subtaskOutputs,
+                    // Add global telemetry in the format CrewResponseMessage expects
+                    token_usage: globalTelemetry.total_token_usage.total > 0 ? {
+                      total_tokens: globalTelemetry.total_token_usage.total,
+                      prompt_tokens: globalTelemetry.total_token_usage.prompt,
+                      completion_tokens: globalTelemetry.total_token_usage.response,
+                    } : undefined,
+                    processing_time: globalTelemetry.total_processing_time > 0 ? {
+                      duration: globalTelemetry.total_processing_time,
+                    } : undefined,
                   },
                 };
 

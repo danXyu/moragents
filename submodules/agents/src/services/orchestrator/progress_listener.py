@@ -62,19 +62,41 @@ async def emit_subtask_dispatch(request_id: str, subtask: str, agents: list):
             }
         })
 
-async def emit_subtask_result(request_id: str, subtask: str, output: str, agents: list):
+async def emit_subtask_result(request_id: str, subtask: str, output: str, agents: list, telemetry: Optional[Dict[str, Any]] = None):
     """Emit event when a subtask completes"""
     if request_id:
         queue = get_or_create_queue(request_id)
+        event_data = {
+            "subtask": subtask[:200],
+            "output": output[:500],
+            "agents": agents,
+            "message": f"Result: {subtask[:100]}..."
+        }
+        
+        # Add telemetry data if available - ensure correct format
+        if telemetry:
+            formatted_telemetry = {}
+            
+            # Format processing time
+            if telemetry.get("processing_time"):
+                formatted_telemetry["processing_time"] = {
+                    "duration": telemetry["processing_time"].get("duration", 0)
+                }
+            
+            # Format token usage
+            if telemetry.get("token_usage"):
+                formatted_telemetry["token_usage"] = {
+                    "total_tokens": telemetry["token_usage"].get("total_tokens", 0),
+                    "prompt_tokens": telemetry["token_usage"].get("prompt_tokens", 0),
+                    "completion_tokens": telemetry["token_usage"].get("completion_tokens", 0),
+                }
+            
+            event_data["telemetry"] = formatted_telemetry
+        
         await queue.put({
             "type": "subtask_result",
             "timestamp": datetime.now().isoformat(),
-            "data": {
-                "subtask": subtask[:200],
-                "output": output[:500],
-                "agents": agents,
-                "message": f"Result: {subtask[:100]}..."
-            }
+            "data": event_data
         })
 
 async def emit_synthesis_start(request_id: str):

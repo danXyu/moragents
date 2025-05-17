@@ -280,6 +280,9 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
               payload: {
                 status: 'processing',
                 progress: 0,
+                telemetry: undefined,
+                currentAgentIndex: undefined,
+                totalAgents: undefined,
               },
             });
 
@@ -304,6 +307,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                         status: 'processing',
                         subtask: event.data.subtask,
                         agents: event.data.agents,
+                        currentAgentIndex: event.data.current_agent_index,
+                        totalAgents: event.data.total_agents,
                       },
                     });
                     break;
@@ -315,6 +320,9 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                         subtask: event.data.subtask,
                         output: event.data.output,
                         agents: event.data.agents,
+                        telemetry: event.data.telemetry,
+                        currentAgentIndex: event.data.current_agent_index,
+                        totalAgents: event.data.total_agents,
                       },
                     });
                     break;
@@ -328,13 +336,20 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                     break;
                   // Handle synthetic events from event: lines
                   case 'flow_start':
-                  case 'flow_end':
-                  case 'stream_complete':
                     dispatch({
                       type: "UPDATE_STREAMING_PROGRESS",
                       payload: {
                         status: 'processing',
-                        progress: event.data.progress,
+                        progress: 10,
+                      },
+                    });
+                    break;
+                  case 'flow_end':
+                    dispatch({
+                      type: "UPDATE_STREAMING_PROGRESS",
+                      payload: {
+                        status: 'processing',
+                        progress: 85,
                       },
                     });
                     break;
@@ -357,6 +372,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                   payload: {
                     status: 'idle',
                     progress: 0,
+                    telemetry: undefined,
+                    subtask: undefined,
+                    agents: undefined,
+                    output: undefined,
+                    currentAgentIndex: undefined,
+                    totalAgents: undefined,
                   },
                 });
                 
@@ -391,6 +412,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                   payload: {
                     status: 'idle',
                     progress: 0,
+                    telemetry: undefined,
+                    subtask: undefined,
+                    agents: undefined,
+                    output: undefined,
+                    currentAgentIndex: undefined,
+                    totalAgents: undefined,
                   },
                 });
               }
@@ -428,6 +455,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
           payload: {
             status: 'idle',
             progress: 0,
+            telemetry: undefined,
+            subtask: undefined,
+            agents: undefined,
+            output: undefined,
+            currentAgentIndex: undefined,
+            totalAgents: undefined,
           },
         });
       }

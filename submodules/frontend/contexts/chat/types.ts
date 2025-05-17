@@ -1,11 +1,25 @@
 import { ChatMessage } from "@/services/types";
 
+export interface TelemetryData {
+  processing_time?: {
+    duration: number;
+  };
+  token_usage?: {
+    prompt?: number;
+    response?: number;
+    total?: number;
+  };
+}
+
 export interface StreamingState {
   subtask?: string;
   agents?: string[];
   output?: string;
   status: 'idle' | 'dispatching' | 'processing' | 'synthesizing' | 'complete';
   progress: number;
+  telemetry?: TelemetryData;
+  currentAgentIndex?: number;
+  totalAgents?: number;
 }
 
 export interface ChatState {

@@ -10,6 +10,12 @@ export const initialState: ChatState = {
   streamingState: {
     status: 'idle',
     progress: 0,
+    telemetry: undefined,
+    subtask: undefined,
+    agents: undefined,
+    output: undefined,
+    currentAgentIndex: undefined,
+    totalAgents: undefined,
   },
 };
 
@@ -73,7 +79,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       };
 
     case "UPDATE_STREAMING_PROGRESS":
-      const currentState = state.streamingState || { status: 'idle', progress: 0 };
+      const currentState = state.streamingState || initialState.streamingState;
       return {
         ...state,
         streamingState: {
