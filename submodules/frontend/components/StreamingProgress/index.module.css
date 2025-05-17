@@ -5,11 +5,14 @@
   padding: 16px;
   margin: 16px 0;
   backdrop-filter: blur(10px);
+  transition: all 0.3s ease-in-out;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .outputBox {
   scrollbar-width: thin;
   scrollbar-color: rgba(59, 130, 246, 0.5) transparent;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
 .outputBox::-webkit-scrollbar {
@@ -23,4 +26,34 @@
 .outputBox::-webkit-scrollbar-thumb {
   background-color: rgba(59, 130, 246, 0.5);
   border-radius: 2px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smooth transition for content changes */
+.progressContainer > * {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Pulse animation for processing status */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.progressContainer[data-status="processing"] {
+  animation: pulse 2s infinite;
 }

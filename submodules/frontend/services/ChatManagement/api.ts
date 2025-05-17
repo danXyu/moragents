@@ -238,6 +238,8 @@ export const writeMessageStream = async (
     const decoder = new TextDecoder();
     let buffer = "";
     let finalAnswer: string | null = null;
+    let subtaskOutputs: any[] = [];
+    let contributingAgents: string[] = [];
 
     while (true) {
       const { done, value } = await reader.read();
@@ -296,15 +298,62 @@ export const writeMessageStream = async (
 
             // Handle specific event types
             switch (event.type) {
+              case "subtask_dispatch":
+              case "subtask_result":
+                // Collect subtask outputs
+                const subtaskOutput = {
+                  subtask: event.data.subtask,
+                  output: event.data.output || "",
+                  agents: event.data.agents || [],
+                  telemetry: {
+                    processing_time: event.data.processing_time ? {
+                      duration: event.data.processing_time,
+                    } : undefined,
+                    token_usage: event.data.token_usage,
+                  }
+                };
+                
+                // Check if we already have this subtask
+                const existingIndex = subtaskOutputs.findIndex(
+                  s => s.subtask === subtaskOutput.subtask
+                );
+                
+                if (existingIndex >= 0) {
+                  // Update existing subtask
+                  subtaskOutputs[existingIndex] = {
+                    ...subtaskOutputs[existingIndex],
+                    ...subtaskOutput,
+                    output: subtaskOutput.output || subtaskOutputs[existingIndex].output,
+                  };
+                } else {
+                  // Add new subtask
+                  subtaskOutputs.push(subtaskOutput);
+                }
+                
+                // Collect contributing agents
+                if (event.data.agents) {
+                  event.data.agents.forEach((agent: string) => {
+                    if (!contributingAgents.includes(agent)) {
+                      contributingAgents.push(agent);
+                    }
+                  });
+                }
+                break;
               case "synthesis_complete":
                 finalAnswer = event.data.final_answer;
                 break;
               case "stream_complete":
-                // Create final assistant message
+                // Create final assistant message with metadata
                 const assistantMessage: ChatMessage = {
                   role: "assistant",
                   content: finalAnswer || "Request completed.",
                   timestamp: Date.now(),
+                  agentName: "basic_crew",
+                  metadata: {
+                    collaboration: "orchestrated",
+                    contributing_agents: contributingAgents,
+                    subtask_outputs: subtaskOutputs,
+                  },
                 };
 
                 // Add to history and notify completion

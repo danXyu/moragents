@@ -348,8 +348,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                 }
               },
               (response: ChatMessage) => {
-                // Completion handler
-                console.log("Stream complete, adding message:", response);
+                // Completion handler - response now includes metadata with subtask_outputs
+                console.log("Stream complete, adding message with metadata:", response);
                 
                 // Reset streaming state
                 dispatch({
@@ -363,7 +363,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                 // Turn off loading
                 dispatch({ type: "SET_LOADING", payload: false });
                 
-                // Add the final message
+                // Add the final message with crew metadata
                 dispatch({
                   type: "ADD_OPTIMISTIC_MESSAGE",
                   payload: {
