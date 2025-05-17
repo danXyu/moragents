@@ -19,21 +19,28 @@ from crewai.flow.flow import Flow, listen, start
 from services.secrets import get_secret
 
 from .orchestration_state import (
+    Assignment,
     AssignmentPlan,
     OrchestrationState,
-    ProcessingTime,
-    SubtaskOutput,
     SubtaskPlan,
+    SubtaskOutput,
     Telemetry,
     TokenUsage,
+    ProcessingTime,
 )
 from .registry.agent_registry import AgentRegistry
-from .utils import parse_llm_structured_output
+from .helpers.utils import parse_llm_structured_output
+from .helpers.retry_utils import retry_with_backoff
+from .helpers.context_utils import (
+    summarize_previous_outputs,
+    create_focused_task_description,
+    truncate_text,
+)
 
 logger = logging.getLogger(__name__)
 
 # Constants to control execution flow
-MAX_SUBTASKS = 5  # Limit number of subtasks to prevent excessive complexity
+MAX_SUBTASKS = 5  # Keep original limit for complex tasks
 SUBTASK_TIMEOUT = 180  # Maximum time (seconds) to wait for a subtask to complete
 DEFAULT_TASK_OUTPUT = "Unable to complete this task within the allowed constraints."
 
@@ -46,6 +53,8 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         super().__init__()
         self.llm_model = llm_model
         self.llm_api_key = get_secret("GeminiApiKey")
+        # Use a more efficient model for simple tasks
+        self.efficient_model = "gemini/gemini-1.5-flash"
 
     # 1️⃣  Summarise recent chat -----------------------------------------
     @start()
@@ -55,57 +64,105 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         chat_history = self.state.chat_history
         self.state.chat_prompt = chat_prompt
 
-        history_text = "\n".join(chat_history)
-        llm = LLM(model=self.llm_model, api_key=self.llm_api_key)
-        resp = llm.call("Summarise the following dialogue in ≤4 sentences.\n" + history_text)
-        self.state.chat_history_summary = resp.strip()
+        # Use ALL chat history for complete context
+        history_text = "\n".join(chat_history)  # Use full history - don't miss any context
+
+        if history_text:  # Only summarize if there's actual history
+            # Use efficient model ONLY for summarization task
+            llm = LLM(model=self.efficient_model, api_key=self.llm_api_key)
+
+            @retry_with_backoff(max_attempts=3, base_delay=1.0, exceptions=(Exception,))
+            def summarize_chat():
+                return llm.call(
+                    "Summarize this entire conversation comprehensively. "
+                    "Preserve ALL key details, context, user intent, and important decisions. "
+                    "Focus on: main topics, user goals, requirements, constraints, and conversation flow. "
+                    "Be thorough but concise (aim for 500-800 chars):\n\n" + history_text
+                )
+
+            try:
+                resp = summarize_chat()
+                self.state.chat_history_summary = resp.strip()
+            except Exception as e:
+                logger.error(f"Failed to summarize chat history: {e}")
+                self.state.chat_history_summary = ""  # Fallback to empty summary
+        else:
+            self.state.chat_history_summary = ""
 
     # 2️⃣  Sub‑task planning (LLM function‑call, structured) -------------
     @listen(initialise)
     def create_subtasks(self):
+        # Use full chat prompt - it's the user's actual request
         prompt = (
-            "You are an expert project planner. "
-            "Break the user's goal into minimal, sequential action-oriented subtasks. "
-            "Prioritize quality over quantity. We want as few high quality subtasks as possible. "
-            "Each subtask must be specific, clear, and directly actionable. "
-            "Make each subtask DISTINCTLY DIFFERENT, avoiding repetition or overlapping responsibilities. "
-            "Design subtasks as a clear progression where each builds on the work of previous ones. "
-            "Return ONLY valid JSON matching the SubtaskPlan schema.\n"
-            f"Goal: {self.state.chat_prompt}\n\nChat history summary: {self.state.chat_history_summary}"
+            "Break this goal into minimal essential subtasks (1-3 preferred, max 4). "
+            "Each subtask should be specific, actionable, and necessary. "
+            "Avoid redundancy - each subtask should have a distinct purpose. "
+            "Consider the context provided to understand the full scope. "
+            "Return ONLY valid JSON.\n"
+            f"Goal: {self.state.chat_prompt}"
         )
+
+        # Only add chat summary if it's meaningful
+        if self.state.chat_history_summary:
+            prompt += f"\nContext: {self.state.chat_history_summary}"
+
+        # Use FULL MODEL for critical subtask planning - this is too important to use efficient model
         llm = LLM(model=self.llm_model, response_format=SubtaskPlan, api_key=self.llm_api_key)
-        plan = llm.call(prompt)
-        plan = parse_llm_structured_output(plan, SubtaskPlan, logger, "SubtaskPlan")
 
-        # Limit number of subtasks to prevent complexity
-        if plan and plan.subtasks and len(plan.subtasks) > MAX_SUBTASKS:
-            plan.subtasks = plan.subtasks[:MAX_SUBTASKS]
+        @retry_with_backoff(max_attempts=3, base_delay=1.0, exceptions=(Exception,))
+        def create_subtask_plan():
+            return llm.call(prompt)
 
-        self.state.subtasks = plan.subtasks
+        try:
+            plan_response = create_subtask_plan()
+            plan = parse_llm_structured_output(plan_response, SubtaskPlan, logger, "SubtaskPlan")
+
+            # Limit number of subtasks to prevent complexity
+            if plan and plan.subtasks and len(plan.subtasks) > MAX_SUBTASKS:
+                plan.subtasks = plan.subtasks[:MAX_SUBTASKS]
+
+            self.state.subtasks = plan.subtasks if plan and plan.subtasks else []
+        except Exception as e:
+            logger.error(f"Failed to create subtask plan: {e}")
+            # Fallback to a single generic subtask
+            self.state.subtasks = ["Complete the user's request"]
 
     # 3️⃣  Agent assignment (LLM decides, structured) --------------------
     @listen(create_subtasks)
     def assign_agents(self):
         agent_descriptions = AgentRegistry.llm_choice_payload()
         prompt = (
-            "You are a senior project manager. "
-            "You have a pool of specialised agents:\n"
-            f"{agent_descriptions}\n"
-            "Given these subtasks, pick the set of best agents for each. "
-            "A given subtask might need multiple agents to complete. "
-            "Prefer more specific agents over generalists. "
-            "Assemble complementary crews where each agent contributes unique strengths. "
-            "IMPORTANT: Avoid using the same agents for different subtasks when possible. "
-            "Different subtasks should use different specialized agents when appropriate. "
-            "Each crew should contain 1-3 agents with relevant skills for the subtask. "
-            "Return ONLY valid JSON matching the AssignmentPlan schema.\n"
+            "Select 1-4 best agents per subtask. "
+            "Match agent expertise to task requirements. "
+            "Prefer specialized agents over generalists. "
+            "Return ONLY valid JSON.\n"
+            f"Agents:\n{agent_descriptions}\n"
             f"Subtasks: {self.state.subtasks}"
         )
+        # Use FULL MODEL for critical agent assignment - this is too important to use efficient model
         llm = LLM(model=self.llm_model, response_format=AssignmentPlan, api_key=self.llm_api_key)
-        mapping = llm.call(prompt)
-        mapping = parse_llm_structured_output(mapping, AssignmentPlan, logger, "AssignmentPlan")
 
-        self.state.assignments = mapping.assignments
+        @retry_with_backoff(max_attempts=3, base_delay=1.0, exceptions=(Exception,))
+        def assign_agents_to_tasks():
+            return llm.call(prompt)
+
+        try:
+            mapping_response = assign_agents_to_tasks()
+            mapping = parse_llm_structured_output(mapping_response, AssignmentPlan, logger, "AssignmentPlan")
+
+            if mapping and mapping.assignments:
+                self.state.assignments = mapping.assignments
+            else:
+                # Fallback: assign default agent to each subtask
+                self.state.assignments = [
+                    Assignment(subtask=subtask, agents=["default"]) for subtask in self.state.subtasks
+                ]
+        except Exception as e:
+            logger.error(f"Failed to assign agents: {e}")
+            # Fallback to default agent for all subtasks
+            self.state.assignments = [
+                Assignment(subtask=subtask, agents=["default"]) for subtask in self.state.subtasks
+            ]
 
     # 4️⃣  Run each sub‑task sequentially ----------------------------------
     @listen(assign_agents)
@@ -115,7 +172,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         async def _execute(
             subtask: str, agents: List[str], previous_outputs: Optional[List[SubtaskOutput]] = None
         ) -> SubtaskOutput:
-            # Get all agents assigned to this subtask
+            # Get only necessary agents for efficiency
             crew_agents = [AgentRegistry.get(agent_name) for agent_name in agents]
 
             # Early exit if no agents were found
@@ -130,30 +187,25 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                     ),
                 )
 
-            # Include previous subtask outputs in the context if available
+            # Create smart summary of previous work - more context for recent tasks
             previous_context = ""
-            if previous_outputs is None:
-                previous_outputs = []
+            if previous_outputs:
+                previous_context = (
+                    summarize_previous_outputs(
+                        previous_outputs,
+                        max_context_per_output=250,  # Increased for better context
+                        max_total_context=600,  # Increased for better flow
+                    )
+                    + "\n"
+                )
 
-            if len(previous_outputs) > 0:
-                previous_context = "PREVIOUSLY COMPLETED WORK (DO NOT REPEAT THESE TASKS):\n"
-                for prev_output in previous_outputs:
-                    previous_context += f"### COMPLETED: {prev_output.subtask}\n{prev_output.output}\n\n"
-                previous_context += "YOUR TASK SHOULD BUILD ON THE ABOVE COMPLETED WORK.\n\n"
-
-            # Enhance the subtask description with direct guidance, original chat prompt, summarized chat history
-            enhanced_subtask = (
-                f"Original user prompt: {self.state.chat_prompt}\n"
-                f"Summary of chat history: {self.state.chat_history_summary}\n\n"
-                f"{previous_context}"
-                f"YOUR SPECIFIC TASK: {subtask}\n\n"
-                "IMPORTANT INSTRUCTIONS:\n"
-                "1. Focus ONLY on completing the specific task described above - ignore the broader context\n"
-                "2. Do NOT repeat work done in previous subtasks\n"
-                "3. Use your tools directly and efficiently\n"
-                "4. Avoid unnecessary reasoning loops\n"
-                "5. Return a clear, concise answer addressing only your specific task\n"
-                "6. Do not use the same tool more than once"
+            # Create focused task description with proper context
+            enhanced_subtask = create_focused_task_description(
+                subtask=subtask,
+                chat_prompt=self.state.chat_prompt,
+                chat_summary=self.state.chat_history_summary,
+                previous_context=previous_context,
+                max_total_length=1200,  # Increased for better context preservation
             )
 
             # Track processing time
@@ -164,7 +216,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                 tasks=[
                     Task(
                         description=enhanced_subtask,
-                        expected_output="Concise result focusing only on the requested information",
+                        expected_output="Clear, complete answer to the specific task",
                         agent=crew_agents[0],
                     )
                 ],
@@ -182,10 +234,12 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                 # Extract token usage if available
                 token_usage = TokenUsage()
                 if result.token_usage:
-                    token_usage.total_tokens = result.token_usage.total_tokens
-                    token_usage.prompt_tokens = result.token_usage.prompt_tokens
-                    token_usage.completion_tokens = result.token_usage.completion_tokens
-                    token_usage.cached_prompt_tokens = result.token_usage.cached_prompt_tokens
+                    token_usage = TokenUsage(
+                        total_tokens=result.token_usage.total_tokens or 0,
+                        prompt_tokens=result.token_usage.prompt_tokens or 0,
+                        completion_tokens=result.token_usage.completion_tokens or 0,
+                        cached_prompt_tokens=result.token_usage.cached_prompt_tokens or 0,
+                    )
 
                 # Create processing time tracking
                 processing_time = ProcessingTime(
@@ -195,14 +249,31 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                 # Create telemetry object
                 telemetry = Telemetry(token_usage=token_usage, processing_time=processing_time)
 
-                # Check if result contains error messages about iteration limits
-                output_str = str(result.raw)
-                if "Maximum iterations reached" in output_str or "iteration limit" in output_str:
-                    logger.warning(f"Task hit iteration limit: {subtask}")
-                    output_str = f"Partial result (hit iteration limit): {output_str}"
+                # Safely extract output string
+                output_str = ""
+                try:
+                    if hasattr(result, "raw") and result.raw is not None:
+                        output_str = str(result.raw)
+                    elif hasattr(result, "output") and result.output is not None:
+                        output_str = str(result.output)
+                    else:
+                        output_str = str(result)
 
-                # Return structured output
-                return SubtaskOutput(subtask=subtask, output=output_str, agents=agents, telemetry=telemetry)
+                    # Check for iteration limits
+                    if output_str and ("Maximum iterations reached" in output_str or "iteration limit" in output_str):
+                        logger.warning(f"Task hit iteration limit: {subtask}")
+                        output_str = truncate_text(output_str, 500)
+                except Exception as e:
+                    logger.error(f"Error extracting result for subtask '{subtask}': {e}")
+                    output_str = "Task completed but output could not be extracted properly"
+
+                # Return structured output with truncated result
+                return SubtaskOutput(
+                    subtask=subtask,
+                    output=truncate_text(output_str, 800),  # Limit output size
+                    agents=agents,
+                    telemetry=telemetry,
+                )
 
             except TimeoutError:
                 # Handle timeout
@@ -215,8 +286,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                 logger.warning(f"Task timed out: {subtask}")
                 return SubtaskOutput(
                     subtask=subtask,
-                    output=f"This task could not be completed within the allotted time. "
-                    f"Partial information: {DEFAULT_TASK_OUTPUT}",
+                    output=f"Task timed out. {DEFAULT_TASK_OUTPUT}",
                     agents=agents,
                     telemetry=telemetry,
                 )
@@ -232,7 +302,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                 logger.error(f"Error executing task '{subtask}': {str(e)}")
                 return SubtaskOutput(
                     subtask=subtask,
-                    output=f"Error executing this task: {str(e)}. {DEFAULT_TASK_OUTPUT}",
+                    output=f"Error: {str(e)[:100]}",
                     agents=agents,
                     telemetry=telemetry,
                 )
@@ -243,28 +313,44 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             output = await _execute(assignment.subtask, assignment.agents, completed_outputs)
             completed_outputs.append(output)
 
+        # Store outputs in state
         self.state.subtask_outputs = completed_outputs
 
     # 5️⃣  Synthesise final answer ---------------------------------------
     @listen(run_sub_crews)
     def synthesise(self) -> Dict[str, Any]:
+        # Create concise synthesis prompt
         prompt = (
-            "Combine the following sub‑task results into one clear answer for the user. "
-            "If some sub-tasks failed or produced limited results, focus on the successful ones. "
-            "Always provide the most helpful answer possible with the available information. "
-            "Give a direct, synthesized response without prefacing with phrases like 'Based on "
-            "the available information' or summarizing that you're providing information. Just "
-            "present the answer clearly and concisely. "
-            "\n\nUser prompt:\n"
-            f"{self.state.chat_prompt}\n\n"
-            "Sub‑task outputs:\n"
+            "Synthesize these results into a direct answer. "
+            "Do not include any other text or commentary like based on the results. "
+            "Just return the synthesized answer in the clearest manner possible. "
+            "Be concise and focus on key information.\n\n"
+            f"User request: {self.state.chat_prompt}\n\n"
+            "Results:\n"
         )
-        for subtask_output in self.state.subtask_outputs:
-            prompt += f"\n### {subtask_output.subtask}\n{subtask_output.output}\n"
+
+        # Include only essential information from subtask outputs
+        for i, subtask_output in enumerate(self.state.subtask_outputs):
+            # Include more detail for the first few outputs, less for later ones
+            max_output_length = 300 if i < 2 else 150
+            truncated_output = truncate_text(subtask_output.output, max_output_length)
+            prompt += f"\n{i+1}. {truncate_text(subtask_output.subtask, 100)}\n{truncated_output}\n"
 
         llm = LLM(model=self.llm_model, api_key=self.llm_api_key)
-        resp = llm.call(prompt)
-        self.state.final_answer = resp.strip()
+
+        @retry_with_backoff(max_attempts=3, base_delay=1.0, exceptions=(Exception,))
+        def synthesize_final_answer():
+            return llm.call(prompt)
+
+        try:
+            resp = synthesize_final_answer()
+            self.state.final_answer = resp.strip()
+        except Exception as e:
+            logger.error(f"Failed to synthesize final answer: {e}")
+            # Fallback: concatenate subtask outputs
+            self.state.final_answer = "\n\n".join(
+                f"{i+1}. {output.subtask}\n{output.output}" for i, output in enumerate(self.state.subtask_outputs)
+            )
 
         return {
             "final_answer": self.state.final_answer,
