@@ -35,8 +35,28 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
-import { FaRobot, FaUsers, FaCogs, FaCode, FaChartLine, FaSearch, FaComments, FaBrain, FaDatabase, FaExchangeAlt, FaClock, FaMemory, FaArrowRight, FaChevronDown, FaChevronUp } from "react-icons/fa";
-import { HiOutlineSparkles, HiChevronRight, HiLightningBolt } from "react-icons/hi";
+import {
+  FaRobot,
+  FaUsers,
+  FaCogs,
+  FaCode,
+  FaChartLine,
+  FaSearch,
+  FaComments,
+  FaBrain,
+  FaDatabase,
+  FaExchangeAlt,
+  FaClock,
+  FaMemory,
+  FaArrowRight,
+  FaChevronDown,
+  FaChevronUp,
+} from "react-icons/fa";
+import {
+  HiOutlineSparkles,
+  HiChevronRight,
+  HiLightningBolt,
+} from "react-icons/hi";
 import { AiOutlineDeploymentUnit } from "react-icons/ai";
 import { RiTeamLine, RiFlowChart } from "react-icons/ri";
 import { BsArrowDownShort } from "react-icons/bs";
@@ -157,18 +177,18 @@ const MarkdownComponents = {
  */
 const getAgentIcon = (agentName: string) => {
   const name = agentName.toLowerCase();
-  
-  if (name.includes('search') || name.includes('query')) return FaSearch;
-  if (name.includes('code') || name.includes('dev')) return FaCode;
-  if (name.includes('data') || name.includes('database')) return FaDatabase;
-  if (name.includes('chart') || name.includes('analytics')) return FaChartLine;
-  if (name.includes('chat') || name.includes('conversation')) return FaComments;
-  if (name.includes('brain') || name.includes('ai')) return FaBrain;
-  if (name.includes('engine') || name.includes('process')) return FaCogs;
-  if (name.includes('exchange') || name.includes('swap')) return FaExchangeAlt;
-  if (name.includes('deploy')) return AiOutlineDeploymentUnit;
-  if (name.includes('team') || name.includes('crew')) return RiTeamLine;
-  
+
+  if (name.includes("search") || name.includes("query")) return FaSearch;
+  if (name.includes("code") || name.includes("dev")) return FaCode;
+  if (name.includes("data") || name.includes("database")) return FaDatabase;
+  if (name.includes("chart") || name.includes("analytics")) return FaChartLine;
+  if (name.includes("chat") || name.includes("conversation")) return FaComments;
+  if (name.includes("brain") || name.includes("ai")) return FaBrain;
+  if (name.includes("engine") || name.includes("process")) return FaCogs;
+  if (name.includes("exchange") || name.includes("swap")) return FaExchangeAlt;
+  if (name.includes("deploy")) return AiOutlineDeploymentUnit;
+  if (name.includes("team") || name.includes("crew")) return RiTeamLine;
+
   return FaRobot; // Default icon
 };
 
@@ -184,13 +204,15 @@ const CompactTaskOutput: React.FC<{
   return (
     <Box position="relative" cursor="pointer" onClick={onToggle}>
       <Collapse in={!isExpanded} animateOpacity>
-        <Box 
+        <Box
           className={styles.compactOutput}
           h="40px"
           overflow="hidden"
           position="relative"
         >
-          <ReactMarkdown components={MarkdownComponents}>{content}</ReactMarkdown>
+          <ReactMarkdown components={MarkdownComponents}>
+            {content}
+          </ReactMarkdown>
           <Box
             position="absolute"
             bottom={0}
@@ -201,10 +223,12 @@ const CompactTaskOutput: React.FC<{
           />
         </Box>
       </Collapse>
-      
+
       <Collapse in={isExpanded} animateOpacity>
         <Box p={3} bg="gray.825" borderRadius="md" mt={2}>
-          <ReactMarkdown components={MarkdownComponents}>{content}</ReactMarkdown>
+          <ReactMarkdown components={MarkdownComponents}>
+            {content}
+          </ReactMarkdown>
         </Box>
       </Collapse>
     </Box>
@@ -221,6 +245,7 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
 }) => {
   const [expandedTasks, setExpandedTasks] = useState<Set<number>>(new Set());
   const [showDetails, setShowDetails] = useState(false);
+  const [isFlowExpanded, setIsFlowExpanded] = useState(true);
 
   if (!metadata) {
     return (
@@ -238,14 +263,36 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
     setExpandedTasks(newExpanded);
   };
 
-  const totalAgents = metadata.subtask_outputs?.reduce((acc, task) => 
-    acc + (task.agents?.length || 0), 0) || 0;
+  const totalAgents =
+    metadata.subtask_outputs?.reduce(
+      (acc, task) => acc + (task.agents?.length || 0),
+      0
+    ) || 0;
 
-  const totalTime = metadata.subtask_outputs?.reduce((acc, task) => 
-    acc + (task.telemetry?.processing_time?.duration || 0), 0) || 0;
+  const totalTime =
+    metadata.subtask_outputs?.reduce(
+      (acc, task) => acc + (task.telemetry?.processing_time?.duration || 0),
+      0
+    ) || 0;
 
-  const totalTokens = metadata.subtask_outputs?.reduce((acc, task) => 
-    acc + (task.telemetry?.token_usage?.total_tokens || 0), 0) || 0;
+  const totalTokens =
+    metadata.subtask_outputs?.reduce(
+      (acc, task) => acc + (task.telemetry?.token_usage?.total_tokens || 0),
+      0
+    ) || 0;
+
+  // Get all unique agents
+  const allAgents =
+    metadata.subtask_outputs?.reduce((acc: string[], task) => {
+      if (task.agents) {
+        task.agents.forEach((agent) => {
+          if (!acc.includes(agent)) {
+            acc.push(agent);
+          }
+        });
+      }
+      return acc;
+    }, []) || [];
 
   return (
     <Box className={styles.crewResponseContainer}>
@@ -256,188 +303,298 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
 
       {/* Orchestration Flow */}
       {metadata.subtask_outputs && metadata.subtask_outputs.length > 0 && (
-        <Box 
-          bg="gray.900" 
-          borderRadius="lg" 
+        <Box
+          bg="gray.900"
+          borderRadius="lg"
           p={4}
           border="1px solid"
           borderColor="gray.700"
           mt={4}
         >
           {/* Header */}
-          <HStack justify="space-between" mb={4}>
-            <HStack spacing={2}>
-              <Icon as={RiFlowChart} boxSize={5} color="blue.400" />
-              <Text fontSize="md" fontWeight="bold" color="gray.100">
-                Orchestration Flow
-              </Text>
-              <Badge colorScheme="purple" fontSize="xs">
-                {metadata.subtask_outputs.length} steps
-              </Badge>
-            </HStack>
-            
-            <HStack spacing={4} fontSize="xs">
-              <HStack>
-                <Icon as={FaRobot} boxSize={3} color="blue.400" />
-                <Text color="gray.400">{totalAgents} agents</Text>
-              </HStack>
-              <HStack>
-                <Icon as={FaClock} boxSize={3} color="orange.400" />
-                <Text>
-                  <Text as="span" color="orange.400" fontWeight="medium">
-                    {totalTime.toFixed(1)}
-                  </Text>
-                  <Text as="span" color="gray.400">s</Text>
+          <Box
+            as="button"
+            w="full"
+            onClick={() => setIsFlowExpanded(!isFlowExpanded)}
+            cursor="pointer"
+            _hover={{ bg: "gray.850" }}
+            p={3}
+            m={-3}
+            mb={-3}
+            borderRadius="md"
+            transition="background 0.2s"
+          >
+            <HStack justify="space-between">
+              <HStack spacing={2}>
+                <Icon as={RiFlowChart} boxSize={5} color="blue.400" />
+                <Text fontSize="md" fontWeight="bold" color="gray.100">
+                  Orchestration Flow
                 </Text>
+                <Badge colorScheme="purple" fontSize="xs">
+                  {metadata.subtask_outputs.length} steps
+                </Badge>
+                <Icon
+                  as={isFlowExpanded ? FaChevronUp : FaChevronDown}
+                  boxSize={3}
+                  color="gray.400"
+                />
               </HStack>
-              <HStack>
-                <Icon as={FaMemory} boxSize={3} color="purple.400" />
-                <Text>
-                  <Text as="span" color="purple.400" fontWeight="medium">
-                    {totalTokens}
+
+              <HStack spacing={4} fontSize="xs">
+                <Popover trigger="hover" placement="top">
+                  <PopoverTrigger>
+                    <HStack cursor="pointer">
+                      <Icon as={FaRobot} boxSize={3} color="blue.400" />
+                      <Text color="gray.400">{allAgents.length} agents</Text>
+                    </HStack>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    width="auto"
+                    minWidth="200px"
+                    maxWidth="320px"
+                    bg="gray.800"
+                    borderColor="gray.700"
+                    boxShadow="lg"
+                  >
+                    <PopoverArrow bg="gray.800" />
+                    <PopoverBody p={3}>
+                      <Text
+                        fontWeight="semibold"
+                        fontSize="sm"
+                        mb={2}
+                        color="blue.200"
+                      >
+                        Agents involved:
+                      </Text>
+                      <VStack align="stretch" spacing={2}>
+                        {allAgents.map((agent, idx) => {
+                          const AgentIcon = getAgentIcon(agent);
+                          return (
+                            <HStack key={idx} spacing={2} color="gray.100">
+                              <Icon
+                                as={AgentIcon}
+                                boxSize={3}
+                                color="blue.400"
+                              />
+                              <Text fontSize="sm">{agent}</Text>
+                            </HStack>
+                          );
+                        })}
+                      </VStack>
+                    </PopoverBody>
+                  </PopoverContent>
+                </Popover>
+                <HStack>
+                  <Icon as={FaClock} boxSize={3} color="orange.400" />
+                  <Text>
+                    <Text as="span" color="orange.400" fontWeight="medium">
+                      {totalTime.toFixed(1)}
+                    </Text>
+                    <Text as="span" color="gray.400">
+                      s
+                    </Text>
                   </Text>
-                  <Text as="span" color="gray.400"> tokens</Text>
-                </Text>
+                </HStack>
+                <HStack>
+                  <Icon as={FaMemory} boxSize={3} color="purple.400" />
+                  <Text>
+                    <Text as="span" color="purple.400" fontWeight="medium">
+                      {totalTokens}
+                    </Text>
+                    <Text as="span" color="gray.400">
+                      {" "}
+                      tokens
+                    </Text>
+                  </Text>
+                </HStack>
               </HStack>
             </HStack>
-          </HStack>
+          </Box>
 
           {/* Flow Visualization */}
-          <VStack spacing={0} align="stretch">
-            {metadata.subtask_outputs.map((subtask, idx) => {
-              const taskDescription = subtask.subtask || subtask.key || "";
-              const taskOutput = subtask.output || subtask.value || "";
-              const isExpanded = expandedTasks.has(idx);
-              const isLastTask = idx === metadata.subtask_outputs.length - 1;
+          <Collapse in={isFlowExpanded} animateOpacity>
+            <Box mt={4}>
+              <VStack spacing={0} align="stretch">
+                {metadata.subtask_outputs.map((subtask, idx) => {
+                  const taskDescription = subtask.subtask || subtask.key || "";
+                  const taskOutput = subtask.output || subtask.value || "";
+                  const isExpanded = expandedTasks.has(idx);
+                  const isLastTask =
+                    idx === metadata.subtask_outputs.length - 1;
 
-              return (
-                <Box key={idx} position="relative" mb={isLastTask ? 0 : 4}>
-                  {/* Connection Line */}
-                  {idx > 0 && (
-                    <Box
-                      position="absolute"
-                      left="20px"
-                      top="-16px"
-                      w="2px"
-                      h="16px"
-                      bg="gray.600"
-                    />
-                  )}
-                  
-                  {/* Line to next task */}
-                  {!isLastTask && (
-                    <Box
-                      position="absolute"
-                      left="20px"
-                      top="40px"
-                      w="2px"
-                      h="calc(100% - 40px + 16px)"
-                      bg="gray.600"
-                    />
-                  )}
-
-                  {/* Task Node */}
-                  <HStack spacing={3} align="stretch">
-                    {/* Step Number */}
-                    <Circle
-                      size="40px"
-                      bg="blue.500"
-                      color="white"
-                      fontSize="sm"
-                      fontWeight="bold"
-                      flexShrink={0}
-                      position="relative"
-                      zIndex={1}
-                    >
-                      {idx + 1}
-                    </Circle>
-
-                    {/* Task Content */}
-                    <Box 
-                      flex={1}
-                      bg="gray.800"
-                      borderRadius="md"
-                      p={3}
-                      border="1px solid"
-                      borderColor="gray.700"
-                      transition="all 0.2s"
-                      _hover={{ borderColor: "gray.600" }}
-                    >
-                      {/* Task Header */}
-                      <HStack justify="space-between" mb={2}>
-                        <Text fontSize="sm" fontWeight="semibold" color="gray.100">
-                          {taskDescription}
-                        </Text>
-                        
-                        {subtask.agents && subtask.agents.length > 0 && (
-                          <HStack spacing={1}>
-                            {subtask.agents.map((agent, agentIdx) => {
-                              const AgentIcon = getAgentIcon(agent);
-                              return (
-                                <Tooltip key={agentIdx} label={agent} placement="top">
-                                  <Circle size="24px" bg="gray.700" borderWidth={1} borderColor="gray.600">
-                                    <Icon as={AgentIcon} boxSize={3} color="blue.300" />
-                                  </Circle>
-                                </Tooltip>
-                              );
-                            })}
-                          </HStack>
-                        )}
-                      </HStack>
-
-                      {/* Task Output */}
-                      <CompactTaskOutput
-                        content={taskOutput}
-                        taskNumber={idx}
-                        isExpanded={isExpanded}
-                        onToggle={() => toggleTask(idx)}
-                      />
-
-                      {/* Task Telemetry */}
-                      {subtask.telemetry && (
-                        <HStack 
-                          mt={2} 
-                          spacing={3} 
-                          fontSize="xs" 
-                          cursor="pointer"
-                          onClick={() => toggleTask(idx)}
-                        >
-                          {subtask.telemetry.processing_time?.duration && (
-                            <HStack spacing={1}>
-                              <Icon as={FaClock} boxSize={3} color="orange.400" />
-                              <Text>
-                                <Text as="span" color="orange.400" fontWeight="medium">
-                                  {subtask.telemetry.processing_time.duration.toFixed(2)}
-                                </Text>
-                                <Text as="span" color="gray.500">s</Text>
-                              </Text>
-                            </HStack>
-                          )}
-                          {subtask.telemetry.token_usage && (
-                            <HStack spacing={1}>
-                              <Icon as={FaMemory} boxSize={3} color="purple.400" />
-                              <Text>
-                                <Text as="span" color="purple.400" fontWeight="medium">
-                                  {subtask.telemetry.token_usage.total_tokens}
-                                </Text>
-                                <Text as="span" color="gray.500"> tokens</Text>
-                              </Text>
-                            </HStack>
-                          )}
-                          <Icon 
-                            as={isExpanded ? FaChevronUp : FaChevronDown} 
-                            boxSize={3} 
-                            color="gray.400"
-                            ml="auto"
-                          />
-                        </HStack>
+                  return (
+                    <Box key={idx} position="relative" mb={isLastTask ? 0 : 4}>
+                      {/* Connection Line */}
+                      {idx > 0 && (
+                        <Box
+                          position="absolute"
+                          left="20px"
+                          top="-16px"
+                          w="2px"
+                          h="16px"
+                          bg="gray.600"
+                        />
                       )}
+
+                      {/* Line to next task */}
+                      {!isLastTask && (
+                        <Box
+                          position="absolute"
+                          left="20px"
+                          top="40px"
+                          w="2px"
+                          h="calc(100% - 40px + 16px)"
+                          bg="gray.600"
+                        />
+                      )}
+
+                      {/* Task Node */}
+                      <HStack spacing={3} align="stretch">
+                        {/* Step Number */}
+                        <Circle
+                          size="40px"
+                          bg="blue.500"
+                          color="white"
+                          fontSize="sm"
+                          fontWeight="bold"
+                          flexShrink={0}
+                          position="relative"
+                          zIndex={1}
+                        >
+                          {idx + 1}
+                        </Circle>
+
+                        {/* Task Content */}
+                        <Box
+                          flex={1}
+                          bg="gray.800"
+                          borderRadius="md"
+                          p={3}
+                          border="1px solid"
+                          borderColor="gray.700"
+                          transition="all 0.2s"
+                          _hover={{ borderColor: "gray.600" }}
+                        >
+                          {/* Task Header */}
+                          <HStack justify="space-between" mb={2}>
+                            <Text
+                              fontSize="sm"
+                              fontWeight="semibold"
+                              color="gray.100"
+                            >
+                              {taskDescription}
+                            </Text>
+
+                            {subtask.agents && subtask.agents.length > 0 && (
+                              <HStack spacing={1}>
+                                {subtask.agents.map((agent, agentIdx) => {
+                                  const AgentIcon = getAgentIcon(agent);
+                                  return (
+                                    <Tooltip
+                                      key={agentIdx}
+                                      label={agent}
+                                      placement="top"
+                                    >
+                                      <Circle
+                                        size="24px"
+                                        bg="gray.700"
+                                        borderWidth={1}
+                                        borderColor="gray.600"
+                                      >
+                                        <Icon
+                                          as={AgentIcon}
+                                          boxSize={3}
+                                          color="blue.300"
+                                        />
+                                      </Circle>
+                                    </Tooltip>
+                                  );
+                                })}
+                              </HStack>
+                            )}
+                          </HStack>
+
+                          {/* Task Output */}
+                          <CompactTaskOutput
+                            content={taskOutput}
+                            taskNumber={idx}
+                            isExpanded={isExpanded}
+                            onToggle={() => toggleTask(idx)}
+                          />
+
+                          {/* Task Telemetry */}
+                          {subtask.telemetry && (
+                            <HStack
+                              mt={2}
+                              spacing={3}
+                              fontSize="xs"
+                              cursor="pointer"
+                              onClick={() => toggleTask(idx)}
+                            >
+                              {subtask.telemetry.processing_time?.duration && (
+                                <HStack spacing={1}>
+                                  <Icon
+                                    as={FaClock}
+                                    boxSize={3}
+                                    color="orange.400"
+                                  />
+                                  <Text>
+                                    <Text
+                                      as="span"
+                                      color="orange.400"
+                                      fontWeight="medium"
+                                    >
+                                      {subtask.telemetry.processing_time.duration.toFixed(
+                                        2
+                                      )}
+                                    </Text>
+                                    <Text as="span" color="gray.500">
+                                      s
+                                    </Text>
+                                  </Text>
+                                </HStack>
+                              )}
+                              {subtask.telemetry.token_usage && (
+                                <HStack spacing={1}>
+                                  <Icon
+                                    as={FaMemory}
+                                    boxSize={3}
+                                    color="purple.400"
+                                  />
+                                  <Text>
+                                    <Text
+                                      as="span"
+                                      color="purple.400"
+                                      fontWeight="medium"
+                                    >
+                                      {
+                                        subtask.telemetry.token_usage
+                                          .total_tokens
+                                      }
+                                    </Text>
+                                    <Text as="span" color="gray.500">
+                                      {" "}
+                                      tokens
+                                    </Text>
+                                  </Text>
+                                </HStack>
+                              )}
+                              <Icon
+                                as={isExpanded ? FaChevronUp : FaChevronDown}
+                                boxSize={3}
+                                color="gray.400"
+                                ml="auto"
+                              />
+                            </HStack>
+                          )}
+                        </Box>
+                      </HStack>
                     </Box>
-                  </HStack>
-                </Box>
-              );
-            })}
-          </VStack>
+                  );
+                })}
+              </VStack>
+            </Box>
+          </Collapse>
         </Box>
       )}
     </Box>
