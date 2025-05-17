@@ -421,7 +421,7 @@ export const writeMessageStream = async (
                 timestamp: new Date().toISOString(),
                 data: {
                   message: `Failed to parse: ${data}`,
-                  error: err.message,
+                  error: err instanceof Error ? err.message : String(err),
                 },
               };
               onEvent(errorEvent);

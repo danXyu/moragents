@@ -278,7 +278,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             dispatch({
               type: "SET_STREAMING_STATE",
               payload: {
-                status: 'processing',
+                status: "processing",
                 progress: 0,
                 telemetry: undefined,
                 currentAgentIndex: undefined,
@@ -295,16 +295,16 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
               (event: StreamingEvent) => {
                 // Handle streaming events
                 console.log("Received streaming event:", event);
-                
+
                 // Turn off loading when first event arrives
                 dispatch({ type: "SET_LOADING", payload: false });
-                
+
                 switch (event.type) {
-                  case 'subtask_dispatch':
+                  case "subtask_dispatch":
                     dispatch({
                       type: "UPDATE_STREAMING_PROGRESS",
                       payload: {
-                        status: 'processing',
+                        status: "processing",
                         subtask: event.data.subtask,
                         agents: event.data.agents,
                         currentAgentIndex: event.data.current_agent_index,
@@ -312,48 +312,55 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                       },
                     });
                     break;
-                  case 'subtask_result':
+                  case "subtask_result":
                     dispatch({
                       type: "UPDATE_STREAMING_PROGRESS",
                       payload: {
-                        status: 'processing',
+                        status: "processing",
                         subtask: event.data.subtask,
                         output: event.data.output,
                         agents: event.data.agents,
-                        telemetry: event.data.telemetry,
+                        telemetry: {
+                          processing_time: event.data.processing_time
+                            ? {
+                                duration: event.data.processing_time,
+                              }
+                            : undefined,
+                          token_usage: event.data.token_usage,
+                        },
                         currentAgentIndex: event.data.current_agent_index,
                         totalAgents: event.data.total_agents,
                       },
                     });
                     break;
-                  case 'synthesis_start':
+                  case "synthesis_start":
                     dispatch({
                       type: "UPDATE_STREAMING_PROGRESS",
                       payload: {
-                        status: 'synthesizing',
+                        status: "synthesizing",
                       },
                     });
                     break;
                   // Handle synthetic events from event: lines
-                  case 'flow_start':
+                  case "flow_start":
                     dispatch({
                       type: "UPDATE_STREAMING_PROGRESS",
                       payload: {
-                        status: 'processing',
+                        status: "processing",
                         progress: 10,
                       },
                     });
                     break;
-                  case 'flow_end':
+                  case "flow_end":
                     dispatch({
                       type: "UPDATE_STREAMING_PROGRESS",
                       payload: {
-                        status: 'processing',
+                        status: "processing",
                         progress: 85,
                       },
                     });
                     break;
-                  case 'parse_error':
+                  case "parse_error":
                     // Log parse errors but don't show to user
                     console.warn("SSE parse error:", event.data.message);
                     break;
@@ -364,13 +371,16 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
               },
               (response: ChatMessage) => {
                 // Completion handler - response now includes metadata with subtask_outputs
-                console.log("Stream complete, adding message with metadata:", response);
-                
+                console.log(
+                  "Stream complete, adding message with metadata:",
+                  response
+                );
+
                 // Reset streaming state
                 dispatch({
                   type: "SET_STREAMING_STATE",
                   payload: {
-                    status: 'idle',
+                    status: "idle",
                     progress: 0,
                     telemetry: undefined,
                     subtask: undefined,
@@ -380,10 +390,10 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                     totalAgents: undefined,
                   },
                 });
-                
+
                 // Turn off loading
                 dispatch({ type: "SET_LOADING", payload: false });
-                
+
                 // Add the final message with crew metadata
                 dispatch({
                   type: "ADD_OPTIMISTIC_MESSAGE",
@@ -392,25 +402,25 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                     message: response,
                   },
                 });
-                
+
                 refreshMessages();
               },
               (error: Error) => {
                 // Error handler
                 console.error("Streaming error:", error);
-                
+
                 // Don't show parse errors to user - they're handled internally
                 if (!error.message.includes("parse")) {
                   dispatch({ type: "SET_ERROR", payload: error.message });
                 }
-                
+
                 dispatch({ type: "SET_LOADING", payload: false });
-                
+
                 // Reset streaming state on error
                 dispatch({
                   type: "SET_STREAMING_STATE",
                   payload: {
-                    status: 'idle',
+                    status: "idle",
                     progress: 0,
                     telemetry: undefined,
                     subtask: undefined,
@@ -432,7 +442,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
               currentConversationId,
               useResearch
             );
-            
+
             // Refresh messages to get server response
             await refreshMessages();
           }
@@ -445,15 +455,15 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       } catch (error) {
         console.error("Failed to send message:", error);
         dispatch({ type: "SET_ERROR", payload: "Failed to send message" });
-        
+
         // Always ensure loading is turned off
         dispatch({ type: "SET_LOADING", payload: false });
-        
+
         // And reset streaming state
         dispatch({
           type: "SET_STREAMING_STATE",
           payload: {
-            status: 'idle',
+            status: "idle",
             progress: 0,
             telemetry: undefined,
             subtask: undefined,

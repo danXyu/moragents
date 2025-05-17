@@ -6,7 +6,6 @@ import {
   HStack,
   Badge,
   Fade,
-  Progress,
   Icon,
   Flex,
   Collapse,
@@ -63,17 +62,6 @@ export const StreamingProgress: React.FC<StreamingProgressProps> = ({
     }
   };
 
-  const getProgressPercentage = () => {
-    if (streamingState.status === "synthesizing") return 90;
-    if (streamingState.progress) return streamingState.progress;
-    if (streamingState.currentAgentIndex && streamingState.totalAgents) {
-      return Math.round(
-        (streamingState.currentAgentIndex / streamingState.totalAgents) * 80
-      );
-    }
-    return 30;
-  };
-
   const formatDuration = (duration?: number) => {
     if (!duration && duration !== 0) return null;
     // duration is in seconds from backend
@@ -87,7 +75,7 @@ export const StreamingProgress: React.FC<StreamingProgressProps> = ({
     if (!streamingState.telemetry?.token_usage) return null;
     const tokens = streamingState.telemetry.token_usage;
     // Check for both naming conventions from backend
-    const totalTokens = tokens.total_tokens || tokens.total || 0;
+    const totalTokens = tokens.total || 0;
     if (totalTokens) {
       return `${totalTokens} tokens`;
     }

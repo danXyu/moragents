@@ -2,42 +2,22 @@ import React, { useState } from "react";
 import {
   Box,
   Text,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon,
-  Flex,
-  Divider,
-  Tag,
   HStack,
   VStack,
-  Button,
   Popover,
   PopoverTrigger,
   PopoverContent,
   PopoverBody,
   PopoverArrow,
-  PopoverCloseButton,
   Circle,
-  List,
-  ListItem,
-  ListIcon,
-  useDisclosure,
   Icon,
   Badge,
-  Wrap,
-  WrapItem,
   Tooltip,
-  Progress,
-  Skeleton,
   Collapse,
-  IconButton,
 } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 import {
   FaRobot,
-  FaUsers,
   FaCogs,
   FaCode,
   FaChartLine,
@@ -48,24 +28,12 @@ import {
   FaExchangeAlt,
   FaClock,
   FaMemory,
-  FaArrowRight,
   FaChevronDown,
   FaChevronUp,
 } from "react-icons/fa";
-import {
-  HiOutlineSparkles,
-  HiChevronRight,
-  HiLightningBolt,
-} from "react-icons/hi";
 import { AiOutlineDeploymentUnit } from "react-icons/ai";
 import { RiTeamLine, RiFlowChart } from "react-icons/ri";
-import { BsArrowDownShort } from "react-icons/bs";
-import {
-  CrewResponseMetadata,
-  TaskSummary,
-  SubtaskOutput,
-  TokenUsage,
-} from "@/components/Agents/Crew/CrewResponseMessage.types";
+import { CrewResponseMetadata } from "@/components/Agents/Crew/CrewResponseMessage.types";
 import styles from "./CrewResponseMessage.module.css";
 
 interface CrewResponseMessageProps {
@@ -420,7 +388,7 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
                   const taskOutput = subtask.output || subtask.value || "";
                   const isExpanded = expandedTasks.has(idx);
                   const isLastTask =
-                    idx === metadata.subtask_outputs.length - 1;
+                    idx === (metadata.subtask_outputs?.length || 0) - 1;
 
                   return (
                     <Box key={idx} position="relative" mb={isLastTask ? 0 : 4}>

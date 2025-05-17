@@ -78,15 +78,19 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         streamingState: action.payload,
       };
 
-    case "UPDATE_STREAMING_PROGRESS":
-      const currentState = state.streamingState || initialState.streamingState;
+    case "UPDATE_STREAMING_PROGRESS": {
+      const currentState = state.streamingState || initialState.streamingState!;
       return {
         ...state,
         streamingState: {
           ...currentState,
           ...action.payload,
+          // Ensure required fields are never undefined
+          status: action.payload.status || currentState.status,
+          progress: action.payload.progress !== undefined ? action.payload.progress : currentState.progress,
         },
       };
+    }
 
     default:
       return state;
