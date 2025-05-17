@@ -36,6 +36,15 @@ from .helpers.context_utils import (
     create_focused_task_description,
     truncate_text,
 )
+from .progress_listener import (
+    emit_flow_start,
+    emit_flow_end,
+    emit_subtask_dispatch,
+    emit_subtask_result,
+    emit_synthesis_start,
+    emit_synthesis_complete,
+    emit_final_complete,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,17 +58,23 @@ DEFAULT_TASK_OUTPUT = "Unable to complete this task within the allowed constrain
 # Flow implementation
 # --------------------------------------------------------------------- #
 class OrchestrationFlow(Flow[OrchestrationState]):
-    def __init__(self, llm_model: str = "gemini/gemini-2.5-flash-preview-04-17"):
+    def __init__(self, llm_model: str = "gemini/gemini-2.5-flash-preview-04-17", request_id: Optional[str] = None):
         super().__init__()
         self.llm_model = llm_model
         self.llm_api_key = get_secret("GeminiApiKey")
         # Use a more efficient model for simple tasks
         self.efficient_model = "gemini/gemini-1.5-flash"
+        self.request_id = request_id
 
     # 1️⃣  Summarise recent chat -----------------------------------------
     @start()
-    def initialise(self) -> None:
+    async def initialise(self) -> None:
         print(f"Initialising flow with state: {self.state}")
+        
+        # Emit flow start event if streaming
+        if self.request_id:
+            await emit_flow_start(self.request_id)
+        
         chat_prompt = self.state.chat_prompt
         chat_history = self.state.chat_history
         self.state.chat_prompt = chat_prompt
@@ -310,15 +325,27 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         # Execute subtasks sequentially and accumulate results
         completed_outputs = []
         for assignment in self.state.assignments:
+            # Emit dispatch event if streaming
+            if self.request_id:
+                await emit_subtask_dispatch(self.request_id, assignment.subtask, assignment.agents)
+            
             output = await _execute(assignment.subtask, assignment.agents, completed_outputs)
             completed_outputs.append(output)
+            
+            # Emit result event if streaming
+            if self.request_id:
+                await emit_subtask_result(self.request_id, assignment.subtask, output.output, assignment.agents)
 
         # Store outputs in state
         self.state.subtask_outputs = completed_outputs
 
     # 5️⃣  Synthesise final answer ---------------------------------------
     @listen(run_sub_crews)
-    def synthesise(self) -> Dict[str, Any]:
+    async def synthesise(self) -> Dict[str, Any]:
+        # Emit synthesis start event if streaming
+        if self.request_id:
+            await emit_synthesis_start(self.request_id)
+        
         # Create concise synthesis prompt
         prompt = (
             "Synthesize these results into a direct answer. "
@@ -352,6 +379,12 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                 f"{i+1}. {output.subtask}\n{output.output}" for i, output in enumerate(self.state.subtask_outputs)
             )
 
+        # Emit synthesis complete and final complete events if streaming
+        if self.request_id:
+            await emit_synthesis_complete(self.request_id, self.state.final_answer)
+            await emit_flow_end(self.request_id)
+            await emit_final_complete(self.request_id)
+        
         return {
             "final_answer": self.state.final_answer,
             "subtask_outputs": self.state.subtask_outputs,

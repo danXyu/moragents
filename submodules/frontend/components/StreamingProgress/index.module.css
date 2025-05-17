@@ -1,0 +1,26 @@
+.progressContainer {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  backdrop-filter: blur(10px);
+}
+
+.outputBox {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.5) transparent;
+}
+
+.outputBox::-webkit-scrollbar {
+  width: 4px;
+}
+
+.outputBox::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.outputBox::-webkit-scrollbar-thumb {
+  background-color: rgba(59, 130, 246, 0.5);
+  border-radius: 2px;
+}

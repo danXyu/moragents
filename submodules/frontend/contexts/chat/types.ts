@@ -1,11 +1,20 @@
 import { ChatMessage } from "@/services/types";
 
+export interface StreamingState {
+  subtask?: string;
+  agents?: string[];
+  output?: string;
+  status: 'idle' | 'dispatching' | 'processing' | 'synthesizing' | 'complete';
+  progress: number;
+}
+
 export interface ChatState {
   messages: Record<string, ChatMessage[]>;
   currentConversationId: string;
   isLoading: boolean;
   error: string | null;
   conversationTitles: Record<string, string>;
+  streamingState?: StreamingState;
 }
 
 export type ChatAction =
@@ -23,6 +32,14 @@ export type ChatAction =
   | {
       type: "SET_CONVERSATION_TITLE";
       payload: { conversationId: string; title: string };
+    }
+  | {
+      type: "SET_STREAMING_STATE";
+      payload: StreamingState;
+    }
+  | {
+      type: "UPDATE_STREAMING_PROGRESS";
+      payload: Partial<StreamingState>;
     };
 
 export interface ChatContextType {

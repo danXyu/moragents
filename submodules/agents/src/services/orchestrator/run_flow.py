@@ -24,8 +24,8 @@ async def run_flow(chat_request: ChatRequest):
         # 2a) initialize tools and agents (only registers if not already registered)
         bootstrap_agents(LLM_AGENT)
 
-        # 2b) instantiate the flow
-        flow = OrchestrationFlow()
+        # 2b) instantiate the flow with request_id if available
+        flow = OrchestrationFlow(request_id=chat_request.request_id)
 
         # 2c) kick off 🚀
         # Include ALL chat history - the summarization step will handle token reduction intelligently

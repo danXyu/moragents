@@ -47,18 +47,18 @@ class ChatController:
 
                 agent_response = await agent.chat(chat_request)
                 current_agent = agent_name
-
             # Use orchestrator for multi-agent flow
-            if chat_request.use_research:
+            elif chat_request.use_research:
                 logger.info("Using research flow")
-                # current_agent, agent_response = await self.orchestrator.orchestrate(chat_request)``
                 current_agent = "basic_crew"
                 agent_response = await run_flow(chat_request)
-
             # Otherwise use delegator to find appropriate agent
-            if self.delegator and not chat_request.use_research:
+            elif self.delegator:
                 logger.info("Using delegator flow")
                 current_agent, agent_response = await self.delegator.delegate_chat(chat_request)
+            else:
+                logger.error("No delegator available and research mode not enabled")
+                raise HTTPException(status_code=500, detail="No processing method available")
 
             # We only critically fail if we don't get an AgentResponse
             if not isinstance(agent_response, AgentResponse):

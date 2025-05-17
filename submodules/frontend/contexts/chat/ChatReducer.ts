@@ -7,6 +7,10 @@ export const initialState: ChatState = {
   isLoading: false,
   error: null,
   conversationTitles: {},
+  streamingState: {
+    status: 'idle',
+    progress: 0,
+  },
 };
 
 /**
@@ -59,6 +63,22 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         conversationTitles: {
           ...state.conversationTitles,
           [action.payload.conversationId]: action.payload.title,
+        },
+      };
+
+    case "SET_STREAMING_STATE":
+      return {
+        ...state,
+        streamingState: action.payload,
+      };
+
+    case "UPDATE_STREAMING_PROGRESS":
+      const currentState = state.streamingState || { status: 'idle', progress: 0 };
+      return {
+        ...state,
+        streamingState: {
+          ...currentState,
+          ...action.payload,
         },
       };
 

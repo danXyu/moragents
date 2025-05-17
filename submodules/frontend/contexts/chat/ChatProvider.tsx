@@ -12,6 +12,8 @@ import {
   writeMessage,
   uploadFile,
   generateConversationTitle,
+  writeMessageStream,
+  StreamingEvent,
 } from "@/services/ChatManagement/api";
 import { getMessagesHistory } from "@/services/ChatManagement/storage";
 import { getStorageData } from "@/services/LocalStorage/core";
@@ -270,27 +272,164 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             },
           });
 
-          // Send to server
-          await writeMessage(
-            message,
-            getHttpClient(),
-            chainId,
-            address || "",
-            currentConversationId,
-            useResearch
-          );
+          // Use streaming for research mode
+          if (useResearch) {
+            // Reset streaming state
+            dispatch({
+              type: "SET_STREAMING_STATE",
+              payload: {
+                status: 'processing',
+                progress: 0,
+              },
+            });
+
+            await writeMessageStream(
+              message,
+              getHttpClient(),
+              chainId,
+              address || "",
+              currentConversationId,
+              (event: StreamingEvent) => {
+                // Handle streaming events
+                console.log("Received streaming event:", event);
+                
+                // Turn off loading when first event arrives
+                dispatch({ type: "SET_LOADING", payload: false });
+                
+                switch (event.type) {
+                  case 'subtask_dispatch':
+                    dispatch({
+                      type: "UPDATE_STREAMING_PROGRESS",
+                      payload: {
+                        status: 'processing',
+                        subtask: event.data.subtask,
+                        agents: event.data.agents,
+                      },
+                    });
+                    break;
+                  case 'subtask_result':
+                    dispatch({
+                      type: "UPDATE_STREAMING_PROGRESS",
+                      payload: {
+                        status: 'processing',
+                        subtask: event.data.subtask,
+                        output: event.data.output,
+                        agents: event.data.agents,
+                      },
+                    });
+                    break;
+                  case 'synthesis_start':
+                    dispatch({
+                      type: "UPDATE_STREAMING_PROGRESS",
+                      payload: {
+                        status: 'synthesizing',
+                      },
+                    });
+                    break;
+                  // Handle synthetic events from event: lines
+                  case 'flow_start':
+                  case 'flow_end':
+                  case 'stream_complete':
+                    dispatch({
+                      type: "UPDATE_STREAMING_PROGRESS",
+                      payload: {
+                        status: 'processing',
+                        progress: event.data.progress,
+                      },
+                    });
+                    break;
+                  case 'parse_error':
+                    // Log parse errors but don't show to user
+                    console.warn("SSE parse error:", event.data.message);
+                    break;
+                  default:
+                    // Log unhandled events but don't break
+                    console.log("Unhandled streaming event type:", event.type);
+                }
+              },
+              (response: ChatMessage) => {
+                // Completion handler
+                console.log("Stream complete, adding message:", response);
+                
+                // Reset streaming state
+                dispatch({
+                  type: "SET_STREAMING_STATE",
+                  payload: {
+                    status: 'idle',
+                    progress: 0,
+                  },
+                });
+                
+                // Turn off loading
+                dispatch({ type: "SET_LOADING", payload: false });
+                
+                // Add the final message
+                dispatch({
+                  type: "ADD_OPTIMISTIC_MESSAGE",
+                  payload: {
+                    conversationId: currentConversationId,
+                    message: response,
+                  },
+                });
+                
+                refreshMessages();
+              },
+              (error: Error) => {
+                // Error handler
+                console.error("Streaming error:", error);
+                
+                // Don't show parse errors to user - they're handled internally
+                if (!error.message.includes("parse")) {
+                  dispatch({ type: "SET_ERROR", payload: error.message });
+                }
+                
+                dispatch({ type: "SET_LOADING", payload: false });
+                
+                // Reset streaming state on error
+                dispatch({
+                  type: "SET_STREAMING_STATE",
+                  payload: {
+                    status: 'idle',
+                    progress: 0,
+                  },
+                });
+              }
+            );
+          } else {
+            // Non-streaming flow
+            await writeMessage(
+              message,
+              getHttpClient(),
+              chainId,
+              address || "",
+              currentConversationId,
+              useResearch
+            );
+            
+            // Refresh messages to get server response
+            await refreshMessages();
+          }
         } else {
           // File upload flow
           await uploadFile(file, getHttpClient(), currentConversationId);
+          // Refresh messages to get server response
+          await refreshMessages();
         }
-
-        // Refresh messages to get server response
-        await refreshMessages();
       } catch (error) {
         console.error("Failed to send message:", error);
         dispatch({ type: "SET_ERROR", payload: "Failed to send message" });
-      } finally {
+        
+        // Always ensure loading is turned off
         dispatch({ type: "SET_LOADING", payload: false });
+        
+        // And reset streaming state
+        dispatch({
+          type: "SET_STREAMING_STATE",
+          payload: {
+            status: 'idle',
+            progress: 0,
+          },
+        });
       }
     },
     [state.currentConversationId, chainId, address, refreshMessages]
