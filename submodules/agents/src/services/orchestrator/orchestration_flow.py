@@ -31,6 +31,7 @@ from .orchestration_state import (
 from .registry.agent_registry import AgentRegistry
 from .helpers.utils import parse_llm_structured_output
 from .helpers.retry_utils import retry_with_backoff
+from .helpers.context_optimization import optimize_context_block
 from .helpers.context_utils import (
     summarize_previous_outputs,
     create_focused_task_description,
@@ -382,12 +383,19 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             "Results:\n"
         )
 
-        # Include only essential information from subtask outputs
+        # Optimize and include context from subtask outputs
         for i, subtask_output in enumerate(self.state.subtask_outputs):
-            # Include more detail for the first few outputs, less for later ones
-            max_output_length = 300 if i < 2 else 150
-            truncated_output = truncate_text(subtask_output.output, max_output_length)
-            prompt += f"\n{i+1}. {truncate_text(subtask_output.subtask, 100)}\n{truncated_output}\n"
+            # Use context optimization to preserve important information
+            optimized_output = optimize_context_block(
+                subtask_output.output,
+                max_length=15000 if i < 2 else 5000,  # Allow more content for first outputs
+                preserve_start=500,  # Preserve more context from start
+                preserve_end=300,  # Preserve key conclusions at end
+            )
+
+            # Include subtask details and agent information
+            agent_info = f"[Executed by: {', '.join(subtask_output.agents)}]" if subtask_output.agents else ""
+            prompt += f"\n{i+1}. Task: {subtask_output.subtask}\n{agent_info}\nOutput:\n{optimized_output}\n"
 
         llm = LLM(model=self.standard_model, api_key=self.standard_model_api_key)
 

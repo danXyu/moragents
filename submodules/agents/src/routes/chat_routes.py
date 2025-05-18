@@ -9,7 +9,6 @@ from config import setup_logging
 from models.service.chat_models import ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from controllers.chat_controller import ChatController
-from services.delegator.delegator import Delegator
 from services.orchestrator.progress_listener import event_stream, get_or_create_queue
 
 logger = setup_logging()
@@ -83,9 +82,8 @@ async def chat_stream(chat_request: ChatRequest):
     if not chat_request.use_research:
         raise HTTPException(status_code=400, detail="Streaming is only supported for research mode")
 
-    # Initialize controller with delegator for streaming
-    delegator = Delegator()
-    controller = ChatController(delegator)
+    # Initialize controller for streaming
+    controller = ChatController()
 
     # Start processing in background
     async def process_stream():
