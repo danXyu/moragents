@@ -59,8 +59,23 @@ export const writeMessage = async (
 
     // Process response
     if (response.data) {
+      // Extract the assistant response from the API response
+      const { response: agentResponse, current_agent } = response.data;
+      
+      // Create a proper ChatMessage from the agent response
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content: agentResponse.content,
+        agentName: current_agent,
+        error_message: agentResponse.error_message,
+        metadata: agentResponse.metadata,
+        requires_action: agentResponse.requires_action,
+        action_type: agentResponse.action_type,
+        timestamp: Date.now(),
+      };
+      
       // Add assistant's response to local storage
-      addMessageToHistory(response.data, convId);
+      addMessageToHistory(assistantMessage, convId);
     }
 
     // Return the updated messages after API response is processed

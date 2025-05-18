@@ -16,7 +16,7 @@ import {
   StreamingEvent,
 } from "@/services/ChatManagement/api";
 import { getMessagesHistory } from "@/services/ChatManagement/storage";
-import { getStorageData } from "@/services/LocalStorage/core";
+import { getStorageData, cleanupCorruptedMessages } from "@/services/LocalStorage/core";
 import { deleteConversation } from "@/services/ChatManagement/conversations";
 import { chatReducer, initialState } from "@/contexts/chat/ChatReducer";
 import ChatContext from "@/contexts/chat/ChatContext";

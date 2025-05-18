@@ -22,8 +22,6 @@ async def _try_agent(agent_name: str, chat_request: ChatRequest) -> Optional[Age
     """Attempt to use a single agent, with error handling"""
     try:
         logger.info(f"Attempting agent: {agent_name}")
-        logger.info(f"Agent manager agents: {agent_manager_instance.agents}")
-        logger.info(f"Agent manager config: {agent_manager_instance.config}")
         agent = agent_manager_instance.get_agent(agent_name)
         if not agent:
             logger.error(f"Agent {agent_name} not found")
@@ -32,7 +30,7 @@ async def _try_agent(agent_name: str, chat_request: ChatRequest) -> Optional[Age
         result: AgentResponse = await agent.chat(chat_request)
 
         if result.response_type == ResponseType.ERROR:
-            logger.warning(f"Agent {agent_name} returned error response. You should probably look into this")
+            logger.warning(f"Agent {agent_name} returned error response")
             logger.error(f"Error message: {result.error_message}")
             return None
 
@@ -44,7 +42,7 @@ async def _try_agent(agent_name: str, chat_request: ChatRequest) -> Optional[Age
 
 
 def _get_delegator_response(chat_request: ChatRequest, attempted_agents: set[str], max_retries: int = 3) -> List[str]:
-    """Get ranked list of appropriate agents with retry logic"""
+    """Get ranked list of appropriate agents"""
     # Get all available agents
     all_available_agents = agent_manager_instance.get_available_agents()
     logger.info(f"All available agents: {all_available_agents}")
@@ -52,29 +50,27 @@ def _get_delegator_response(chat_request: ChatRequest, attempted_agents: set[str
     # Filter by selected agents if specified in the request
     available_agents = all_available_agents
     if chat_request.selected_agents:
-        # Filter available agents to only include those that were selected
         available_agents = [
             agent for agent in all_available_agents if agent.get("name") in chat_request.selected_agents
         ]
-        logger.info(f"Filtered to selected agents: {chat_request.selected_agents}")
-        logger.info(f"Available selected agents: {available_agents}")
+        logger.info(f"Filtered to selected agents: {available_agents}")
 
     if not available_agents:
         if "default" not in attempted_agents:
             return ["default"]
         raise ValueError("No remaining agents available")
 
-    # Build a proper message list for Together API
+    # Build message list for Together API
     messages = [{"role": "system", "content": get_system_prompt(available_agents)}]
 
-    # Add chat history
+    # Add chat history (last 5 messages)
     for msg in chat_request.chat_history[-5:]:
         messages.append({"role": msg.role, "content": msg.content})
 
     # Add current prompt
     messages.append({"role": "user", "content": chat_request.prompt.content})
 
-    # Define the tool that will return agent rankings
+    # Define the agent ranking tool
     tools = [
         {
             "type": "function",
@@ -98,38 +94,50 @@ def _get_delegator_response(chat_request: ChatRequest, attempted_agents: set[str
 
     for attempt in range(max_retries):
         try:
-            # Use Together's function calling without forcing tool choice
             response = TOGETHER_CLIENT.chat.completions.create(
                 model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
                 messages=messages,
                 tools=tools,
                 temperature=0.7,
+                tool_choice="auto",  # Let model decide when to use tools
             )
 
-            # Extract tool calls
             tool_calls = response.choices[0].message.tool_calls
+            if not tool_calls:
+                logger.error(f"No tool calls in response (attempt {attempt + 1})")
+                continue
 
-            if tool_calls and len(tool_calls) > 0:
-                # Extract the arguments from the function call
-                tool_call = tool_calls[0]
+            tool_call = tool_calls[0]
+            if tool_call.function.name != "rank_agents":
+                logger.error(f"Unexpected function call {tool_call.function.name} (attempt {attempt + 1})")
+                continue
+
+            try:
                 function_args = json.loads(tool_call.function.arguments)
+                agents = function_args.get("agents", [])
 
-                if "agents" in function_args and isinstance(function_args["agents"], list):
-                    agents = function_args["agents"]
-                    if all(isinstance(a, str) for a in agents):
-                        logger.info(f"Selected agents (attempt {attempt+1}): {agents}")
-                        return agents
+                if not isinstance(agents, list) or not all(isinstance(a, str) for a in agents):
+                    logger.error(f"Invalid agents format in response (attempt {attempt + 1})")
+                    continue
 
-            logger.warning(f"Failed to parse agent selection from tool call on attempt {attempt+1}")
+                # Validate agent names against available agents
+                valid_agents = [a for a in agents if any(av.get("name") == a for av in available_agents)]
+                if valid_agents:
+                    logger.info(f"Selected agents: {valid_agents}")
+                    return valid_agents
+
+                logger.error(f"No valid agents in response (attempt {attempt + 1})")
+
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse function arguments (attempt {attempt + 1})")
+                continue
 
         except Exception as e:
-            logger.warning(f"Attempt {attempt+1} failed: {str(e)}")
+            logger.error(f"Error in delegator response (attempt {attempt + 1}): {str(e)}")
 
-        if attempt == max_retries - 1:
-            logger.error("All retries failed")
-            return ["default"]
-
-    return []
+    # If all retries fail, return default agent
+    logger.error("All delegator attempts failed, falling back to default agent")
+    return ["default"]
 
 
 async def run_delegation(chat_request: ChatRequest) -> Tuple[Optional[str], AgentResponse]:
