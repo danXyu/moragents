@@ -6,8 +6,8 @@ from fastapi.responses import JSONResponse
 from langchain.schema import SystemMessage
 from models.service.chat_models import AgentResponse, ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
-from services.delegator.delegator import Delegator
-from services.orchestrator.run_flow import run_flow
+from services.delegator.delegator import run_delegation
+from services.orchestrator.run_flow import run_orchestration
 from stores.agent_manager import agent_manager_instance
 
 logger = setup_logging()
@@ -23,9 +23,6 @@ class ChatController:
     async def handle_chat(self, chat_request: ChatRequest) -> JSONResponse:
         """Handle chat requests and delegate to appropriate agent"""
         logger.info(f"Received chat request for conversation {chat_request.conversation_id}")
-
-        assert self.delegator is not None
-        logger.info(f"Delegator: {self.delegator}")
 
         try:
             # Parse command if present
@@ -50,35 +47,24 @@ class ChatController:
             # Use orchestrator for multi-agent flow
             elif chat_request.use_research:
                 logger.info("Using research flow")
-                current_agent = "basic_crew"
-                agent_response = await run_flow(chat_request)
+                current_agent, agent_response = await run_orchestration(chat_request)
             # Otherwise use delegator to find appropriate agent
-            elif self.delegator:
-                logger.info("Using delegator flow")
-                current_agent, agent_response = await self.delegator.delegate_chat(chat_request)
             else:
-                logger.error("No delegator available and research mode not enabled")
-                raise HTTPException(status_code=500, detail="No processing method available")
+                logger.info("Using delegator flow")
+                current_agent, agent_response = await run_delegation(chat_request)
 
             # We only critically fail if we don't get an AgentResponse
             if not isinstance(agent_response, AgentResponse):
                 logger.error(f"Agent {current_agent} returned invalid response type {type(agent_response)}")
                 raise HTTPException(status_code=500, detail="Agent returned invalid response type")
 
-            response = agent_response.to_chat_message(current_agent).model_dump()
-            logger.info(f"Sending response: {response}")
-            return JSONResponse(content=response)
+            # Return the response
+            return JSONResponse(content={"response": agent_response.dict(), "current_agent": current_agent})
 
-        except HTTPException:
-            raise
-        except TimeoutError:
-            logger.error("Chat request timed out")
-            raise HTTPException(status_code=504, detail="Request timed out")
-        except ValueError as ve:
-            logger.error(f"Input formatting error: {str(ve)}")
-            raise HTTPException(status_code=400, detail=str(ve))
+        except HTTPException as he:
+            raise he
         except Exception as e:
-            logger.error(f"Error in chat route: {str(e)}", exc_info=True)
+            logger.error(f"Error handling chat: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
 
     async def generate_conversation_title(self, request: GenerateConversationTitleRequest) -> str:

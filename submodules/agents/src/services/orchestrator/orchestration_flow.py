@@ -58,13 +58,14 @@ DEFAULT_TASK_OUTPUT = "Unable to complete this task within the allowed constrain
 # Flow implementation
 # --------------------------------------------------------------------- #
 class OrchestrationFlow(Flow[OrchestrationState]):
-    def __init__(self, llm_model: str = "gemini/gemini-2.5-flash-preview-04-17", request_id: Optional[str] = None):
+    def __init__(self, standard_model: str = "gemini/gemini-2.5-flash-preview-04-17", request_id: Optional[str] = None):
         super().__init__()
-        self.llm_model = llm_model
-        self.llm_api_key = get_secret("GeminiApiKey")
+        self.request_id = request_id
+        self.standard_model = standard_model
+        self.standard_model_api_key = get_secret("GeminiApiKey")
+
         # Use a more efficient model for simple tasks
         self.efficient_model = "gemini/gemini-1.5-flash"
-        self.request_id = request_id
 
     # 1️⃣  Summarise recent chat -----------------------------------------
     @start()
@@ -79,12 +80,12 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         chat_history = self.state.chat_history
         self.state.chat_prompt = chat_prompt
 
-        # Use ALL chat history for complete context
-        history_text = "\n".join(chat_history)  # Use full history - don't miss any context
-
-        if history_text:  # Only summarize if there's actual history
-            # Use efficient model ONLY for summarization task
-            llm = LLM(model=self.efficient_model, api_key=self.llm_api_key)
+        # Use ALL chat history for complete context and then use an efficient, large context model for summarization.
+        # The logic behind summarization isn't too complex, and it's more important to be including all of the chat history,
+        # so for that many input tokens, a small quantized model that does well on large contexts gets you 90% of the way there.
+        history_text = "\n".join(chat_history)
+        if history_text:
+            llm = LLM(model=self.efficient_model, api_key=self.standard_model_api_key)
 
             @retry_with_backoff(max_attempts=3, base_delay=1.0, exceptions=(Exception,))
             def summarize_chat():
@@ -107,9 +108,11 @@ class OrchestrationFlow(Flow[OrchestrationState]):
     # 2️⃣  Sub‑task planning (LLM function‑call, structured) -------------
     @listen(initialise)
     def create_subtasks(self):
-        # Use full chat prompt - it's the user's actual request
+        # Curate the full prompt, with
         prompt = (
             "Break this goal into minimal essential subtasks (1-3 preferred, max 4). "
+            "At the end, we will synthesize the results from the subtasks into a final answer. "
+            "So, don't include subtasks that are summarization or post-processing related to synthesis. "
             "Each subtask should be specific, actionable, and necessary. "
             "Avoid redundancy - each subtask should have a distinct purpose. "
             "Consider the context provided to understand the full scope. "
@@ -118,11 +121,11 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         )
 
         # Only add chat summary if it's meaningful
-        if self.state.chat_history_summary:
-            prompt += f"\nContext: {self.state.chat_history_summary}"
+        prompt += f"\nContext: {self.state.chat_history_summary if self.state.chat_history_summary else ''}"
 
-        # Use FULL MODEL for critical subtask planning - this is too important to use efficient model
-        llm = LLM(model=self.llm_model, response_format=SubtaskPlan, api_key=self.llm_api_key)
+        # Use FULL MODEL for critical subtask planning - this is too important to use an efficient model, and
+        # is not limited by retrieval, but rather by latent reasoning capability.
+        llm = LLM(model=self.standard_model, response_format=SubtaskPlan, api_key=self.standard_model_api_key)
 
         @retry_with_backoff(max_attempts=3, base_delay=1.0, exceptions=(Exception,))
         def create_subtask_plan():
@@ -132,7 +135,8 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             plan_response = create_subtask_plan()
             plan = parse_llm_structured_output(plan_response, SubtaskPlan, logger, "SubtaskPlan")
 
-            # Limit number of subtasks to prevent complexity
+            # Limit number of subtasks as a precaution to prevent too much complexity,
+            # sometimes the subtask plan forgets that we synthesize separately.
             if plan and plan.subtasks and len(plan.subtasks) > MAX_SUBTASKS:
                 plan.subtasks = plan.subtasks[:MAX_SUBTASKS]
 
@@ -155,7 +159,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             f"Subtasks: {self.state.subtasks}"
         )
         # Use FULL MODEL for critical agent assignment - this is too important to use efficient model
-        llm = LLM(model=self.llm_model, response_format=AssignmentPlan, api_key=self.llm_api_key)
+        llm = LLM(model=self.standard_model, response_format=AssignmentPlan, api_key=self.standard_model_api_key)
 
         @retry_with_backoff(max_attempts=3, base_delay=1.0, exceptions=(Exception,))
         def assign_agents_to_tasks():
@@ -208,8 +212,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                 previous_context = (
                     summarize_previous_outputs(
                         previous_outputs,
-                        max_context_per_output=250,  # Increased for better context
-                        max_total_context=600,  # Increased for better flow
+                        max_total_context=10000,  # Increased for better flow
                     )
                     + "\n"
                 )
@@ -220,7 +223,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                 chat_prompt=self.state.chat_prompt,
                 chat_summary=self.state.chat_history_summary,
                 previous_context=previous_context,
-                max_total_length=1200,  # Increased for better context preservation
+                max_total_length=1500,
             )
 
             # Track processing time
@@ -267,12 +270,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                 # Safely extract output string
                 output_str = ""
                 try:
-                    if hasattr(result, "raw") and result.raw is not None:
-                        output_str = str(result.raw)
-                    elif hasattr(result, "output") and result.output is not None:
-                        output_str = str(result.output)
-                    else:
-                        output_str = str(result)
+                    output_str = str(result.raw)
 
                     # Check for iteration limits
                     if output_str and ("Maximum iterations reached" in output_str or "iteration limit" in output_str):
@@ -282,10 +280,10 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                     logger.error(f"Error extracting result for subtask '{subtask}': {e}")
                     output_str = "Task completed but output could not be extracted properly"
 
-                # Return structured output with truncated result
+                # Return structured output
                 return SubtaskOutput(
                     subtask=subtask,
-                    output=truncate_text(output_str, 800),  # Limit output size
+                    output=output_str,
                     agents=agents,
                     telemetry=telemetry,
                 )
@@ -391,7 +389,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             truncated_output = truncate_text(subtask_output.output, max_output_length)
             prompt += f"\n{i+1}. {truncate_text(subtask_output.subtask, 100)}\n{truncated_output}\n"
 
-        llm = LLM(model=self.llm_model, api_key=self.llm_api_key)
+        llm = LLM(model=self.standard_model, api_key=self.standard_model_api_key)
 
         @retry_with_backoff(max_attempts=3, base_delay=1.0, exceptions=(Exception,))
         def synthesize_final_answer():

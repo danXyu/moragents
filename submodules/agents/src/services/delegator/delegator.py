@@ -18,147 +18,139 @@ class RankAgentsOutput(BaseModel):
     agents: List[str] = Field(..., description="List of up to 3 agent names, ordered by relevance")
 
 
-class Delegator:
-    def __init__(self, model: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo"):
-        self.together_client = TOGETHER_CLIENT
-        self.model = model
-        self.attempted_agents: set[str] = set()
-        self.selected_agents_for_request: list[str] = []
-
-    async def _try_agent(self, agent_name: str, chat_request: ChatRequest) -> Optional[AgentResponse]:
-        """Attempt to use a single agent, with error handling"""
-        try:
-            logger.info(f"Attempting agent: {agent_name}")
-            logger.info(f"Agent manager agents: {agent_manager_instance.agents}")
-            logger.info(f"Agent manager config: {agent_manager_instance.config}")
-            agent = agent_manager_instance.get_agent(agent_name)
-            if not agent:
-                logger.error(f"Agent {agent_name} not found")
-                return None
-
-            result: AgentResponse = await agent.chat(chat_request)
-
-            if result.response_type == ResponseType.ERROR:
-                logger.warning(f"Agent {agent_name} returned error response. You should probably look into this")
-                logger.error(f"Error message: {result.error_message}")
-                return None
-
-            return result
-
-        except Exception as e:
-            logger.error(f"Error using agent {agent_name}: {str(e)}")
+async def _try_agent(agent_name: str, chat_request: ChatRequest) -> Optional[AgentResponse]:
+    """Attempt to use a single agent, with error handling"""
+    try:
+        logger.info(f"Attempting agent: {agent_name}")
+        logger.info(f"Agent manager agents: {agent_manager_instance.agents}")
+        logger.info(f"Agent manager config: {agent_manager_instance.config}")
+        agent = agent_manager_instance.get_agent(agent_name)
+        if not agent:
+            logger.error(f"Agent {agent_name} not found")
             return None
 
-    def get_delegator_response(self, chat_request: ChatRequest, max_retries: int = 3) -> List[str]:
-        """Get ranked list of appropriate agents with retry logic"""
-        # Get all available agents
-        all_available_agents = agent_manager_instance.get_available_agents()
-        logger.info(f"All available agents: {all_available_agents}")
+        result: AgentResponse = await agent.chat(chat_request)
 
-        # Filter by selected agents if specified in the request
-        available_agents = all_available_agents
-        if chat_request.selected_agents:
-            # Filter available agents to only include those that were selected
-            available_agents = [
-                agent for agent in all_available_agents if agent.get("name") in chat_request.selected_agents
-            ]
-            logger.info(f"Filtered to selected agents: {chat_request.selected_agents}")
-            logger.info(f"Available selected agents: {available_agents}")
+        if result.response_type == ResponseType.ERROR:
+            logger.warning(f"Agent {agent_name} returned error response. You should probably look into this")
+            logger.error(f"Error message: {result.error_message}")
+            return None
 
-        if not available_agents:
-            if "default" not in self.attempted_agents:
-                return ["default"]
-            raise ValueError("No remaining agents available")
+        return result
 
-        system_prompt = get_system_prompt(available_agents)
+    except Exception as e:
+        logger.error(f"Error using agent {agent_name}: {str(e)}")
+        return None
 
-        # Build a proper message list for Together API
-        messages = [{"role": "system", "content": system_prompt}]
 
-        # Add chat history
-        for msg in chat_request.chat_history[-5:]:
-            messages.append({"role": msg.role, "content": msg.content})
+def _get_delegator_response(chat_request: ChatRequest, attempted_agents: set[str], max_retries: int = 3) -> List[str]:
+    """Get ranked list of appropriate agents with retry logic"""
+    # Get all available agents
+    all_available_agents = agent_manager_instance.get_available_agents()
+    logger.info(f"All available agents: {all_available_agents}")
 
-        # Add current prompt
-        messages.append({"role": "user", "content": chat_request.prompt.content})
-
-        # Define the tool that will return agent rankings
-        tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "rank_agents",
-                    "description": "Rank the most appropriate agents for this request",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "agents": {
-                                "type": "array",
-                                "description": "List of up to 3 agent names, ordered by relevance",
-                                "items": {"type": "string"},
-                            }
-                        },
-                        "required": ["agents"],
-                    },
-                },
-            }
+    # Filter by selected agents if specified in the request
+    available_agents = all_available_agents
+    if chat_request.selected_agents:
+        # Filter available agents to only include those that were selected
+        available_agents = [
+            agent for agent in all_available_agents if agent.get("name") in chat_request.selected_agents
         ]
+        logger.info(f"Filtered to selected agents: {chat_request.selected_agents}")
+        logger.info(f"Available selected agents: {available_agents}")
 
-        for attempt in range(max_retries):
-            try:
-                # Use Together's function calling without forcing tool choice
-                response = self.together_client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    tools=tools,
-                    temperature=0.7,
-                )
+    if not available_agents:
+        if "default" not in attempted_agents:
+            return ["default"]
+        raise ValueError("No remaining agents available")
 
-                # Extract tool calls
-                tool_calls = response.choices[0].message.tool_calls
+    # Build a proper message list for Together API
+    messages = [{"role": "system", "content": get_system_prompt(available_agents)}]
 
-                if tool_calls and len(tool_calls) > 0:
-                    # Extract the arguments from the function call
-                    tool_call = tool_calls[0]
-                    function_args = json.loads(tool_call.function.arguments)
+    # Add chat history
+    for msg in chat_request.chat_history[-5:]:
+        messages.append({"role": msg.role, "content": msg.content})
 
-                    if "agents" in function_args and isinstance(function_args["agents"], list):
-                        agents = function_args["agents"]
-                        if all(isinstance(a, str) for a in agents):
-                            self.selected_agents_for_request = agents
-                            logger.info(f"Selected agents (attempt {attempt+1}): {agents}")
-                            return agents
+    # Add current prompt
+    messages.append({"role": "user", "content": chat_request.prompt.content})
 
-                logger.warning(f"Failed to parse agent selection from tool call on attempt {attempt+1}")
+    # Define the tool that will return agent rankings
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "rank_agents",
+                "description": "Rank the most appropriate agents for this request",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "agents": {
+                            "type": "array",
+                            "description": "List of up to 3 agent names, ordered by relevance",
+                            "items": {"type": "string"},
+                        }
+                    },
+                    "required": ["agents"],
+                },
+            },
+        }
+    ]
 
-            except Exception as e:
-                logger.warning(f"Attempt {attempt+1} failed: {str(e)}")
-
-            if attempt == max_retries - 1:
-                logger.error("All retries failed")
-                return ["default"]
-
-        return []
-
-    async def delegate_chat(self, chat_request: ChatRequest) -> Tuple[Optional[str], AgentResponse]:
-        """Delegate chat to ranked agents with fallback"""
-        attempts = 0
+    for attempt in range(max_retries):
         try:
-            # Get ranked agents based on LLM delegation
-            ranked_agents = self.get_delegator_response(chat_request)
+            # Use Together's function calling without forcing tool choice
+            response = TOGETHER_CLIENT.chat.completions.create(
+                model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
+                messages=messages,
+                tools=tools,
+                temperature=0.7,
+            )
 
-            for agent_name in ranked_agents:
-                attempts += 1
-                self.attempted_agents.add(agent_name)
-                logger.info(f"Attempting agent: {agent_name}")
+            # Extract tool calls
+            tool_calls = response.choices[0].message.tool_calls
 
-                result = await self._try_agent(agent_name, chat_request)
-                if result:
-                    logger.info(f"Successfully used agent: {agent_name}")
-                    return agent_name, result
+            if tool_calls and len(tool_calls) > 0:
+                # Extract the arguments from the function call
+                tool_call = tool_calls[0]
+                function_args = json.loads(tool_call.function.arguments)
 
-            return None, AgentResponse.error(error_message="All agents have been attempted without success")
+                if "agents" in function_args and isinstance(function_args["agents"], list):
+                    agents = function_args["agents"]
+                    if all(isinstance(a, str) for a in agents):
+                        logger.info(f"Selected agents (attempt {attempt+1}): {agents}")
+                        return agents
 
-        except ValueError as ve:
-            logger.error(f"No available agents: {str(ve)}")
-            return None, AgentResponse.error(error_message="No suitable agents available for the request")
+            logger.warning(f"Failed to parse agent selection from tool call on attempt {attempt+1}")
+
+        except Exception as e:
+            logger.warning(f"Attempt {attempt+1} failed: {str(e)}")
+
+        if attempt == max_retries - 1:
+            logger.error("All retries failed")
+            return ["default"]
+
+    return []
+
+
+async def run_delegation(chat_request: ChatRequest) -> Tuple[Optional[str], AgentResponse]:
+    """Run the delegation process to find and execute the best agent for the request"""
+    attempted_agents: set[str] = set()
+
+    try:
+        # Get ranked agents based on LLM delegation
+        ranked_agents = _get_delegator_response(chat_request, attempted_agents)
+
+        for agent_name in ranked_agents:
+            attempted_agents.add(agent_name)
+            logger.info(f"Attempting agent: {agent_name}")
+
+            result = await _try_agent(agent_name, chat_request)
+            if result:
+                logger.info(f"Successfully used agent: {agent_name}")
+                return agent_name, result
+
+        return None, AgentResponse.error(error_message="All agents have been attempted without success")
+
+    except ValueError as ve:
+        logger.error(f"No available agents: {str(ve)}")
+        return None, AgentResponse.error(error_message="No suitable agents available for the request")
