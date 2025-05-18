@@ -1,6 +1,7 @@
 """Utilities for optimizing agent-related token usage."""
 
 from typing import List
+
 from services.orchestrator.registry.agent_registry import AgentRegistry
 
 

@@ -2,7 +2,6 @@ from config import LLM_DELEGATOR, setup_logging
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from langchain.schema import SystemMessage
-
 from models.service.chat_models import AgentResponse, ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
 from services.delegator.delegator import run_delegation
@@ -13,7 +12,6 @@ logger = setup_logging()
 
 
 class ChatController:
-
     async def handle_chat(self, chat_request: ChatRequest) -> JSONResponse:
         """Handle chat requests and delegate to appropriate agent"""
         logger.info(f"Received chat request for conversation {chat_request.conversation_id}")
@@ -53,7 +51,9 @@ class ChatController:
                 raise HTTPException(status_code=500, detail="Agent returned invalid response type")
 
             # Return the response
-            return JSONResponse(content={"response": agent_response.model_dump(mode='json'), "current_agent": current_agent})
+            return JSONResponse(
+                content={"response": agent_response.model_dump(mode="json"), "current_agent": current_agent}
+            )
 
         except HTTPException as he:
             raise he

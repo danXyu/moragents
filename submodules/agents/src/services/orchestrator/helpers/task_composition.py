@@ -1,10 +1,10 @@
 """Task description composition utilities with clear separation of concerns."""
 
-from typing import List, Optional
 from dataclasses import dataclass
+from typing import List, Optional
 
-from .context_optimization import optimize_context_block
 from ..orchestration_state import SubtaskOutput
+from .context_optimization import optimize_context_block
 
 
 @dataclass

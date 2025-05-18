@@ -1,9 +1,9 @@
 """Context optimization utilities for handling large context windows efficiently."""
 
-from typing import List, Dict, Optional
-from collections import Counter
 import json
 import re
+from collections import Counter
+from typing import Dict, List
 
 
 def detect_repeated_structures(text: str) -> Dict[str, float]:
@@ -77,7 +77,7 @@ def optimize_context_block(text: str, max_length: int, preserve_start: int = 100
 
 def extract_complete_units(text: str) -> List[str]:
     """Extract complete structural units from text (JSON objects, list items etc)."""
-    units = []
+    units: List[str] = []
 
     # Try parsing as JSON first
     try:
@@ -150,7 +150,7 @@ def optimize_by_density(text: str, max_length: int, preserve_start: int, preserv
 
     # Split into chunks and analyze density
     chunk_size = 100
-    chunks = [middle_text[i : i + chunk_size] for i in range(0, len(middle_text), chunk_size)]
+    chunks = [middle_text[i : i + chunk_size] for i in range(0, len(middle_text), chunk_size)]  # noqa: E203
 
     # Calculate density scores for chunks
     chunk_scores = [(chunk, analyze_information_density(chunk)) for chunk in chunks]

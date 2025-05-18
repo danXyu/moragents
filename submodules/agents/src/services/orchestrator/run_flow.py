@@ -1,15 +1,14 @@
+import logging
 from typing import Any, Dict, Tuple
 
 from config import LLM_AGENT
 from models.service.chat_models import AgentResponse, ChatRequest
+from services.orchestrator.helpers.error_handler import safe_orchestration_response
 
 # ------------------------------------------------------------
 # 1.  Import flow + registry
 from services.orchestrator.orchestration_flow import OrchestrationFlow
 from services.orchestrator.registry.agent_bootstrap import bootstrap_agents
-from services.orchestrator.helpers.error_handler import safe_orchestration_response
-
-import logging
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,10 @@
 """Context utilities."""
 
 from typing import List, Optional
+
 from services.orchestrator.orchestration_state import SubtaskOutput
-from .task_composition import TaskComponents, optimize_previous_outputs, compose_task_description
+
+from .task_composition import TaskComponents, compose_task_description, optimize_previous_outputs
 
 
 def truncate_text(text: str, max_chars: int = 500) -> str:

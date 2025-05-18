@@ -18,34 +18,30 @@ from crewai import LLM, Crew, Process, Task
 from crewai.flow.flow import Flow, listen, start
 from services.secrets import get_secret
 
+from .helpers.context_optimization import optimize_context_block
+from .helpers.context_utils import create_focused_task_description, summarize_previous_outputs, truncate_text
+from .helpers.retry_utils import retry_with_backoff
+from .helpers.utils import parse_llm_structured_output
 from .orchestration_state import (
     Assignment,
     AssignmentPlan,
     OrchestrationState,
-    SubtaskPlan,
+    ProcessingTime,
     SubtaskOutput,
+    SubtaskPlan,
     Telemetry,
     TokenUsage,
-    ProcessingTime,
-)
-from .registry.agent_registry import AgentRegistry
-from .helpers.utils import parse_llm_structured_output
-from .helpers.retry_utils import retry_with_backoff
-from .helpers.context_optimization import optimize_context_block
-from .helpers.context_utils import (
-    summarize_previous_outputs,
-    create_focused_task_description,
-    truncate_text,
 )
 from .progress_listener import (
-    emit_flow_start,
+    emit_final_complete,
     emit_flow_end,
+    emit_flow_start,
     emit_subtask_dispatch,
     emit_subtask_result,
-    emit_synthesis_start,
     emit_synthesis_complete,
-    emit_final_complete,
+    emit_synthesis_start,
 )
+from .registry.agent_registry import AgentRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +77,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         chat_history = self.state.chat_history
         self.state.chat_prompt = chat_prompt
 
-        # Use ALL chat history for complete context and then use an efficient, large context model for summarization.
-        # The logic behind summarization isn't too complex, and it's more important to be including all of the chat history,
-        # so for that many input tokens, a small quantized model that does well on large contexts gets you 90% of the way there.
+        # Only summarize chat history that's relevant to the current prompt
         history_text = "\n".join(chat_history)
         if history_text:
             llm = LLM(model=self.efficient_model, api_key=self.standard_model_api_key)
@@ -91,10 +85,11 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             @retry_with_backoff(max_attempts=3, base_delay=1.0, exceptions=(Exception,))
             def summarize_chat():
                 return llm.call(
-                    "Summarize this entire conversation comprehensively. "
-                    "Preserve ALL key details, context, user intent, and important decisions. "
-                    "Focus on: main topics, user goals, requirements, constraints, and conversation flow. "
-                    "Be thorough but concise (aim for 500-800 chars):\n\n" + history_text
+                    "Review the conversation history and extract ONLY information that is relevant "
+                    "to answering this current prompt/request. If no information is relevant, return "
+                    "an empty string. Do not include irrelevant context.\n\n"
+                    f"Current prompt: {chat_prompt}\n\n"
+                    f"Conversation history:\n{history_text}"
                 )
 
             try:
@@ -116,13 +111,19 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             "So, don't include subtasks that are summarization or post-processing related to synthesis. "
             "Each subtask should be specific, actionable, and necessary. "
             "Avoid redundancy - each subtask should have a distinct purpose. "
-            "Consider the context provided to understand the full scope. "
+            "The subtasks should directly address the core goal - do not be distracted by context. "
             "Return ONLY valid JSON.\n"
             f"Goal: {self.state.chat_prompt}"
         )
 
         # Only add chat summary if it's meaningful
-        prompt += f"\nContext: {self.state.chat_history_summary if self.state.chat_history_summary else ''}"
+        if self.state.chat_history_summary:
+            prompt += (
+                "\nNote: Below is a summary of relevant details from prior chat history. "
+                "Use these details only if they provide specific information needed to complete subtasks. "
+                "Do not create subtasks just to incorporate this context - focus on the core goal.\n"
+                f"Relevant chat details: {self.state.chat_history_summary}"
+            )
 
         # Use FULL MODEL for critical subtask planning - this is too important to use an efficient model, and
         # is not limited by retrieval, but rather by latent reasoning capability.

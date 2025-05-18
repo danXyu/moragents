@@ -1,15 +1,15 @@
 import asyncio
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
-from sse_starlette.sse import EventSourceResponse
 
 from config import setup_logging
+from controllers.chat_controller import ChatController
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from models.service.chat_models import ChatRequest
 from models.service.service_models import GenerateConversationTitleRequest
-from controllers.chat_controller import ChatController
 from services.orchestrator.progress_listener import event_stream, get_or_create_queue
+from sse_starlette.sse import EventSourceResponse
 
 logger = setup_logging()
 
@@ -21,9 +21,8 @@ async def chat(chat_request: ChatRequest) -> JSONResponse:
     """Handle chat requests and delegate to appropriate agent"""
     logger.info(f"Received chat request for conversation {chat_request.conversation_id}")
 
-    # Initialize new delegator and controller for each request
-    delegator = Delegator()
-    controller = ChatController(delegator)
+    # Initialize new controller for each request
+    controller = ChatController()
 
     try:
         response = await controller.handle_chat(chat_request)

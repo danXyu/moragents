@@ -193,7 +193,29 @@ const CompactTaskOutput: React.FC<{
       </Collapse>
 
       <Collapse in={isExpanded} animateOpacity>
-        <Box p={3} bg="gray.825" borderRadius="md" mt={2}>
+        <Box 
+          p={3} 
+          bg="gray.825" 
+          borderRadius="md" 
+          mt={2}
+          maxH="400px"
+          overflowY="auto"
+          sx={{
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(96, 165, 250, 0.3)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'rgba(96, 165, 250, 0.5)',
+            },
+          }}
+        >
           <ReactMarkdown components={MarkdownComponents}>
             {content}
           </ReactMarkdown>
@@ -217,25 +239,28 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
   const [isFlowExpanded, setIsFlowExpanded] = useState(true);
   const [displayedContent, setDisplayedContent] = useState("");
   const [isTyping, setIsTyping] = useState(true);
-  
+
   // Typing animation effect
   useEffect(() => {
     if (!content) return;
-    
+
     // Reset displayed content when content changes
     setDisplayedContent("");
     setIsTyping(true);
-    
+
     const totalLength = content.length;
     let currentLength = 0;
-    
+
     // Calculate typing speed to complete in ~0.8-1.2 seconds
     const typingDuration = Math.min(1000, Math.max(800, totalLength * 3)); // Dynamic duration based on length
-    const charsPerInterval = Math.max(1, Math.ceil(totalLength / (typingDuration / 16))); // 60fps
-    
+    const charsPerInterval = Math.max(
+      1,
+      Math.ceil(totalLength / (typingDuration / 16))
+    ); // 60fps
+
     const interval = setInterval(() => {
       currentLength += charsPerInterval;
-      
+
       if (currentLength >= totalLength) {
         setDisplayedContent(content);
         setIsTyping(false);
@@ -244,13 +269,15 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
         setDisplayedContent(content.substring(0, currentLength));
       }
     }, 16); // 60fps
-    
+
     return () => clearInterval(interval);
   }, [content]);
 
   if (!metadata) {
     return (
-      <ReactMarkdown components={MarkdownComponents}>{displayedContent}</ReactMarkdown>
+      <ReactMarkdown components={MarkdownComponents}>
+        {displayedContent}
+      </ReactMarkdown>
     );
   }
 
@@ -299,7 +326,9 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
     <Box className={styles.crewResponseContainer}>
       {/* Main Response */}
       <Box mb={3} className={styles.mainResponse}>
-        <ReactMarkdown components={MarkdownComponents}>{displayedContent}</ReactMarkdown>
+        <ReactMarkdown components={MarkdownComponents}>
+          {displayedContent}
+        </ReactMarkdown>
         {isTyping && <span className={styles.typingCursor} />}
       </Box>
 
