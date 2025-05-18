@@ -7,6 +7,16 @@ export const initialState: ChatState = {
   isLoading: false,
   error: null,
   conversationTitles: {},
+  streamingState: {
+    status: 'idle',
+    progress: 0,
+    telemetry: undefined,
+    subtask: undefined,
+    agents: undefined,
+    output: undefined,
+    currentAgentIndex: undefined,
+    totalAgents: undefined,
+  },
 };
 
 /**
@@ -61,6 +71,26 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
           [action.payload.conversationId]: action.payload.title,
         },
       };
+
+    case "SET_STREAMING_STATE":
+      return {
+        ...state,
+        streamingState: action.payload,
+      };
+
+    case "UPDATE_STREAMING_PROGRESS": {
+      const currentState = state.streamingState || initialState.streamingState!;
+      return {
+        ...state,
+        streamingState: {
+          ...currentState,
+          ...action.payload,
+          // Ensure required fields are never undefined
+          status: action.payload.status || currentState.status,
+          progress: action.payload.progress !== undefined ? action.payload.progress : currentState.progress,
+        },
+      };
+    }
 
     default:
       return state;

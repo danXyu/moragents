@@ -37,6 +37,7 @@ together = "1.5.8"
 crewai = {extras = ["tools"], version = "^0.118.0"}
 pydantic = ">=2.5.3"
 langchain-apify = "^0.1.2"
+sse-starlette = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pycodestyle = "^2.10.0"

@@ -12,9 +12,11 @@ import {
   writeMessage,
   uploadFile,
   generateConversationTitle,
+  writeMessageStream,
+  StreamingEvent,
 } from "@/services/ChatManagement/api";
 import { getMessagesHistory } from "@/services/ChatManagement/storage";
-import { getStorageData } from "@/services/LocalStorage/core";
+import { getStorageData, cleanupCorruptedMessages } from "@/services/LocalStorage/core";
 import { deleteConversation } from "@/services/ChatManagement/conversations";
 import { chatReducer, initialState } from "@/contexts/chat/ChatReducer";
 import ChatContext from "@/contexts/chat/ChatContext";
@@ -270,27 +272,207 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             },
           });
 
-          // Send to server
-          await writeMessage(
-            message,
-            getHttpClient(),
-            chainId,
-            address || "",
-            currentConversationId,
-            useResearch
-          );
+          // Use streaming for research mode
+          if (useResearch) {
+            // Reset streaming state
+            dispatch({
+              type: "SET_STREAMING_STATE",
+              payload: {
+                status: "processing",
+                progress: 0,
+                telemetry: undefined,
+                currentAgentIndex: undefined,
+                totalAgents: undefined,
+              },
+            });
+
+            await writeMessageStream(
+              message,
+              getHttpClient(),
+              chainId,
+              address || "",
+              currentConversationId,
+              (event: StreamingEvent) => {
+                // Handle streaming events
+                console.log("Received streaming event:", event);
+
+                // Turn off loading when first event arrives
+                dispatch({ type: "SET_LOADING", payload: false });
+
+                switch (event.type) {
+                  case "subtask_dispatch":
+                    dispatch({
+                      type: "UPDATE_STREAMING_PROGRESS",
+                      payload: {
+                        status: "processing",
+                        subtask: event.data.subtask,
+                        agents: event.data.agents,
+                        currentAgentIndex: event.data.current_agent_index,
+                        totalAgents: event.data.total_agents,
+                      },
+                    });
+                    break;
+                  case "subtask_result":
+                    dispatch({
+                      type: "UPDATE_STREAMING_PROGRESS",
+                      payload: {
+                        status: "processing",
+                        subtask: event.data.subtask,
+                        output: event.data.output,
+                        agents: event.data.agents,
+                        telemetry: {
+                          processing_time: event.data.processing_time
+                            ? {
+                                duration: event.data.processing_time,
+                              }
+                            : undefined,
+                          token_usage: event.data.token_usage,
+                        },
+                        currentAgentIndex: event.data.current_agent_index,
+                        totalAgents: event.data.total_agents,
+                      },
+                    });
+                    break;
+                  case "synthesis_start":
+                    dispatch({
+                      type: "UPDATE_STREAMING_PROGRESS",
+                      payload: {
+                        status: "synthesizing",
+                      },
+                    });
+                    break;
+                  // Handle synthetic events from event: lines
+                  case "flow_start":
+                    dispatch({
+                      type: "UPDATE_STREAMING_PROGRESS",
+                      payload: {
+                        status: "processing",
+                        progress: 10,
+                      },
+                    });
+                    break;
+                  case "flow_end":
+                    dispatch({
+                      type: "UPDATE_STREAMING_PROGRESS",
+                      payload: {
+                        status: "processing",
+                        progress: 85,
+                      },
+                    });
+                    break;
+                  case "parse_error":
+                    // Log parse errors but don't show to user
+                    console.warn("SSE parse error:", event.data.message);
+                    break;
+                  default:
+                    // Log unhandled events but don't break
+                    console.log("Unhandled streaming event type:", event.type);
+                }
+              },
+              (response: ChatMessage) => {
+                // Completion handler - response now includes metadata with subtask_outputs
+                console.log(
+                  "Stream complete, adding message with metadata:",
+                  response
+                );
+
+                // Reset streaming state
+                dispatch({
+                  type: "SET_STREAMING_STATE",
+                  payload: {
+                    status: "idle",
+                    progress: 0,
+                    telemetry: undefined,
+                    subtask: undefined,
+                    agents: undefined,
+                    output: undefined,
+                    currentAgentIndex: undefined,
+                    totalAgents: undefined,
+                  },
+                });
+
+                // Turn off loading
+                dispatch({ type: "SET_LOADING", payload: false });
+
+                // Add the final message with crew metadata
+                dispatch({
+                  type: "ADD_OPTIMISTIC_MESSAGE",
+                  payload: {
+                    conversationId: currentConversationId,
+                    message: response,
+                  },
+                });
+
+                refreshMessages();
+              },
+              (error: Error) => {
+                // Error handler
+                console.error("Streaming error:", error);
+
+                // Don't show parse errors to user - they're handled internally
+                if (!error.message.includes("parse")) {
+                  dispatch({ type: "SET_ERROR", payload: error.message });
+                }
+
+                dispatch({ type: "SET_LOADING", payload: false });
+
+                // Reset streaming state on error
+                dispatch({
+                  type: "SET_STREAMING_STATE",
+                  payload: {
+                    status: "idle",
+                    progress: 0,
+                    telemetry: undefined,
+                    subtask: undefined,
+                    agents: undefined,
+                    output: undefined,
+                    currentAgentIndex: undefined,
+                    totalAgents: undefined,
+                  },
+                });
+              }
+            );
+          } else {
+            // Non-streaming flow
+            await writeMessage(
+              message,
+              getHttpClient(),
+              chainId,
+              address || "",
+              currentConversationId,
+              useResearch
+            );
+
+            // Refresh messages to get server response
+            await refreshMessages();
+          }
         } else {
           // File upload flow
           await uploadFile(file, getHttpClient(), currentConversationId);
+          // Refresh messages to get server response
+          await refreshMessages();
         }
-
-        // Refresh messages to get server response
-        await refreshMessages();
       } catch (error) {
         console.error("Failed to send message:", error);
         dispatch({ type: "SET_ERROR", payload: "Failed to send message" });
-      } finally {
+
+        // Always ensure loading is turned off
         dispatch({ type: "SET_LOADING", payload: false });
+
+        // And reset streaming state
+        dispatch({
+          type: "SET_STREAMING_STATE",
+          payload: {
+            status: "idle",
+            progress: 0,
+            telemetry: undefined,
+            subtask: undefined,
+            agents: undefined,
+            output: undefined,
+            currentAgentIndex: undefined,
+            totalAgents: undefined,
+          },
+        });
       }
     },
     [state.currentConversationId, chainId, address, refreshMessages]

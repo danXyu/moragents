@@ -1,8 +1,8 @@
 import "../styles/globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import type { AppProps } from "next/app";
+import { Analytics } from "@vercel/analytics/react";
 import {
-  background,
   ChakraProvider,
   defineStyleConfig,
   extendTheme,
@@ -10,15 +10,7 @@ import {
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
-import {
-  arbitrum,
-  base,
-  mainnet,
-  optimism,
-  polygon,
-  sepolia,
-  bsc,
-} from "wagmi/chains";
+import { arbitrum, base, mainnet, optimism, polygon, bsc } from "wagmi/chains";
 import {
   getDefaultConfig,
   RainbowKitProvider,
@@ -171,6 +163,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         >
           <ChakraProvider theme={theme}>
             <Component {...pageProps} />
+            <Analytics />
           </ChakraProvider>
         </RainbowKitProvider>
       </QueryClientProvider>

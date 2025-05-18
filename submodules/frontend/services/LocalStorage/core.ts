@@ -46,3 +46,44 @@ export const getStorageData = (): LocalStorageData => {
 export const saveStorageData = (data: LocalStorageData): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 };
+
+// Cleanup corrupted messages from storage
+export const cleanupCorruptedMessages = (): void => {
+  const data = getStorageData();
+  let hasCorruptedMessages = false;
+  
+  // Check each conversation
+  Object.keys(data.conversations).forEach(conversationId => {
+    const conversation = data.conversations[conversationId];
+    
+    // Filter out messages that have the wrong structure
+    const cleanMessages = conversation.messages.filter(message => {
+      // Check if message has the correct structure
+      if (!message.role || !message.content) {
+        console.warn(`Removing corrupted message in conversation ${conversationId}:`, message);
+        hasCorruptedMessages = true;
+        return false;
+      }
+      
+      // Check if message accidentally contains API response structure
+      if ('response' in message && 'current_agent' in message) {
+        console.warn(`Removing API response in conversation ${conversationId}:`, message);
+        hasCorruptedMessages = true;
+        return false;
+      }
+      
+      return true;
+    });
+    
+    // Update messages if any were removed
+    if (cleanMessages.length !== conversation.messages.length) {
+      conversation.messages = cleanMessages;
+    }
+  });
+  
+  // Save cleaned data if any messages were removed
+  if (hasCorruptedMessages) {
+    console.log('Cleaned corrupted messages from storage');
+    saveStorageData(data);
+  }
+};

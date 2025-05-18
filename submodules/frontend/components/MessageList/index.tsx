@@ -4,6 +4,8 @@ import { ChatMessage } from "@/services/types";
 import { MessageItem } from "@/components/MessageItem";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import PrefilledOptions from "@/components/ChatInput/PrefilledOptions";
+import { StreamingProgress } from "@/components/StreamingProgress";
+import { useChatContext } from "@/contexts/chat/useChatContext";
 
 type MessageListProps = {
   messages: ChatMessage[];
@@ -30,17 +32,20 @@ export const MessageList: FC<MessageListProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const prevMessagesLength = useRef(0);
+  const { state } = useChatContext();
+  const streamingState = state.streamingState;
 
-  // Effect for scrolling to bottom when new messages arrive
+  // Effect for scrolling to bottom when new messages arrive or streaming state changes
   useEffect(() => {
     if (
-      messages.length > prevMessagesLength.current &&
+      (messages.length > prevMessagesLength.current ||
+       streamingState?.status !== 'idle') &&
       messagesEndRef.current
     ) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
     prevMessagesLength.current = messages.length;
-  }, [messages]);
+  }, [messages, streamingState]);
 
   // Fix for mobile viewport height
   useEffect(() => {
@@ -98,7 +103,12 @@ export const MessageList: FC<MessageListProps> = ({
               <MessageItem message={message} />
             </div>
           ))}
-          {isLoading && (
+          {streamingState && streamingState.status !== 'idle' && (
+            <Box width="100%" py={2}>
+              <StreamingProgress streamingState={streamingState} />
+            </Box>
+          )}
+          {isLoading && (!streamingState || streamingState.status === 'idle') && (
             <Box width="100%" py={2}>
               <LoadingIndicator />
             </Box>

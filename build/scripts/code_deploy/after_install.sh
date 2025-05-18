@@ -10,7 +10,6 @@ FRONTEND_REPO="mysuperagent-frontend"
 # Pull the latest images
 echo "Pulling latest Docker images..."
 docker pull $ECR_URL/$AGENT_REPO:latest
-docker pull $ECR_URL/$FRONTEND_REPO:latest
 
 # Create docker-compose.yml with proper network configuration
 cat > /home/ec2-user/mysuperagent/docker-compose.yml << EOL
@@ -24,23 +23,6 @@ services:
       - "8888:5000"
     environment:
       - ENV=staging
-      - AWS_DEFAULT_REGION=us-west-1
-      - AWS_REGION=us-west-1
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    tty: true
-    stdin_open: true
-  
-  frontend:
-    container_name: frontend
-    image: $ECR_URL/$FRONTEND_REPO:latest
-    restart: always
-    ports:
-      - "3333:80"
-    environment:
-      - NODE_ENV=production
-      - APP_ENV=staging
       - AWS_DEFAULT_REGION=us-west-1
       - AWS_REGION=us-west-1
     dns:

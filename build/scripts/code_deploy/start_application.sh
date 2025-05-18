@@ -24,13 +24,9 @@ else
     AWS_REGION="us-west-1"
     ECR_URL="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
     AGENT_REPO="mysuperagent-agents"
-    FRONTEND_REPO="mysuperagent-frontend"
     
     # Start backend
     docker run -d --restart always --name mysuperagent-backend -p 8888:5000 $ECR_URL/$AGENT_REPO:latest
-    
-    # Start frontend
-    docker run -d --restart always --name mysuperagent-frontend -p 3333:80 $ECR_URL/$FRONTEND_REPO:latest
 fi
 
 # Output container status

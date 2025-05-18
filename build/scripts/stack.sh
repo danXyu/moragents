@@ -20,6 +20,106 @@ function show_usage {
     exit 1
 }
 
+# Function to empty an S3 bucket completely, including all versions
+function empty_s3_bucket {
+    local bucket_name=$1
+    
+    echo "Checking if bucket $bucket_name exists..."
+    if aws s3api head-bucket --bucket $bucket_name 2>/dev/null; then
+        echo "Emptying S3 bucket $bucket_name (including all versions)..."
+        
+        # First, remove all current objects
+        echo "Removing current objects..."
+        aws s3 rm s3://$bucket_name --recursive
+        
+        # Now handle versions and delete markers
+        echo "Removing all versions and delete markers..."
+        
+        # Use a simple approach with an AWS CLI command in a loop
+        local more_objects=true
+        local max_iterations=10
+        local current_iteration=0
+        
+        while $more_objects && [ $current_iteration -lt $max_iterations ]; do
+            current_iteration=$((current_iteration + 1))
+            echo "Deletion pass $current_iteration..."
+            
+            # Get list of all versions
+            version_list=$(aws s3api list-object-versions \
+                --bucket $bucket_name \
+                --output json \
+                --max-items 1000)
+            
+            # Extract version IDs and keys
+            versions=$(echo "$version_list" | jq -r '.Versions[]? | "\(.Key) \(.VersionId)"')
+            delete_markers=$(echo "$version_list" | jq -r '.DeleteMarkers[]? | "\(.Key) \(.VersionId)"')
+            
+            # Check if we have any versions or delete markers to process
+            if [ -z "$versions" ] && [ -z "$delete_markers" ]; then
+                more_objects=false
+                echo "No more objects to delete."
+                break
+            fi
+            
+            # Create a temporary deletion file in required JSON format
+            echo "{\"Objects\": [" > /tmp/delete_keys.json
+            
+            # Add all versions to the deletion file
+            first=true
+            while IFS= read -r object; do
+                if [ -n "$object" ]; then
+                    key=$(echo "$object" | cut -d' ' -f1)
+                    versionId=$(echo "$object" | cut -d' ' -f2)
+                    
+                    if $first; then
+                        first=false
+                    else
+                        echo "," >> /tmp/delete_keys.json
+                    fi
+                    
+                    echo "{\"Key\": \"$key\", \"VersionId\": \"$versionId\"}" >> /tmp/delete_keys.json
+                fi
+            done <<< "$versions"
+            
+            # Add all delete markers to the deletion file
+            while IFS= read -r object; do
+                if [ -n "$object" ]; then
+                    key=$(echo "$object" | cut -d' ' -f1)
+                    versionId=$(echo "$object" | cut -d' ' -f2)
+                    
+                    if $first; then
+                        first=false
+                    else
+                        echo "," >> /tmp/delete_keys.json
+                    fi
+                    
+                    echo "{\"Key\": \"$key\", \"VersionId\": \"$versionId\"}" >> /tmp/delete_keys.json
+                fi
+            done <<< "$delete_markers"
+            
+            # Complete the JSON structure
+            echo "], \"Quiet\": true}" >> /tmp/delete_keys.json
+            
+            # Only attempt deletion if we have objects to delete
+            if ! $first; then
+                # Delete the batch of objects
+                aws s3api delete-objects \
+                    --bucket $bucket_name \
+                    --delete file:///tmp/delete_keys.json > /dev/null
+            else
+                more_objects=false
+            fi
+            
+            # Clean up
+            rm -f /tmp/delete_keys.json
+        done
+        
+        echo "S3 bucket $bucket_name has been emptied."
+    else
+        echo "S3 bucket $bucket_name does not exist or you don't have permission to access it."
+    fi
+}
+
 # Check if an argument was provided
 if [ $# -lt 1 ] || [ $# -gt 2 ]; then
     show_usage
@@ -39,12 +139,14 @@ case "$1" in
     prod)
         STACK_NAME="MSA-Infrastructure-Production"
         TEMPLATE_FILE="${SCRIPT_DIR}/../mysuperagent-stack-prod.yaml"
+        S3_BUCKET_NAME="mysuperagent-production-deploy-$(aws sts get-caller-identity --query 'Account' --output text)"
         echo "Selected: Production stack"
         echo "Using template file: $TEMPLATE_FILE"
         ;;
     staging)
         STACK_NAME="MSA-Infrastructure-Staging"
         TEMPLATE_FILE="${SCRIPT_DIR}/../mysuperagent-stack-staging.yaml"
+        S3_BUCKET_NAME="mysuperagent-staging-deploy-$(aws sts get-caller-identity --query 'Account' --output text)"
         echo "Selected: Staging stack"
         echo "Using template file: $TEMPLATE_FILE"
         ;;
@@ -83,6 +185,39 @@ if [ "$DELETE_FLAG" = true ]; then
         exit 0
     fi
     
+    # Get stack resources to identify S3 buckets
+    echo "Finding S3 buckets in the stack..."
+    stack_resources=$(aws cloudformation list-stack-resources --stack-name $STACK_NAME --region $REGION 2>/dev/null)
+    
+    if [ $? -eq 0 ]; then
+        # Check if we have a specific bucket already identified
+        if [ -n "$S3_BUCKET_NAME" ]; then
+            echo "Found predefined S3 bucket: $S3_BUCKET_NAME"
+            empty_s3_bucket "$S3_BUCKET_NAME"
+        fi
+        
+        # Look for any other S3 buckets in the stack
+        bucket_resources=$(echo "$stack_resources" | jq -r '.StackResourceSummaries[] | select(.ResourceType=="AWS::S3::Bucket") | .PhysicalResourceId' 2>/dev/null)
+        
+        if [ -n "$bucket_resources" ]; then
+            echo "Found the following S3 buckets in the stack:"
+            echo "$bucket_resources"
+            
+            for bucket in $bucket_resources; do
+                if [ "$bucket" != "$S3_BUCKET_NAME" ]; then
+                    empty_s3_bucket "$bucket"
+                fi
+            done
+        else
+            echo "No additional S3 buckets found in the stack resources."
+        fi
+    else
+        echo "Could not retrieve stack resources. Using predefined bucket name if available."
+        if [ -n "$S3_BUCKET_NAME" ]; then
+            empty_s3_bucket "$S3_BUCKET_NAME"
+        fi
+    fi
+    
     echo "Deleting stack $STACK_NAME..."
     aws cloudformation delete-stack --stack-name $STACK_NAME --region $REGION
     
@@ -99,6 +234,7 @@ if [ "$DELETE_FLAG" = true ]; then
     fi
 fi
 
+# Rest of the script remains unchanged
 # Check if the stack exists
 STACK_EXISTS=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --region $REGION 2>&1 || echo "NOT_EXISTS")
 

@@ -13,23 +13,39 @@ class TokenUsage(BaseModel):
     total_tokens: int = 0
     cached_prompt_tokens: int = 0
 
+    class Config:
+        # Ensure proper type coercion
+        arbitrary_types_allowed = False
+
 
 class ProcessingTime(BaseModel):
     start_time: float = 0
     end_time: float = 0
     duration: float = 0
 
+    class Config:
+        # Ensure proper type coercion
+        arbitrary_types_allowed = False
+
 
 class Telemetry(BaseModel):
     token_usage: TokenUsage = TokenUsage()
     processing_time: ProcessingTime = ProcessingTime()
 
+    class Config:
+        # Ensure proper type coercion
+        arbitrary_types_allowed = False
+
 
 class SubtaskOutput(BaseModel):
-    subtask: str
-    output: str
-    agents: List[str]
+    subtask: str = ""
+    output: str = ""
+    agents: List[str] = []
     telemetry: Telemetry = Telemetry()
+
+    class Config:
+        # Ensure proper type coercion
+        arbitrary_types_allowed = False
 
 
 class SubtaskPlan(BaseModel):

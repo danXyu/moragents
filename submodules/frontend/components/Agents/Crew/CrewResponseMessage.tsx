@@ -1,36 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Text,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon,
-  Flex,
-  Divider,
-  Tag,
   HStack,
-  Button,
+  VStack,
   Popover,
   PopoverTrigger,
   PopoverContent,
   PopoverBody,
   PopoverArrow,
-  PopoverCloseButton,
   Circle,
-  List,
-  ListItem,
-  ListIcon,
-  useDisclosure,
+  Icon,
+  Badge,
+  Tooltip,
+  Collapse,
 } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 import {
-  CrewResponseMetadata,
-  TaskSummary,
-  SubtaskOutput,
-  TokenUsage,
-} from "@/components/Agents/Crew/CrewResponseMessage.types";
+  FaRobot,
+  FaCogs,
+  FaCode,
+  FaChartLine,
+  FaSearch,
+  FaComments,
+  FaBrain,
+  FaDatabase,
+  FaExchangeAlt,
+  FaClock,
+  FaMemory,
+  FaChevronDown,
+  FaChevronUp,
+} from "react-icons/fa";
+import { AiOutlineDeploymentUnit } from "react-icons/ai";
+import { RiTeamLine, RiFlowChart } from "react-icons/ri";
+import { CrewResponseMetadata } from "@/components/Agents/Crew/CrewResponseMessage.types";
 import styles from "./CrewResponseMessage.module.css";
 
 interface CrewResponseMessageProps {
@@ -138,122 +141,86 @@ const MarkdownComponents = {
 };
 
 /**
- * Agent count badge with popover showing all agent names
+ * Get an icon for an agent based on its name/type
  */
-const AgentBadge: React.FC<{ agents: string[] }> = ({ agents }) => {
-  // Use isOpen state to control the popover
-  const { isOpen, onOpen, onClose } = useDisclosure();
+const getAgentIcon = (agentName: string) => {
+  const name = agentName.toLowerCase();
 
-  if (!agents || agents.length === 0) return null;
+  if (name.includes("search") || name.includes("query")) return FaSearch;
+  if (name.includes("code") || name.includes("dev")) return FaCode;
+  if (name.includes("data") || name.includes("database")) return FaDatabase;
+  if (name.includes("chart") || name.includes("analytics")) return FaChartLine;
+  if (name.includes("chat") || name.includes("conversation")) return FaComments;
+  if (name.includes("brain") || name.includes("ai")) return FaBrain;
+  if (name.includes("engine") || name.includes("process")) return FaCogs;
+  if (name.includes("exchange") || name.includes("swap")) return FaExchangeAlt;
+  if (name.includes("deploy")) return AiOutlineDeploymentUnit;
+  if (name.includes("team") || name.includes("crew")) return RiTeamLine;
 
-  return (
-    <Box position="absolute" top="10px" right="10px" zIndex={1}>
-      <Popover
-        isOpen={isOpen}
-        onClose={onClose}
-        placement="top-end"
-        closeOnBlur={true}
-        trigger="hover"
-        gutter={8}
-      >
-        <PopoverTrigger>
-          <Circle
-            size="26px"
-            bg="blue.400"
-            color="white"
-            fontSize="xs"
-            fontWeight="bold"
-            cursor="pointer"
-            onMouseEnter={onOpen}
-            onMouseLeave={onClose}
-            boxShadow="0 2px 4px rgba(0, 0, 0, 0.2)"
-            _hover={{ bg: "blue.300" }}
-          >
-            {agents.length}
-          </Circle>
-        </PopoverTrigger>
-        <PopoverContent
-          width="auto"
-          minWidth="200px"
-          maxWidth="320px"
-          bg="gray.800"
-          borderColor="gray.700"
-          boxShadow="lg"
-        >
-          <PopoverArrow bg="gray.800" />
-          <PopoverBody p={3}>
-            <Text fontWeight="semibold" fontSize="sm" mb={2} color="blue.200">
-              Agents involved:
-            </Text>
-            <List spacing={2} fontSize="sm">
-              {agents.map((agent, idx) => (
-                <ListItem
-                  key={idx}
-                  display="flex"
-                  alignItems="center"
-                  color="gray.100"
-                  py={1}
-                  borderBottom={idx < agents.length - 1 ? "1px solid" : "none"}
-                  borderColor="gray.700"
-                >
-                  <Box
-                    as="span"
-                    w="6px"
-                    h="6px"
-                    bg="blue.400"
-                    borderRadius="full"
-                    mr={2}
-                  ></Box>
-                  {agent}
-                </ListItem>
-              ))}
-            </List>
-          </PopoverBody>
-        </PopoverContent>
-      </Popover>
-    </Box>
-  );
+  return FaRobot; // Default icon
 };
 
 /**
- * Component for displaying a subtask output with a truncation toggle
+ * Compact task output component
  */
-const TruncatableTaskOutput: React.FC<{
+const CompactTaskOutput: React.FC<{
   content: string;
-  maxLines?: number;
-}> = ({ content, maxLines = 4 }) => {
-  const [expanded, setExpanded] = useState(false);
-
-  const toggleExpanded = () => setExpanded(!expanded);
-
+  taskNumber: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+}> = ({ content, taskNumber, isExpanded, onToggle }) => {
   return (
-    <Box>
-      <Box
-        className={`${styles.taskOutput} ${expanded ? "" : styles.truncated}`}
-        style={{ WebkitLineClamp: expanded ? "unset" : maxLines }}
-        borderRadius="md"
-        pt={1}
-      >
-        <ReactMarkdown components={MarkdownComponents}>{content}</ReactMarkdown>
-      </Box>
+    <Box position="relative" cursor="pointer" onClick={onToggle}>
+      <Collapse in={!isExpanded} animateOpacity>
+        <Box
+          className={styles.compactOutput}
+          h="40px"
+          overflow="hidden"
+          position="relative"
+        >
+          <ReactMarkdown components={MarkdownComponents}>
+            {content}
+          </ReactMarkdown>
+          <Box
+            position="absolute"
+            bottom={0}
+            left={0}
+            right={0}
+            h="20px"
+            bgGradient="linear(to-t, gray.800, transparent)"
+          />
+        </Box>
+      </Collapse>
 
-      <Button
-        size="xs"
-        variant="ghost"
-        onClick={toggleExpanded}
-        mt={1}
-        color="blue.300"
-        fontWeight="medium"
-        borderRadius="md"
-        _hover={{ bg: "rgba(66, 153, 225, 0.12)" }}
-        leftIcon={
-          <Box as="span" fontSize="xs">
-            {expanded ? "▲" : "▼"}
-          </Box>
-        }
-      >
-        {expanded ? "Show less" : "Show more"}
-      </Button>
+      <Collapse in={isExpanded} animateOpacity>
+        <Box 
+          p={3} 
+          bg="gray.825" 
+          borderRadius="md" 
+          mt={2}
+          maxH="400px"
+          overflowY="auto"
+          sx={{
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(96, 165, 250, 0.3)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'rgba(96, 165, 250, 0.5)',
+            },
+          }}
+        >
+          <ReactMarkdown components={MarkdownComponents}>
+            {content}
+          </ReactMarkdown>
+        </Box>
+      </Collapse>
     </Box>
   );
 };
@@ -266,139 +233,401 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
   content,
   metadata,
 }) => {
+  // Initialize all tasks as collapsed (empty set)
+  const [expandedTasks, setExpandedTasks] = useState<Set<number>>(new Set());
+  const [showDetails, setShowDetails] = useState(false);
+  const [isFlowExpanded, setIsFlowExpanded] = useState(true);
+  const [displayedContent, setDisplayedContent] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+
+  // Typing animation effect
+  useEffect(() => {
+    if (!content) return;
+
+    // Reset displayed content when content changes
+    setDisplayedContent("");
+    setIsTyping(true);
+
+    const totalLength = content.length;
+    let currentLength = 0;
+
+    // Calculate typing speed to complete in ~0.8-1.2 seconds
+    const typingDuration = Math.min(1000, Math.max(800, totalLength * 3)); // Dynamic duration based on length
+    const charsPerInterval = Math.max(
+      1,
+      Math.ceil(totalLength / (typingDuration / 16))
+    ); // 60fps
+
+    const interval = setInterval(() => {
+      currentLength += charsPerInterval;
+
+      if (currentLength >= totalLength) {
+        setDisplayedContent(content);
+        setIsTyping(false);
+        clearInterval(interval);
+      } else {
+        setDisplayedContent(content.substring(0, currentLength));
+      }
+    }, 16); // 60fps
+
+    return () => clearInterval(interval);
+  }, [content]);
+
   if (!metadata) {
-    // If no metadata, just render the content as markdown
     return (
-      <ReactMarkdown components={MarkdownComponents}>{content}</ReactMarkdown>
+      <ReactMarkdown components={MarkdownComponents}>
+        {displayedContent}
+      </ReactMarkdown>
     );
   }
 
-  const formatTokens = (tokens?: TokenUsage) => {
-    if (!tokens) return "N/A";
-    return `Tokens In: ${tokens.prompt_tokens || 0} | Tokens Out: ${
-      tokens.completion_tokens || 0
-    } | Total Tokens: ${tokens.total_tokens || 0}`;
+  const toggleTask = (taskIndex: number) => {
+    const newExpanded = new Set(expandedTasks);
+    if (newExpanded.has(taskIndex)) {
+      newExpanded.delete(taskIndex);
+    } else {
+      newExpanded.add(taskIndex);
+    }
+    setExpandedTasks(newExpanded);
   };
 
-  const formatTime = (time?: number) => {
-    if (!time) return "N/A";
-    return `${time.toFixed(2)}s`;
-  };
+  const totalAgents =
+    metadata.subtask_outputs?.reduce(
+      (acc, task) => acc + (task.agents?.length || 0),
+      0
+    ) || 0;
+
+  const totalTime =
+    metadata.subtask_outputs?.reduce(
+      (acc, task) => acc + (task.telemetry?.processing_time?.duration || 0),
+      0
+    ) || 0;
+
+  const totalTokens =
+    metadata.subtask_outputs?.reduce(
+      (acc, task) => acc + (task.telemetry?.token_usage?.total_tokens || 0),
+      0
+    ) || 0;
+
+  // Get all unique agents
+  const allAgents =
+    metadata.subtask_outputs?.reduce((acc: string[], task) => {
+      if (task.agents) {
+        task.agents.forEach((agent) => {
+          if (!acc.includes(agent)) {
+            acc.push(agent);
+          }
+        });
+      }
+      return acc;
+    }, []) || [];
 
   return (
     <Box className={styles.crewResponseContainer}>
-      {/* Main content */}
-      <Box mb={4}>
-        <ReactMarkdown components={MarkdownComponents}>{content}</ReactMarkdown>
+      {/* Main Response */}
+      <Box mb={3} className={styles.mainResponse}>
+        <ReactMarkdown components={MarkdownComponents}>
+          {displayedContent}
+        </ReactMarkdown>
+        {isTyping && <span className={styles.typingCursor} />}
       </Box>
 
-      {/* Metadata section */}
-      <Accordion allowToggle mb={2} className={styles.metadataAccordion}>
-        <AccordionItem border="none">
-          <h2>
-            <AccordionButton>
-              <Box flex="1" textAlign="left" fontSize="sm">
-                <Text fontSize="lg" fontWeight="medium">
-                  Research & Orchestration
+      {/* Orchestration Flow */}
+      {metadata.subtask_outputs && metadata.subtask_outputs.length > 0 && (
+        <Box
+          bg="gray.900"
+          borderRadius="lg"
+          p={4}
+          border="1px solid"
+          borderColor="gray.700"
+          mt={4}
+        >
+          {/* Header */}
+          <Box
+            as="button"
+            w="full"
+            onClick={() => setIsFlowExpanded(!isFlowExpanded)}
+            cursor="pointer"
+            _hover={{ bg: "gray.850" }}
+            p={3}
+            m={-3}
+            mb={-3}
+            borderRadius="md"
+            transition="background 0.2s"
+          >
+            <HStack justify="space-between">
+              <HStack spacing={2}>
+                <Icon as={RiFlowChart} boxSize={5} color="blue.400" />
+                <Text fontSize="md" fontWeight="bold" color="gray.100">
+                  Orchestration Flow
                 </Text>
-              </Box>
-              <AccordionIcon />
-            </AccordionButton>
-          </h2>
-          <AccordionPanel pb={4}>
-            {/* Subtask Outputs */}
-            {metadata.subtask_outputs &&
-              metadata.subtask_outputs.length > 0 && (
-                <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={2}>
-                    Here are all of the tasks that were completed:
+                <Badge colorScheme="purple" fontSize="xs">
+                  {metadata.subtask_outputs.length} steps
+                </Badge>
+                <Icon
+                  as={isFlowExpanded ? FaChevronUp : FaChevronDown}
+                  boxSize={3}
+                  color="gray.400"
+                />
+              </HStack>
+
+              <HStack spacing={4} fontSize="xs">
+                <Popover trigger="hover" placement="top">
+                  <PopoverTrigger>
+                    <HStack cursor="pointer">
+                      <Icon as={FaRobot} boxSize={3} color="blue.400" />
+                      <Text color="gray.400">{allAgents.length} agents</Text>
+                    </HStack>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    width="auto"
+                    minWidth="200px"
+                    maxWidth="320px"
+                    bg="gray.800"
+                    borderColor="gray.700"
+                    boxShadow="lg"
+                  >
+                    <PopoverArrow bg="gray.800" />
+                    <PopoverBody p={3}>
+                      <Text
+                        fontWeight="semibold"
+                        fontSize="sm"
+                        mb={2}
+                        color="blue.200"
+                      >
+                        Agents involved:
+                      </Text>
+                      <VStack align="stretch" spacing={2}>
+                        {allAgents.map((agent, idx) => {
+                          const AgentIcon = getAgentIcon(agent);
+                          return (
+                            <HStack key={idx} spacing={2} color="gray.100">
+                              <Icon
+                                as={AgentIcon}
+                                boxSize={3}
+                                color="blue.400"
+                              />
+                              <Text fontSize="sm">{agent}</Text>
+                            </HStack>
+                          );
+                        })}
+                      </VStack>
+                    </PopoverBody>
+                  </PopoverContent>
+                </Popover>
+                <HStack>
+                  <Icon as={FaClock} boxSize={3} color="orange.400" />
+                  <Text>
+                    <Text as="span" color="orange.400" fontWeight="medium">
+                      {totalTime.toFixed(1)}
+                    </Text>
+                    <Text as="span" color="gray.400">
+                      s
+                    </Text>
                   </Text>
-                  {metadata.subtask_outputs.map(
-                    (subtask: SubtaskOutput, idx: number) => {
-                      // Handle both formats (key/value or subtask/output)
-                      const taskDescription =
-                        subtask.subtask || subtask.key || "";
-                      const taskOutput = subtask.output || subtask.value || "";
+                </HStack>
+                <HStack>
+                  <Icon as={FaMemory} boxSize={3} color="purple.400" />
+                  <Text>
+                    <Text as="span" color="purple.400" fontWeight="medium">
+                      {totalTokens}
+                    </Text>
+                    <Text as="span" color="gray.400">
+                      {" "}
+                      tokens
+                    </Text>
+                  </Text>
+                </HStack>
+              </HStack>
+            </HStack>
+          </Box>
 
-                      return (
+          {/* Flow Visualization */}
+          <Collapse in={isFlowExpanded} animateOpacity>
+            <Box mt={4}>
+              <VStack spacing={0} align="stretch">
+                {metadata.subtask_outputs.map((subtask, idx) => {
+                  const taskDescription = subtask.subtask || subtask.key || "";
+                  const taskOutput = subtask.output || subtask.value || "";
+                  const isExpanded = expandedTasks.has(idx);
+                  const isLastTask =
+                    idx === (metadata.subtask_outputs?.length || 0) - 1;
+
+                  return (
+                    <Box key={idx} position="relative" mb={isLastTask ? 0 : 4}>
+                      {/* Connection Line */}
+                      {idx > 0 && (
                         <Box
-                          key={idx}
-                          mb={4}
-                          className={styles.summaryBox}
+                          position="absolute"
+                          left="20px"
+                          top="-16px"
+                          w="2px"
+                          h="16px"
+                          bg="gray.600"
+                        />
+                      )}
+
+                      {/* Line to next task */}
+                      {!isLastTask && (
+                        <Box
+                          position="absolute"
+                          left="20px"
+                          top="40px"
+                          w="2px"
+                          h="calc(100% - 40px + 16px)"
+                          bg="gray.600"
+                        />
+                      )}
+
+                      {/* Task Node */}
+                      <HStack spacing={3} align="stretch">
+                        {/* Step Number */}
+                        <Circle
+                          size="40px"
+                          bg="blue.500"
+                          color="white"
+                          fontSize="sm"
+                          fontWeight="bold"
+                          flexShrink={0}
                           position="relative"
+                          zIndex={1}
                         >
-                          {/* Agent count badge */}
-                          {subtask.agents && (
-                            <AgentBadge agents={subtask.agents} />
-                          )}
+                          {idx + 1}
+                        </Circle>
 
-                          {/* Task description */}
-                          <Text
-                            className={styles.task}
-                            fontWeight="semibold"
-                            mb={2}
-                            pr={10} // Add padding to prevent overlap with the agent badge
-                          >
-                            {taskDescription}
-                          </Text>
+                        {/* Task Content */}
+                        <Box
+                          flex={1}
+                          bg="gray.800"
+                          borderRadius="md"
+                          p={3}
+                          border="1px solid"
+                          borderColor="gray.700"
+                          transition="all 0.2s"
+                          _hover={{ borderColor: "gray.600" }}
+                        >
+                          {/* Task Header */}
+                          <HStack justify="space-between" mb={2}>
+                            <Text
+                              fontSize="sm"
+                              fontWeight="semibold"
+                              color="gray.100"
+                            >
+                              {taskDescription}
+                            </Text>
 
-                          {/* Telemetry for this subtask */}
+                            {subtask.agents && subtask.agents.length > 0 && (
+                              <HStack spacing={1}>
+                                {subtask.agents.map((agent, agentIdx) => {
+                                  const AgentIcon = getAgentIcon(agent);
+                                  return (
+                                    <Tooltip
+                                      key={agentIdx}
+                                      label={agent}
+                                      placement="top"
+                                    >
+                                      <Circle
+                                        size="24px"
+                                        bg="gray.700"
+                                        borderWidth={1}
+                                        borderColor="gray.600"
+                                      >
+                                        <Icon
+                                          as={AgentIcon}
+                                          boxSize={3}
+                                          color="blue.300"
+                                        />
+                                      </Circle>
+                                    </Tooltip>
+                                  );
+                                })}
+                              </HStack>
+                            )}
+                          </HStack>
+
+                          {/* Task Output */}
+                          <CompactTaskOutput
+                            content={taskOutput}
+                            taskNumber={idx}
+                            isExpanded={isExpanded}
+                            onToggle={() => toggleTask(idx)}
+                          />
+
+                          {/* Task Telemetry */}
                           {subtask.telemetry && (
                             <HStack
-                              fontSize="2xs"
+                              mt={2}
                               spacing={3}
-                              mb={2}
-                              p={1.5}
-                              bg="rgba(0, 0, 0, 0.2)"
-                              borderRadius="md"
-                              color="gray.400"
+                              fontSize="xs"
+                              cursor="pointer"
+                              onClick={() => toggleTask(idx)}
                             >
-                              {subtask.telemetry.token_usage && (
-                                <Flex align="center">
-                                  <Text
-                                    fontWeight="medium"
-                                    color="gray.300"
-                                    mr={1}
-                                  >
-                                    Tokens:
-                                  </Text>
-                                  <Text>
-                                    {formatTokens(
-                                      subtask.telemetry.token_usage
-                                    )}
-                                  </Text>
-                                </Flex>
-                              )}
                               {subtask.telemetry.processing_time?.duration && (
-                                <Flex align="center">
-                                  <Text
-                                    fontWeight="medium"
-                                    color="gray.300"
-                                    mr={1}
-                                  >
-                                    Time:
-                                  </Text>
+                                <HStack spacing={1}>
+                                  <Icon
+                                    as={FaClock}
+                                    boxSize={3}
+                                    color="orange.400"
+                                  />
                                   <Text>
-                                    {formatTime(
-                                      subtask.telemetry.processing_time.duration
-                                    )}
+                                    <Text
+                                      as="span"
+                                      color="orange.400"
+                                      fontWeight="medium"
+                                    >
+                                      {subtask.telemetry.processing_time.duration.toFixed(
+                                        2
+                                      )}
+                                    </Text>
+                                    <Text as="span" color="gray.500">
+                                      s
+                                    </Text>
                                   </Text>
-                                </Flex>
+                                </HStack>
                               )}
+                              {subtask.telemetry.token_usage && (
+                                <HStack spacing={1}>
+                                  <Icon
+                                    as={FaMemory}
+                                    boxSize={3}
+                                    color="purple.400"
+                                  />
+                                  <Text>
+                                    <Text
+                                      as="span"
+                                      color="purple.400"
+                                      fontWeight="medium"
+                                    >
+                                      {
+                                        subtask.telemetry.token_usage
+                                          .total_tokens
+                                      }
+                                    </Text>
+                                    <Text as="span" color="gray.500">
+                                      {" "}
+                                      tokens
+                                    </Text>
+                                  </Text>
+                                </HStack>
+                              )}
+                              <Icon
+                                as={isExpanded ? FaChevronUp : FaChevronDown}
+                                boxSize={3}
+                                color="gray.400"
+                                ml="auto"
+                              />
                             </HStack>
                           )}
-
-                          <Divider my={2} borderColor="gray.700" />
-                          <TruncatableTaskOutput content={taskOutput} />
                         </Box>
-                      );
-                    }
-                  )}
-                </Box>
-              )}
-          </AccordionPanel>
-        </AccordionItem>
-      </Accordion>
+                      </HStack>
+                    </Box>
+                  );
+                })}
+              </VStack>
+            </Box>
+          </Collapse>
+        </Box>
+      )}
     </Box>
   );
 };

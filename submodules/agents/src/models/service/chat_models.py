@@ -49,6 +49,7 @@ class ChatRequest(BaseModel):
     use_research: bool = Query(default=False)
     selected_agents: List[str] = Field(default_factory=list)
     chat_history: List[ChatMessage] = Field(default_factory=list)
+    request_id: Optional[str] = None  # For streaming support
 
     @property
     def messages_for_llm(self) -> List[BaseMessage]:
