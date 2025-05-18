@@ -14,6 +14,32 @@
   }
 }
 
+/* Typing animation cursor */
+.typingCursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: var(--chakra-colors-gray-300);
+  animation: blink 1s infinite;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+/* Main response with typing effect */
+.mainResponse {
+  position: relative;
+  min-height: 1em;
+}
+
 .compactOutput {
   font-size: 0.8125rem;
   color: var(--chakra-colors-gray-400);

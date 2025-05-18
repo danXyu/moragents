@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Text,
@@ -211,13 +211,46 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
   content,
   metadata,
 }) => {
+  // Initialize all tasks as collapsed (empty set)
   const [expandedTasks, setExpandedTasks] = useState<Set<number>>(new Set());
   const [showDetails, setShowDetails] = useState(false);
   const [isFlowExpanded, setIsFlowExpanded] = useState(true);
+  const [displayedContent, setDisplayedContent] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+  
+  // Typing animation effect
+  useEffect(() => {
+    if (!content) return;
+    
+    // Reset displayed content when content changes
+    setDisplayedContent("");
+    setIsTyping(true);
+    
+    const totalLength = content.length;
+    let currentLength = 0;
+    
+    // Calculate typing speed to complete in ~0.8-1.2 seconds
+    const typingDuration = Math.min(1000, Math.max(800, totalLength * 3)); // Dynamic duration based on length
+    const charsPerInterval = Math.max(1, Math.ceil(totalLength / (typingDuration / 16))); // 60fps
+    
+    const interval = setInterval(() => {
+      currentLength += charsPerInterval;
+      
+      if (currentLength >= totalLength) {
+        setDisplayedContent(content);
+        setIsTyping(false);
+        clearInterval(interval);
+      } else {
+        setDisplayedContent(content.substring(0, currentLength));
+      }
+    }, 16); // 60fps
+    
+    return () => clearInterval(interval);
+  }, [content]);
 
   if (!metadata) {
     return (
-      <ReactMarkdown components={MarkdownComponents}>{content}</ReactMarkdown>
+      <ReactMarkdown components={MarkdownComponents}>{displayedContent}</ReactMarkdown>
     );
   }
 
@@ -265,8 +298,9 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
   return (
     <Box className={styles.crewResponseContainer}>
       {/* Main Response */}
-      <Box mb={3}>
-        <ReactMarkdown components={MarkdownComponents}>{content}</ReactMarkdown>
+      <Box mb={3} className={styles.mainResponse}>
+        <ReactMarkdown components={MarkdownComponents}>{displayedContent}</ReactMarkdown>
+        {isTyping && <span className={styles.typingCursor} />}
       </Box>
 
       {/* Orchestration Flow */}
