@@ -189,12 +189,6 @@ Resources:
       LogGroupName: "/mysuperagent/app/backend"
       RetentionInDays: 30
 
-  FrontendLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: "/mysuperagent/app/frontend"
-      RetentionInDays: 30
-
   SystemMessagesLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:

@@ -12,9 +12,9 @@ AWS_REGION="us-west-1"
 AWS_ACCOUNT_ID="816069170416"
 ECR_URL="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 
-# Define image names and their corresponding directories
-IMAGE_NAMES=("mysuperagent-agents" "mysuperagent-frontend")
-IMAGE_DIRS=("$ROOT_DIR/../submodules/agents" "$ROOT_DIR/../submodules/frontend")
+# Define image name and directory
+IMAGE_NAME="mysuperagent-agents"
+IMAGE_DIR="$ROOT_DIR/../submodules/agents"
 
 # Function to handle errors
 handle_error() {
@@ -26,33 +26,13 @@ handle_error() {
 show_usage() {
     echo "Usage: $0 [OPTION]"
     echo "Options:"
-    echo "  --agents    Build and push only the agents image"
-    echo "  --frontend  Build and push only the frontend image"
-    echo "  --all       Build and push all images (default if no option is specified)"
     echo "  --help      Display this help message"
     exit 0
 }
 
 # Parse command line arguments
-BUILD_AGENTS=false
-BUILD_FRONTEND=false
-
-if [ $# -eq 0 ]; then
-    # Default: build all
-    BUILD_AGENTS=true
-    BUILD_FRONTEND=true
-else
+if [ $# -gt 0 ]; then
     case "$1" in
-        --agents)
-            BUILD_AGENTS=true
-            ;;
-        --frontend)
-            BUILD_FRONTEND=true
-            ;;
-        --all)
-            BUILD_AGENTS=true
-            BUILD_FRONTEND=true
-            ;;
         --help)
             show_usage
             ;;
@@ -73,67 +53,57 @@ refresh_aws_auth() {
 echo "Logging into AWS ECR..."
 refresh_aws_auth
 
-# Function to build and push an image
-build_and_push_image() {
-    local image_idx=$1
-    local image_name="${IMAGE_NAMES[$image_idx]}"
-    local image_dir="${IMAGE_DIRS[$image_idx]}"
-    
-    echo "Building $image_name in directory $image_dir..."
+# Function to build and push the image
+build_and_push_image() {    
+    echo "Building $IMAGE_NAME in directory $IMAGE_DIR..."
     
     # Check if repository exists, create if it doesn't
-    echo "Checking if repository $image_name exists..."
-    if ! aws ecr describe-repositories --repository-names "$image_name" --region $AWS_REGION &> /dev/null; then
-        echo "Creating repository $image_name..."
-        aws ecr create-repository --repository-name "$image_name" --region $AWS_REGION || handle_error "Failed to create repository $image_name"
+    echo "Checking if repository $IMAGE_NAME exists..."
+    if ! aws ecr describe-repositories --repository-names "$IMAGE_NAME" --region $AWS_REGION &> /dev/null; then
+        echo "Creating repository $IMAGE_NAME..."
+        aws ecr create-repository --repository-name "$IMAGE_NAME" --region $AWS_REGION || handle_error "Failed to create repository $IMAGE_NAME"
     else
-        echo "Repository $image_name already exists"
+        echo "Repository $IMAGE_NAME already exists"
     fi
     
     # Navigate to the project directory
-    cd "$image_dir" || handle_error "Failed to navigate to $image_dir"
+    cd "$IMAGE_DIR" || handle_error "Failed to navigate to $IMAGE_DIR"
 
     # Build the Docker image
-    if [ "$image_name" == "mysuperagent-agents" ]; then
-        docker build -t "$image_name" -f build/Dockerfile . || handle_error "Failed to build $image_name"
-    else
-        docker build -t "$image_name" . || handle_error "Failed to build $image_name"
-    fi
+    docker build -t "$IMAGE_NAME" -f build/Dockerfile . || handle_error "Failed to build $IMAGE_NAME"
     
     # Navigate back to the root directory
     cd - > /dev/null
 
     # Tag the image
-    echo "Tagging $image_name..."
-    docker tag "$image_name:latest" "$ECR_URL/$image_name:latest" || handle_error "Failed to tag $image_name"
+    echo "Tagging $IMAGE_NAME..."
+    docker tag "$IMAGE_NAME:latest" "$ECR_URL/$IMAGE_NAME:latest" || handle_error "Failed to tag $IMAGE_NAME"
 
     # Push the image with improved retry logic
-    echo "Pushing $image_name to ECR..."
+    echo "Pushing $IMAGE_NAME to ECR..."
     
     # Set retry parameters
-    MAX_RETRIES=5  # Increased from 3 to 5
+    MAX_RETRIES=5
     RETRY_COUNT=0
     PUSH_SUCCESS=false
     
     while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$PUSH_SUCCESS" = false ]; do
         if [ $RETRY_COUNT -gt 0 ]; then
-            echo "Retry attempt $RETRY_COUNT for pushing $image_name..."
+            echo "Retry attempt $RETRY_COUNT for pushing $IMAGE_NAME..."
             # Refresh AWS credentials before retry
             refresh_aws_auth
             # Longer delay before retry - increases with each attempt
             sleep $((5 * RETRY_COUNT))
         fi
         
-        # Direct push without background process or timeout
-        # Simplified approach that relies on Docker's built-in retry mechanism
-        if docker push "$ECR_URL/$image_name:latest"; then
+        if docker push "$ECR_URL/$IMAGE_NAME:latest"; then
             PUSH_SUCCESS=true
-            echo "$image_name pushed successfully!"
+            echo "$IMAGE_NAME pushed successfully!"
         else
             RETRY_COUNT=$((RETRY_COUNT + 1))
             
             if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
-                handle_error "Failed to push $image_name after $MAX_RETRIES attempts. Check network connection to ECR."
+                handle_error "Failed to push $IMAGE_NAME after $MAX_RETRIES attempts. Check network connection to ECR."
             else
                 echo "Push attempt failed. Will retry ($RETRY_COUNT/$MAX_RETRIES)..."
             fi
@@ -141,15 +111,8 @@ build_and_push_image() {
     done
 }
 
-# Build and push selected images
+# Build and push the image
 echo "Starting build and push process..."
+build_and_push_image
 
-if [ "$BUILD_AGENTS" = true ]; then
-    build_and_push_image 0
-fi
-
-if [ "$BUILD_FRONTEND" = true ]; then
-    build_and_push_image 1
-fi
-
-echo "All selected images have been built and pushed successfully!"
+echo "Image has been built and pushed successfully!"

@@ -14,10 +14,6 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
-          FromPort: 3333
-          ToPort: 3333
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
           FromPort: 8888
           ToPort: 8888
           CidrIp: 0.0.0.0/0
@@ -248,7 +244,6 @@ Resources:
 
           # Pull the staging images
           docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:latest
-          docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
 
           # Create docker-compose.yml with proper network configuration (similar to prod)
           cat > /home/ec2-user/mysuperagent/docker-compose.yml << 'EOL'
@@ -262,23 +257,6 @@ Resources:
                 - "8888:5000"
               environment:
                 - ENV=staging
-                - AWS_DEFAULT_REGION=us-west-1
-                - AWS_REGION=us-west-1
-              dns:
-                - 8.8.8.8
-                - 8.8.4.4
-              tty: true
-              stdin_open: true
-            
-            frontend:
-              container_name: frontend
-              image: 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
-              restart: always
-              ports:
-                - "3333:80"
-              environment:
-                - NODE_ENV=production
-                - APP_ENV=staging
                 - AWS_DEFAULT_REGION=us-west-1
                 - AWS_REGION=us-west-1
               dns:
@@ -343,36 +321,13 @@ Resources:
       Targets:
         - Id: !Ref EC2Instance
 
-  # ALB Target Group for Frontend
-  FrontendTargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      Name: "FrontendTargetGroup-Staging"
-      Port: 3333
-      Protocol: HTTP
-      VpcId: vpc-0b3d3e43a3896fba1
-      TargetType: instance
-      HealthCheckPath: /
-      HealthCheckProtocol: HTTP
-      HealthCheckPort: "3333"
-      HealthyThresholdCount: 2
-      UnhealthyThresholdCount: 3
-      HealthCheckTimeoutSeconds: 5
-      HealthCheckIntervalSeconds: 30
-      Targets:
-        - Id: !Ref EC2Instance
-
-  # ACM certificate for staging.mysuperagent.io + api.staging.mysuperagent.io
+  # ACM certificate for api.staging.mysuperagent.io only
   StagingCertificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
-      DomainName: staging.mysuperagent.io
-      SubjectAlternativeNames:
-        - api.staging.mysuperagent.io
+      DomainName: api.staging.mysuperagent.io
       ValidationMethod: DNS
       DomainValidationOptions:
-        - DomainName: staging.mysuperagent.io
-          HostedZoneId: Z0231843Q41D0UD9HQEI
         - DomainName: api.staging.mysuperagent.io
           HostedZoneId: Z0231843Q41D0UD9HQEI
 
@@ -389,7 +344,7 @@ Resources:
         - CertificateArn: !Ref StagingCertificate
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref FrontendTargetGroup
+          TargetGroupArn: !Ref BackendTargetGroup
 
   # HTTP Listener (Redirects to HTTPS)
   HTTPListener:
@@ -419,16 +374,17 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref BackendTargetGroup
 
-  # Route 53 DNS for Main Domain
-  DNSRecord:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneId: Z0231843Q41D0UD9HQEI
-      Name: "staging.mysuperagent.io."
-      Type: A
-      AliasTarget:
-        DNSName: !GetAtt ApplicationLoadBalancer.DNSName
-        HostedZoneId: !GetAtt ApplicationLoadBalancer.CanonicalHostedZoneID
+  # Route 53 DNS for Main Domain - Now points to Vercel
+  # NOTE: This should be configured in Route53 manually to point to Vercel
+  # DNSRecord:
+  #   Type: AWS::Route53::RecordSet
+  #   Properties:
+  #     HostedZoneId: Z0231843Q41D0UD9HQEI
+  #     Name: "staging.mysuperagent.io."
+  #     Type: CNAME
+  #     TTL: 300
+  #     ResourceRecords:
+  #       - "cname.vercel-dns.com"  # Replace with actual Vercel CNAME
 
   # Route 53 DNS for API Subdomain
   ApiDNSRecord:
@@ -461,12 +417,6 @@ Outputs:
     Value: !GetAtt ApplicationLoadBalancer.LoadBalancerFullName
     Export:
       Name: !Sub "${AWS::StackName}-LoadBalancerName"
-
-  FrontendURL:
-    Description: Frontend URL
-    Value: "https://staging.mysuperagent.io"
-    Export:
-      Name: !Sub "${AWS::StackName}-FrontendURL"
 
   ApiURL:
     Description: API URL

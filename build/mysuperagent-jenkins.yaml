@@ -463,14 +463,6 @@ Resources:
                                   docker push $ECR_REPO_AGENTS:latest
                               '''
                               
-                              // Build and push frontend
-                              sh '''
-                                  cd frontend
-                                  docker build -t $ECR_REPO_FRONTEND:$ENVIRONMENT-$BUILD_NUMBER .
-                                  docker tag $ECR_REPO_FRONTEND:$ENVIRONMENT-$BUILD_NUMBER $ECR_REPO_FRONTEND:latest
-                                  docker push $ECR_REPO_FRONTEND:$ENVIRONMENT-$BUILD_NUMBER
-                                  docker push $ECR_REPO_FRONTEND:latest
-                              '''
                           }
                       }
                   }
@@ -505,7 +497,6 @@ Resources:
                                   
                                   # Pull the latest images
                                   docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:latest
-                                  docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:latest
                                   
                                   # Restart the containers
                                   docker-compose down
@@ -589,14 +580,6 @@ Resources:
                                   docker push $ECR_REPO_AGENTS:stable
                               '''
                               
-                              // Build and push frontend
-                              sh '''
-                                  cd frontend
-                                  docker build -t $ECR_REPO_FRONTEND:$ENVIRONMENT-$BUILD_NUMBER .
-                                  docker tag $ECR_REPO_FRONTEND:$ENVIRONMENT-$BUILD_NUMBER $ECR_REPO_FRONTEND:stable
-                                  docker push $ECR_REPO_FRONTEND:$ENVIRONMENT-$BUILD_NUMBER
-                                  docker push $ECR_REPO_FRONTEND:stable
-                              '''
                           }
                       }
                   }
@@ -631,11 +614,9 @@ Resources:
                                   
                                   # Pull the stable images
                                   docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-agents:stable
-                                  docker pull 816069170416.dkr.ecr.us-west-1.amazonaws.com/mysuperagent-frontend:stable
                                   
                                   # Update the docker-compose.yml file to use stable tags
                                   sed -i 's/mysuperagent-agents:latest/mysuperagent-agents:stable/g' docker-compose.yml
-                                  sed -i 's/mysuperagent-frontend:latest/mysuperagent-frontend:stable/g' docker-compose.yml
                                   
                                   # Restart the containers
                                   docker-compose down
