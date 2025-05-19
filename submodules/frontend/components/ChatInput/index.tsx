@@ -5,6 +5,7 @@ import { SendIcon } from "../CustomIcon/SendIcon";
 import { Command } from "./Commands";
 import { CommandsPortal } from "./CommandsPortal";
 import { ToolsButton } from "@/components/Tools/ToolsButton";
+import { isFeatureEnabled } from "@/services/featureFlags";
 import styles from "./index.module.css";
 import BASE_URL from "@/services/constants";
 
@@ -209,32 +210,38 @@ export const ChatInput: FC<ChatInputProps> = ({
                 size="sm"
                 onClick={handleFileUpload}
               />
-              <Button
-                leftIcon={<LinkIcon />}
-                size="sm"
-                className={`${styles.actionButton} ${
-                  useResearch ? styles.activeButton : ""
-                }`}
-                onClick={toggleResearch}
-              >
-                Research
-              </Button>
-              <Button
-                leftIcon={<QuestionOutlineIcon />}
-                size="sm"
-                className={`${styles.actionButton} ${
-                  showPrefilledOptions ? styles.activeButton : ""
-                }`}
-                onClick={onToggleHelp}
-              >
-                Help
-              </Button>
+              {isFeatureEnabled('feature.research_mode') && (
+                <Button
+                  leftIcon={<LinkIcon />}
+                  size="sm"
+                  className={`${styles.actionButton} ${
+                    useResearch ? styles.activeButton : ""
+                  }`}
+                  onClick={toggleResearch}
+                >
+                  Research
+                </Button>
+              )}
+              {isFeatureEnabled('feature.prefilled_options') && (
+                <Button
+                  leftIcon={<QuestionOutlineIcon />}
+                  size="sm"
+                  className={`${styles.actionButton} ${
+                    showPrefilledOptions ? styles.activeButton : ""
+                  }`}
+                  onClick={onToggleHelp}
+                >
+                  Help
+                </Button>
+              )}
             </div>
 
             {/* Right aligned tools button */}
-            <div className={styles.rightActions}>
-              <ToolsButton apiBaseUrl={BASE_URL} />
-            </div>
+            {isFeatureEnabled('feature.tools_configuration') && (
+              <div className={styles.rightActions}>
+                <ToolsButton apiBaseUrl={BASE_URL} />
+              </div>
+            )}
           </div>
         </div>
 

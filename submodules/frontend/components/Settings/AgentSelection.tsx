@@ -6,7 +6,10 @@ import {
   Button,
   Text,
   useToast,
+  Tooltip,
 } from "@chakra-ui/react";
+import { trackEvent } from "@/services/analytics";
+import { isFeatureEnabled, getNumericFlag } from "@/services/featureFlags";
 import styles from "./AgentSelection.module.css";
 
 interface Agent {
@@ -23,14 +26,31 @@ export const AgentSelection: React.FC<AgentSelectionProps> = ({ onSave }) => {
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   const toast = useToast();
+  
+  // Get max selection limit from feature flag
+  const maxAgentSelection = getNumericFlag('feature.agent.max_selection', 6);
 
   useEffect(() => {
     const fetchAgents = async () => {
       try {
         const response = await fetch("http://localhost:8888/agents/available");
         const data = await response.json();
-        setAvailableAgents(data.available_agents);
-        setSelectedAgents(data.selected_agents);
+        
+        // Filter agents based on feature flags
+        const filteredAgents = data.available_agents.filter((agent: Agent) => {
+          const featureFlagKey = `feature.agent.${agent.name}` as any;
+          return isFeatureEnabled(featureFlagKey);
+        });
+        
+        setAvailableAgents(filteredAgents);
+        
+        // Filter selected agents to only include those that are enabled
+        const filteredSelected = data.selected_agents.filter((agentName: string) => {
+          const featureFlagKey = `feature.agent.${agentName}` as any;
+          return isFeatureEnabled(featureFlagKey);
+        });
+        
+        setSelectedAgents(filteredSelected);
       } catch (error) {
         console.error("Failed to fetch agents:", error);
       }
@@ -42,12 +62,17 @@ export const AgentSelection: React.FC<AgentSelectionProps> = ({ onSave }) => {
   const handleAgentToggle = (agentName: string) => {
     setSelectedAgents((prev) => {
       if (prev.includes(agentName)) {
+        trackEvent('agent.selected', {
+          agentName,
+          action: 'deselected',
+          totalSelected: prev.length - 1,
+        });
         return prev.filter((name) => name !== agentName);
       } else {
-        if (prev.length >= 6) {
+        if (maxAgentSelection >= 0 && prev.length >= maxAgentSelection) {
           toast({
             title: "Maximum agents selected",
-            description: "You can only select up to 6 agents at a time",
+            description: `You can only select up to ${maxAgentSelection} agents at a time`,
             status: "warning",
             duration: 3000,
             isClosable: true,
@@ -56,6 +81,13 @@ export const AgentSelection: React.FC<AgentSelectionProps> = ({ onSave }) => {
           });
           return prev;
         }
+        
+        trackEvent('agent.selected', {
+          agentName,
+          action: 'selected',
+          totalSelected: prev.length + 1,
+        });
+        
         return [...prev, agentName];
       }
     });
@@ -73,6 +105,13 @@ export const AgentSelection: React.FC<AgentSelectionProps> = ({ onSave }) => {
       const data = await response.json();
       if (data.status === "success") {
         onSave(data.agents);
+        
+        // Track save event
+        trackEvent('agent.selection_saved', {
+          selectedAgents,
+          agentCount: selectedAgents.length,
+        });
+        
         window.location.reload();
       }
     } catch (error) {
@@ -84,20 +123,32 @@ export const AgentSelection: React.FC<AgentSelectionProps> = ({ onSave }) => {
     <VStack spacing={4} align="stretch">
       <Text className={styles.description}>
         Select which agents you want to be available in the system. For
-        performance reasons, only 6 agents can be selected at a time.
+        performance reasons, {maxAgentSelection >= 0 
+          ? `only ${maxAgentSelection} agents can be selected at a time.`
+          : 'there is no limit on the number of agents you can select.'}
       </Text>
 
       <Box className={styles.agentList}>
         <VStack spacing={2} align="stretch">
-          {availableAgents.map((agent) => (
-            <Box key={agent.name} className={styles.agentItem}>
-              <Checkbox
-                isChecked={selectedAgents.includes(agent.name)}
-                onChange={() => handleAgentToggle(agent.name)}
-                width="100%"
-                className={styles.checkbox}
-              >
-                <VStack align="start" spacing={1} ml={3}>
+          {availableAgents.map((agent) => {
+            const isDisabled = maxAgentSelection >= 0 && 
+              selectedAgents.length >= maxAgentSelection && 
+              !selectedAgents.includes(agent.name);
+            
+            return (
+              <Box key={agent.name} className={styles.agentItem}>
+                <Tooltip 
+                  label={isDisabled ? `Maximum ${maxAgentSelection} agents already selected` : ''}
+                  isDisabled={!isDisabled}
+                >
+                  <Checkbox
+                    isChecked={selectedAgents.includes(agent.name)}
+                    onChange={() => handleAgentToggle(agent.name)}
+                    isDisabled={isDisabled}
+                    width="100%"
+                    className={styles.checkbox}
+                  >
+                    <VStack align="start" spacing={1} ml={3}>
                   <Text className={styles.agentName}>
                     {agent.human_readable_name}
                   </Text>
@@ -106,10 +157,12 @@ export const AgentSelection: React.FC<AgentSelectionProps> = ({ onSave }) => {
                   </Text>
                 </VStack>
               </Checkbox>
-            </Box>
-          ))}
-        </VStack>
-      </Box>
+            </Tooltip>
+          </Box>
+        );
+      })}
+    </VStack>
+  </Box>
 
       <Button onClick={handleSave} className={styles.saveButton}>
         Save Configuration

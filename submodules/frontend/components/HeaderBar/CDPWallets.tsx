@@ -41,6 +41,7 @@ import {
   StarIcon,
   CopyIcon,
 } from "@chakra-ui/icons";
+import { isFeatureEnabled } from "@/services/featureFlags";
 
 const NETWORKS = [
   "base-mainnet",
@@ -58,6 +59,7 @@ interface Wallet {
 }
 
 export const CDPWallets: React.FC = () => {
+  // Hooks must be called before any conditional returns
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [activeWallet, setActiveWallet] = useState<string | null>(null);
   const [newWalletName, setNewWalletName] = useState("");
@@ -74,7 +76,7 @@ export const CDPWallets: React.FC = () => {
     onClose: closeMenu,
     onOpen: openMenu,
   } = useDisclosure();
-
+  
   const fetchWallets = useCallback(async () => {
     try {
       const [walletsResponse, activeWalletResponse] = await Promise.all([
@@ -100,6 +102,11 @@ export const CDPWallets: React.FC = () => {
   useEffect(() => {
     fetchWallets();
   }, [fetchWallets]);
+  
+  // Return early if feature is disabled
+  if (!isFeatureEnabled('feature.cdp_wallets')) {
+    return null;
+  }
 
   const handleCopyAddress = (address: string) => {
     navigator.clipboard.writeText(address);

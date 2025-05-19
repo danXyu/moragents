@@ -6,6 +6,23 @@ This is a front-end for the Morpheus local install. It connects directly to agen
 
 ## Configuration
 
+### Environment Variables
+
+Copy the `.env.example` file to `.env.local` and update the values:
+
+```bash
+cp .env.example .env.local
+```
+
+Required environment variables:
+- `NEXT_PUBLIC_API_URL`: Backend API URL (default: http://localhost:8888)
+- `FLAGS_SECRET`: Secret key for feature flags encryption (32 bytes, base64url encoded)
+
+To generate a FLAGS_SECRET:
+```bash
+node -e "console.log(crypto.randomBytes(32).toString('base64url'))"
+```
+
 ### Adding a new agent
 
 Edit `frontend/config.ts`

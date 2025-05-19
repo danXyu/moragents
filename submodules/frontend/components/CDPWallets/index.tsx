@@ -27,6 +27,7 @@ import { WalletItem } from "./WalletItem";
 import { CreateWalletForm } from "./CreateWalletForm";
 import { RestoreWalletForm } from "./RestoreWalletForm";
 import { DeleteWalletDialog } from "./DeleteWalletDialog";
+import { trackEvent } from "@/services/analytics";
 import styles from "./index.module.css";
 
 export const CDPWallets: React.FC = () => {

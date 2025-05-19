@@ -5,6 +5,7 @@ import { addMessageToHistory } from "@/services/ChatManagement/messages";
 import { getOrCreateConversation } from "@/services/ChatManagement/storage";
 import { getStorageData } from "../LocalStorage/core";
 import { saveStorageData } from "../LocalStorage/core";
+import { trackEvent, trackError, trackTiming } from "@/services/analytics";
 
 // LocalStorage key for selected agents
 const SELECTED_AGENTS_KEY = "selectedAgents";
@@ -43,6 +44,16 @@ export const writeMessage = async (
     console.error("Error loading selected agents from localStorage:", err);
   }
 
+  // Track message sent event
+  trackEvent('agent.message_sent', {
+    conversationId,
+    selectedAgents,
+    researchMode: useResearch,
+    messageLength: message.length,
+  });
+
+  const startTime = Date.now();
+
   try {
     // Send message along with conversation history to backend
     const response = await backendClient.post("/api/v1/chat", {
@@ -76,12 +87,35 @@ export const writeMessage = async (
       
       // Add assistant's response to local storage
       addMessageToHistory(assistantMessage, convId);
+      
+      // Track response received event
+      trackEvent('agent.response_received', {
+        conversationId,
+        agentName: current_agent,
+        hasError: !!agentResponse.error_message,
+        requiresAction: !!agentResponse.requires_action,
+        actionType: agentResponse.action_type,
+      });
+      
+      // Track response timing
+      trackTiming('agent.response_received', startTime, {
+        agentName: current_agent,
+        researchMode: useResearch,
+      });
     }
 
     // Return the updated messages after API response is processed
     return getMessagesHistory(convId);
   } catch (error) {
     console.error("Failed to send message:", error);
+    
+    // Track error event
+    trackError('chat.api.writeMessage', error as Error, {
+      conversationId,
+      selectedAgents,
+      researchMode: useResearch,
+    });
+    
     throw error;
   }
 };
@@ -101,6 +135,16 @@ export const uploadFile = async (
     // Create form data
     const formData = new FormData();
     formData.append("file", file);
+
+    // Track file upload start
+    trackEvent('file.upload_started', {
+      conversationId,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+    
+    const uploadStartTime = Date.now();
 
     // Upload file to backend
     const response = await backendClient.post("/rag/upload", formData, {
@@ -123,11 +167,26 @@ export const uploadFile = async (
 
       // Add assistant's response
       addMessageToHistory(response.data, convId);
+      
+      // Track successful upload
+      trackTiming('file.upload_completed', uploadStartTime, {
+        conversationId,
+        fileName: file.name,
+        fileSize: file.size,
+      });
     }
 
     return getMessagesHistory(convId);
   } catch (error) {
     console.error("Failed to upload file:", error);
+    
+    // Track upload error
+    trackError('file.upload', error as Error, {
+      conversationId,
+      fileName: file.name,
+      fileSize: file.size,
+    });
+    
     throw error;
   }
 };
@@ -225,6 +284,15 @@ export const writeMessageStream = async (
   } catch (err) {
     console.error("Error loading selected agents from localStorage:", err);
   }
+
+  // Track research initiated event
+  trackEvent('research.initiated', {
+    conversationId,
+    selectedAgents,
+    messageLength: message.length,
+  });
+
+  const startTime = Date.now();
 
   const baseUrl = backendClient.defaults.baseURL || "";
   console.log("Starting stream request to:", `${baseUrl}/api/v1/chat/stream`);
@@ -326,6 +394,17 @@ export const writeMessageStream = async (
             const event = JSON.parse(jsonStr);
             console.log("Parsed event:", event);
             onEvent(event);
+            
+            // Track streaming progress
+            if (event.type === 'subtask_dispatch') {
+              trackEvent('research.agent_progress', {
+                conversationId,
+                agentName: event.data.agent,
+                subtask: event.data.subtask,
+                totalAgents: event.data.total_agents,
+                currentAgentIndex: event.data.current_agent_index,
+              });
+            }
 
             // Handle specific event types
             switch (event.type) {
@@ -420,10 +499,31 @@ export const writeMessageStream = async (
 
                 // Add to history and notify completion
                 addMessageToHistory(assistantMessage, convId);
+                
+                // Track research completed event
+                trackEvent('research.completed', {
+                  conversationId,
+                  contributingAgents,
+                  subtaskCount: subtaskOutputs.length,
+                  totalTokens: globalTelemetry.total_token_usage.total,
+                  duration: Date.now() - startTime,
+                });
+                
+                // Track timing
+                trackTiming('research.completed', startTime, {
+                  conversationId,
+                  contributingAgents,
+                });
+                
                 onComplete(assistantMessage);
                 return;
               case "error":
-                onError(new Error(event.data.message || "Stream error"));
+                const errorMsg = event.data.message || "Stream error";
+                trackError('research.streaming', new Error(errorMsg), {
+                  conversationId,
+                  selectedAgents,
+                });
+                onError(new Error(errorMsg));
                 return;
             }
           } catch (err) {
@@ -449,6 +549,13 @@ export const writeMessageStream = async (
     }
   } catch (error: any) {
     console.error("Failed to stream message:", error);
+    
+    // Track streaming error
+    trackError('research.streaming', error, {
+      conversationId,
+      selectedAgents,
+    });
+    
     onError(error);
   }
 };
