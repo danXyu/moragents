@@ -33,6 +33,7 @@ from .orchestration_state import (
     TokenUsage,
 )
 from .progress_listener import (
+    emit_final_answer_actions,
     emit_final_complete,
     emit_flow_end,
     emit_flow_start,
@@ -407,20 +408,207 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         try:
             resp = synthesize_final_answer()
             self.state.final_answer = resp.strip()
+            
+            # Identify and extract potential final answer actions
+            await self._extract_final_answer_actions()
+            
         except Exception as e:
             logger.error(f"Failed to synthesize final answer: {e}")
             # Fallback: concatenate subtask outputs
             self.state.final_answer = "\n\n".join(
                 f"{i+1}. {output.subtask}\n{output.output}" for i, output in enumerate(self.state.subtask_outputs)
             )
+            self.state.final_answer_actions = []
 
-        # Emit synthesis complete and final complete events if streaming
+        # Emit synthesis complete, final answer actions, and final complete events if streaming
         if self.request_id:
-            await emit_synthesis_complete(self.request_id, self.state.final_answer)
+            await emit_synthesis_complete(self.request_id, self.state.final_answer, self.state.final_answer_actions)
+            
+            # Emit final answer actions if any were identified
+            if self.state.final_answer_actions:
+                await emit_final_answer_actions(self.request_id, self.state.final_answer_actions)
+                
             await emit_flow_end(self.request_id)
-            await emit_final_complete(self.request_id)
+            await emit_final_complete(self.request_id, self.state.final_answer_actions)
 
         return {
             "final_answer": self.state.final_answer,
             "subtask_outputs": self.state.subtask_outputs,
+            "final_answer_actions": self.state.final_answer_actions,
         }
+        
+    async def _extract_final_answer_actions(self) -> None:
+        """
+        Analyze the final answer and subtask outputs to identify potential actions
+        that can be performed based on the results.
+        """
+        import time
+        import uuid
+        from .orchestration_state import (
+            FinalAnswerAction,
+            FinalAnswerActionType,
+            TweetActionMetadata,
+            SwapActionMetadata,
+            TransferActionMetadata,
+            ImageGenerationActionMetadata,
+            AnalysisActionMetadata,
+        )
+        
+        # Initialize empty actions list
+        self.state.final_answer_actions = []
+        
+        # Analyze the chat prompt and final answer for action potential
+        action_detection_prompt = (
+            "Analyze this user request and the final answer to identify if any specific actions should be taken. "
+            "For example, if the user asked to create a tweet, identify the tweet content. "
+            "Return ONLY valid JSON for any actions identified, or an empty list if no actions are needed.\n\n"
+            f"User request: {self.state.chat_prompt}\n\n"
+            f"Final answer: {self.state.final_answer}\n\n"
+            "Supported action types: tweet, swap, transfer, image_generation, analysis\n\n"
+            "JSON format:\n"
+            "{\n"
+            "  \"actions\": [\n"
+            "    {\n"
+            "      \"action_type\": \"<action_type>\",\n"
+            "      \"description\": \"<human readable description>\",\n"
+            "      \"metadata\": { <action-specific fields> }\n"
+            "    }\n"
+            "  ]\n"
+            "}"
+        )
+        
+        try:
+            # Use efficient model for action detection
+            llm = LLM(model=self.efficient_model, api_key=self.standard_model_api_key)
+            
+            @retry_with_backoff(max_attempts=2, base_delay=1.0, exceptions=(Exception,))
+            def detect_actions():
+                return llm.call(action_detection_prompt)
+            
+            action_response = detect_actions()
+            
+            # Parse the structured response
+            try:
+                import json
+                action_data = json.loads(action_response)
+                
+                if not isinstance(action_data, dict) or "actions" not in action_data:
+                    logger.warning(f"Invalid action detection response format: {action_response}")
+                    return
+                
+                detected_actions = action_data["actions"]
+                timestamp = int(time.time())
+                
+                for action in detected_actions:
+                    action_type = action.get("action_type", "").lower()
+                    description = action.get("description", "")
+                    metadata_dict = action.get("metadata", {})
+                    
+                    # Create action based on type
+                    if action_type == FinalAnswerActionType.TWEET:
+                        # For tweet action
+                        metadata = TweetActionMetadata(
+                            agent="tweet_sizzler",
+                            action_id=str(uuid.uuid4()),
+                            timestamp=timestamp,
+                            content=metadata_dict.get("content", ""),
+                            hashtags=metadata_dict.get("hashtags", []),
+                            image_url=metadata_dict.get("image_url")
+                        )
+                        
+                        # Create the final answer action
+                        final_action = FinalAnswerAction(
+                            action_type=FinalAnswerActionType.TWEET,
+                            metadata=metadata,
+                            description=description
+                        )
+                        
+                        self.state.final_answer_actions.append(final_action)
+                        
+                    elif action_type == FinalAnswerActionType.SWAP:
+                        # For swap action
+                        metadata = SwapActionMetadata(
+                            agent="token_swap",
+                            action_id=str(uuid.uuid4()),
+                            timestamp=timestamp,
+                            from_token=metadata_dict.get("from_token", ""),
+                            to_token=metadata_dict.get("to_token", ""),
+                            amount=metadata_dict.get("amount", ""),
+                            slippage=metadata_dict.get("slippage")
+                        )
+                        
+                        final_action = FinalAnswerAction(
+                            action_type=FinalAnswerActionType.SWAP,
+                            metadata=metadata,
+                            description=description
+                        )
+                        
+                        self.state.final_answer_actions.append(final_action)
+                        
+                    elif action_type == FinalAnswerActionType.TRANSFER:
+                        # For transfer action
+                        metadata = TransferActionMetadata(
+                            agent="token_swap",
+                            action_id=str(uuid.uuid4()),
+                            timestamp=timestamp,
+                            token=metadata_dict.get("token", ""),
+                            to_address=metadata_dict.get("to_address", ""),
+                            amount=metadata_dict.get("amount", "")
+                        )
+                        
+                        final_action = FinalAnswerAction(
+                            action_type=FinalAnswerActionType.TRANSFER,
+                            metadata=metadata,
+                            description=description
+                        )
+                        
+                        self.state.final_answer_actions.append(final_action)
+                        
+                    elif action_type == FinalAnswerActionType.IMAGE_GENERATION:
+                        # For image generation action
+                        metadata = ImageGenerationActionMetadata(
+                            agent="imagen",
+                            action_id=str(uuid.uuid4()),
+                            timestamp=timestamp,
+                            prompt=metadata_dict.get("prompt", ""),
+                            negative_prompt=metadata_dict.get("negative_prompt"),
+                            style=metadata_dict.get("style")
+                        )
+                        
+                        final_action = FinalAnswerAction(
+                            action_type=FinalAnswerActionType.IMAGE_GENERATION,
+                            metadata=metadata,
+                            description=description
+                        )
+                        
+                        self.state.final_answer_actions.append(final_action)
+                        
+                    elif action_type == FinalAnswerActionType.ANALYSIS:
+                        # For analysis action
+                        metadata = AnalysisActionMetadata(
+                            agent="codex",
+                            action_id=str(uuid.uuid4()),
+                            timestamp=timestamp,
+                            type=metadata_dict.get("type", ""),
+                            subject=metadata_dict.get("subject", ""),
+                            parameters=metadata_dict.get("parameters", {})
+                        )
+                        
+                        final_action = FinalAnswerAction(
+                            action_type=FinalAnswerActionType.ANALYSIS,
+                            metadata=metadata,
+                            description=description
+                        )
+                        
+                        self.state.final_answer_actions.append(final_action)
+                
+                logger.info(f"Identified {len(self.state.final_answer_actions)} final answer actions")
+                
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse action detection response: {action_response}")
+            except Exception as e:
+                logger.error(f"Error processing detected actions: {str(e)}")
+                
+        except Exception as e:
+            logger.error(f"Failed to extract final answer actions: {str(e)}")
+            self.state.final_answer_actions = []

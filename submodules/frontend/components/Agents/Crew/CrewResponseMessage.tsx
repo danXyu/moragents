@@ -14,6 +14,7 @@ import {
   Badge,
   Tooltip,
   Collapse,
+  useToast,
 } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 import {
@@ -33,7 +34,11 @@ import {
 } from "react-icons/fa";
 import { AiOutlineDeploymentUnit } from "react-icons/ai";
 import { RiTeamLine, RiFlowChart } from "react-icons/ri";
-import { CrewResponseMetadata } from "@/components/Agents/Crew/CrewResponseMessage.types";
+import { 
+  CrewResponseMetadata, 
+  FinalAnswerAction,
+} from "@/components/Agents/Crew/CrewResponseMessage.types";
+import FinalAnswerActions from "./FinalAnswerActions";
 import styles from "./CrewResponseMessage.module.css";
 
 interface CrewResponseMessageProps {
@@ -239,6 +244,7 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
   const [isFlowExpanded, setIsFlowExpanded] = useState(true);
   const [displayedContent, setDisplayedContent] = useState("");
   const [isTyping, setIsTyping] = useState(true);
+  const toast = useToast();
 
   // Typing animation effect
   useEffect(() => {
@@ -272,6 +278,37 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
 
     return () => clearInterval(interval);
   }, [content]);
+
+  // Handle execution of final answer actions
+  const handleActionExecute = async (action: FinalAnswerAction) => {
+    try {
+      // Implement the API call to execute the action
+      // This will depend on the action type
+      console.log("Executing action:", action);
+      
+      // For now, just show a toast notification
+      toast({
+        title: "Action executed",
+        description: `Successfully executed ${action.action_type} action`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+      
+      // In a real implementation, you would call the appropriate API endpoint
+      // based on the action type and metadata
+      
+    } catch (error) {
+      console.error("Error executing action:", error);
+      toast({
+        title: "Action failed",
+        description: `Failed to execute ${action.action_type} action`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
 
   if (!metadata) {
     return (
@@ -331,6 +368,23 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
         </ReactMarkdown>
         {isTyping && <span className={styles.typingCursor} />}
       </Box>
+
+      {/* Final Answer Actions */}
+      {metadata.final_answer_actions && metadata.final_answer_actions.length > 0 && (
+        <Box 
+          bg="gray.850" 
+          borderRadius="md" 
+          p={3} 
+          borderWidth="1px" 
+          borderColor="blue.700"
+          mb={4}
+        >
+          <FinalAnswerActions 
+            actions={metadata.final_answer_actions} 
+            onActionExecute={handleActionExecute} 
+          />
+        </Box>
+      )}
 
       {/* Orchestration Flow */}
       {metadata.subtask_outputs && metadata.subtask_outputs.length > 0 && (

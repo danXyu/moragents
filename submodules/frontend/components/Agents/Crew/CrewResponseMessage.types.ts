@@ -46,6 +46,21 @@ export interface SubtaskOutput {
 }
 
 /**
+ * Import Final Answer Action types
+ */
+import { 
+  FinalAnswerAction, 
+  FinalAnswerActionType, 
+  FinalAnswerActionMetadata 
+} from './FinalAnswerAction.types';
+
+export { 
+  FinalAnswerAction, 
+  FinalAnswerActionType, 
+  FinalAnswerActionMetadata 
+};
+
+/**
  * Metadata structure for crew responses as returned by BasicOrchestrator.
  */
 export interface CrewResponseMetadata {
@@ -73,6 +88,11 @@ export interface CrewResponseMetadata {
    * Outputs from subtasks in orchestration flows
    */
   subtask_outputs?: SubtaskOutput[];
+
+  /**
+   * Action-based results that can be executed from the UI
+   */
+  final_answer_actions?: FinalAnswerAction[];
 
   /**
    * Any additional metadata fields
