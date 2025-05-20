@@ -3,6 +3,7 @@ import { Box, useBreakpointValue } from "@chakra-ui/react";
 import { MessageList } from "@/components/MessageList";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatContext } from "@/contexts/chat/useChatContext";
+import { trackEvent } from "@/services/analytics";
 import styles from "./index.module.css";
 
 export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
@@ -54,7 +55,13 @@ export const Chat: FC<{ isSidebarOpen?: boolean }> = ({
           onSubmit={handleSubmit}
           disabled={showLoading}
           isSidebarOpen={isSidebarOpen}
-          onToggleHelp={() => setShowPrefilledOptions(!showPrefilledOptions)}
+          onToggleHelp={() => {
+            const newValue = !showPrefilledOptions;
+            setShowPrefilledOptions(newValue);
+            trackEvent('ui.prefilled_options_toggled', {
+              isOpen: newValue,
+            });
+          }}
           showPrefilledOptions={showPrefilledOptions}
         />
       </Box>

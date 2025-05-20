@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@chakra-ui/react";
+import { trackEvent } from "@/services/analytics";
 
 interface Wallet {
   wallet_id: string;
@@ -56,6 +57,11 @@ export const useWallets = (): UseWalletsReturn => {
       status: "success",
       duration: 2000,
     });
+    
+    // Track address copy event
+    trackEvent('wallet.copied_address', {
+      wallet: address.substring(0, 6) + '...' + address.slice(-4),
+    });
   };
 
   const handleSetActiveWallet = async (walletId: string) => {
@@ -76,6 +82,11 @@ export const useWallets = (): UseWalletsReturn => {
           title: "Active wallet set successfully",
           status: "success",
           duration: 3000,
+        });
+        
+        // Track wallet set as active
+        trackEvent('wallet.set_active', {
+          walletId,
         });
       } else {
         const errorData = await response.json();
@@ -123,6 +134,13 @@ export const useWallets = (): UseWalletsReturn => {
           status: "success",
           duration: 3000,
         });
+        
+        // Track wallet created event
+        trackEvent('wallet.created', {
+          network,
+          walletName,
+        });
+        
         await fetchWallets();
       } else {
         const errorData = await response.json();
@@ -162,6 +180,12 @@ export const useWallets = (): UseWalletsReturn => {
           status: "success",
           duration: 3000,
         });
+        
+        // Track wallet restored event
+        trackEvent('wallet.restored', {
+          walletId: walletData.wallet_id,
+        });
+        
         await fetchWallets();
       } else {
         const errorData = await response.json();
@@ -203,6 +227,11 @@ export const useWallets = (): UseWalletsReturn => {
             title: "Wallet exported successfully",
             status: "success",
             duration: 3000,
+          });
+          
+          // Track wallet download event
+          trackEvent('wallet.downloaded', {
+            walletId,
           });
         } else {
           throw new Error(data.message || "Failed to export wallet");
@@ -249,6 +278,12 @@ export const useWallets = (): UseWalletsReturn => {
           status: "success",
           duration: 3000,
         });
+        
+        // Track wallet deleted event
+        trackEvent('wallet.deleted', {
+          walletId,
+        });
+        
         await fetchWallets();
         return true;
       } else {

@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useAccount, useChainId, useSendTransaction } from "wagmi";
 import { sendSwapStatus } from "@/services/apiHooks";
 import { getHttpClient, SWAP_STATUS } from "@/services/constants";
+import { trackEvent, trackError } from "@/services/analytics";
 
 export type SwapTx = {
   dstAmount: string;
@@ -31,6 +32,14 @@ export const useSwapTransaction = () => {
 
       setIsLoading(true);
       setTxHash("");
+      
+      // Track swap initiated
+      trackEvent('swap.initiated', {
+        wallet: address.substring(0, 6) + '...' + address.slice(-4),
+        chain: chainId.toString(),
+        value: swapTx.tx.value,
+        dstAmount: swapTx.dstAmount,
+      });
 
       try {
         // Safely handle the value conversion to BigInt
@@ -77,6 +86,16 @@ export const useSwapTransaction = () => {
           {
             onSuccess: async (hash) => {
               setTxHash(hash);
+              
+              // Track swap completed
+              trackEvent('swap.completed', {
+                wallet: address.substring(0, 6) + '...' + address.slice(-4),
+                chain: chainId.toString(),
+                txHash: hash,
+                value: swapTx.tx.value,
+                dstAmount: swapTx.dstAmount,
+              });
+              
               try {
                 await sendSwapStatus(
                   getHttpClient(),
@@ -92,6 +111,14 @@ export const useSwapTransaction = () => {
             },
             onError: async (error) => {
               console.error(`Error sending transaction: ${error}`);
+              
+              // Track swap error
+              trackError('swap.failed', error as Error, {
+                wallet: address.substring(0, 6) + '...' + address.slice(-4),
+                chain: chainId.toString(),
+                value: swapTx.tx.value,
+              });
+              
               try {
                 await sendSwapStatus(
                   getHttpClient(),
@@ -112,6 +139,12 @@ export const useSwapTransaction = () => {
       } catch (error) {
         setIsLoading(false);
         console.error("Swap failed:", error);
+        
+        // Track general swap error
+        trackError('swap.failed', error as Error, {
+          wallet: address.substring(0, 6) + '...' + address.slice(-4),
+          chain: chainId.toString(),
+        });
       }
     },
     [address, chainId, sendTransaction]
@@ -130,8 +163,21 @@ export const useSwapTransaction = () => {
           "",
           fromAction
         );
+        
+        // Track swap cancelled
+        trackEvent('swap.cancelled', {
+          wallet: address.substring(0, 6) + '...' + address.slice(-4),
+          chain: chainId.toString(),
+          fromAction,
+        });
       } catch (error) {
         console.error(`Failed to cancel swap: ${error}`);
+        
+        // Track cancellation error
+        trackError('swap.cancel_failed', error as Error, {
+          wallet: address.substring(0, 6) + '...' + address.slice(-4),
+          chain: chainId.toString(),
+        });
       }
     },
     [address, chainId]
