@@ -1,14 +1,13 @@
 import logging
 from typing import Any, Dict
 
+from langchain.schema import SystemMessage
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
+from services.agents.codex.utils.networks import NETWORK_TO_ID_MAPPING
+from services.tools import ToolRegistry, bootstrap_tools
 
 from .config import Config
-from .models import NftSearchResponse, TopHoldersResponse, TopTokensResponse
-from .tools import get_top_holders_percent, list_top_tokens, search_nfts
-from .utils.networks import NETWORK_TO_ID_MAPPING
-from .utils.tool_types import CodexToolType
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +18,28 @@ class CodexAgent(AgentCore):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.tools_provided = Config.tools
+        
+        # Initialize tools registry
+        bootstrap_tools()
+        
+        # Get tools from registry
+        self.list_top_tokens_tool = ToolRegistry.get("list_top_tokens")
+        self.top_holders_tool = ToolRegistry.get("get_top_holders_percent")
+        self.search_nfts_tool = ToolRegistry.get("search_nfts")
 
     async def _process_request(self, request: ChatRequest) -> AgentResponse:
         """Process the validated chat request for Codex API interactions."""
         try:
-            messages = [Config.system_message, *request.messages_for_llm]
+            messages = [
+                SystemMessage(
+                    content=(
+                        "You are an agent that can fetch and analyze token and NFT data "
+                        "from Codex.io. You can get trending tokens, analyze token holder "
+                        "concentration, and search for NFT collections."
+                    )
+                ),
+                *request.messages_for_llm,
+            ]
             response = await self._call_llm_with_tools(messages, self.tools_provided)
             return await self._handle_llm_response(response)
 
@@ -34,19 +50,15 @@ class CodexAgent(AgentCore):
     async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate Codex API tool based on function name."""
         try:
-            if func_name == CodexToolType.LIST_TOP_TOKENS.value:
-                top_tokens_response: TopTokensResponse = await list_top_tokens(
-                    limit=args.get("limit"),
-                    networks=args.get("networks"),
-                    resolution=args.get("resolution"),
-                )
+            if func_name == "list_top_tokens":
+                result = await self.list_top_tokens_tool.execute(**args)
                 return AgentResponse.success(
-                    content=top_tokens_response.formatted_response,
-                    metadata=top_tokens_response.model_dump(),
-                    action_type=CodexToolType.LIST_TOP_TOKENS.value,
+                    content=result.get("message", ""),
+                    metadata=result,
+                    action_type="list_top_tokens",
                 )
 
-            elif func_name == CodexToolType.GET_TOP_HOLDERS_PERCENT.value:
+            elif func_name == "get_top_holders_percent":
                 if args.get("tokenName") is None:
                     return AgentResponse.needs_info(
                         content="Please specify both the token name and network you'd like to get top holders for"
@@ -64,28 +76,19 @@ class CodexAgent(AgentCore):
                         f"{args.get('tokenName')}"
                     )
 
-                holders_response: TopHoldersResponse = await get_top_holders_percent(
-                    token_name=args["tokenName"],
-                    network=args["network"],
-                )
+                result = await self.top_holders_tool.execute(**args)
                 return AgentResponse.success(
-                    content=holders_response.formatted_response,
-                    metadata=holders_response.model_dump(),
-                    action_type=CodexToolType.GET_TOP_HOLDERS_PERCENT.value,
+                    content=result.get("message", ""),
+                    metadata=result,
+                    action_type="get_top_holders_percent",
                 )
 
-            elif func_name == CodexToolType.SEARCH_NFTS.value:
-                nft_search_response: NftSearchResponse = await search_nfts(
-                    search=args["search"],
-                    limit=args.get("limit"),
-                    network_filter=args.get("networkFilter"),
-                    filter_wash_trading=args.get("filterWashTrading"),
-                    window=args.get("window"),
-                )
+            elif func_name == "search_nfts":
+                result = await self.search_nfts_tool.execute(**args)
                 return AgentResponse.success(
-                    content=nft_search_response.formatted_response,
-                    metadata=nft_search_response.model_dump(),
-                    action_type=CodexToolType.SEARCH_NFTS.value,
+                    content=result.get("message", ""),
+                    metadata=result,
+                    action_type="search_nfts",
                 )
 
             else:
