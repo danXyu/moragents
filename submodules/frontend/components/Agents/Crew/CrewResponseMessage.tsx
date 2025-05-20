@@ -38,6 +38,7 @@ import {
   CrewResponseMetadata, 
   FinalAnswerAction,
 } from "@/components/Agents/Crew/CrewResponseMessage.types";
+import { useCallback } from "react";
 import FinalAnswerActions from "./FinalAnswerActions";
 import styles from "./CrewResponseMessage.module.css";
 
@@ -358,6 +359,30 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
       }
       return acc;
     }, []) || [];
+    
+  // Handle action execution
+  const toast = useToast();
+  const handleActionExecute = useCallback(async (action: FinalAnswerAction) => {
+    // In a real implementation, this would call the appropriate agent's API
+    toast({
+      title: "Action execution",
+      description: `Executing ${action.action_type} action`,
+      status: "info",
+      duration: 3000,
+      isClosable: true,
+    });
+    
+    // For demonstration purposes, just show success after 1 second
+    setTimeout(() => {
+      toast({
+        title: "Action complete",
+        description: `Successfully executed ${action.action_type}`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    }, 1000);
+  }, [toast]);
 
   return (
     <Box className={styles.crewResponseContainer}>
@@ -367,24 +392,26 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
           {displayedContent}
         </ReactMarkdown>
         {isTyping && <span className={styles.typingCursor} />}
+        
+        {/* Final Answer Actions - embedded within main response */}
+        {metadata.final_answer_actions && metadata.final_answer_actions.length > 0 && (
+          <Box 
+            mt={4}
+            bg="gray.850" 
+            borderRadius="md" 
+            p={3} 
+            borderWidth="1px" 
+            borderColor="blue.700"
+          >
+            <FinalAnswerActions 
+              actions={metadata.final_answer_actions} 
+              onActionExecute={handleActionExecute} 
+            />
+          </Box>
+        )}
       </Box>
 
-      {/* Final Answer Actions */}
-      {metadata.final_answer_actions && metadata.final_answer_actions.length > 0 && (
-        <Box 
-          bg="gray.850" 
-          borderRadius="md" 
-          p={3} 
-          borderWidth="1px" 
-          borderColor="blue.700"
-          mb={4}
-        >
-          <FinalAnswerActions 
-            actions={metadata.final_answer_actions} 
-            onActionExecute={handleActionExecute} 
-          />
-        </Box>
-      )}
+      {/* Final Answer Actions - moved inside main response */}
 
       {/* Orchestration Flow */}
       {metadata.subtask_outputs && metadata.subtask_outputs.length > 0 && (

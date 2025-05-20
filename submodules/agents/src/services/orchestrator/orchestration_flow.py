@@ -447,6 +447,7 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         from .orchestration_state import (
             FinalAnswerAction,
             FinalAnswerActionType,
+            FinalAnswerActionPlan,
             TweetActionMetadata,
             SwapActionMetadata,
             TransferActionMetadata,
@@ -461,25 +462,19 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         action_detection_prompt = (
             "Analyze this user request and the final answer to identify if any specific actions should be taken. "
             "For example, if the user asked to create a tweet, identify the tweet content. "
-            "Return ONLY valid JSON for any actions identified, or an empty list if no actions are needed.\n\n"
+            "Return actions identified, or an empty list if no actions are needed.\n\n"
             f"User request: {self.state.chat_prompt}\n\n"
             f"Final answer: {self.state.final_answer}\n\n"
             "Supported action types: tweet, swap, transfer, image_generation, analysis\n\n"
-            "JSON format:\n"
-            "{\n"
-            "  \"actions\": [\n"
-            "    {\n"
-            "      \"action_type\": \"<action_type>\",\n"
-            "      \"description\": \"<human readable description>\",\n"
-            "      \"metadata\": { <action-specific fields> }\n"
-            "    }\n"
-            "  ]\n"
-            "}"
+            "For each action provide:\n"
+            "- action_type: The type of action (one of the supported types)\n"
+            "- description: A human readable description of the action\n"
+            "- metadata: Action-specific fields like content for tweets, token details for swaps, etc.\n"
         )
         
         try:
-            # Use efficient model for action detection
-            llm = LLM(model=self.efficient_model, api_key=self.standard_model_api_key)
+            # Use efficient model for action detection with structured output format
+            llm = LLM(model=self.efficient_model, response_format=FinalAnswerActionPlan, api_key=self.standard_model_api_key)
             
             @retry_with_backoff(max_attempts=2, base_delay=1.0, exceptions=(Exception,))
             def detect_actions():
@@ -487,22 +482,16 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             
             action_response = detect_actions()
             
-            # Parse the structured response
+            # Parse the structured response using the utility function
             try:
-                import json
-                action_data = json.loads(action_response)
-                
-                if not isinstance(action_data, dict) or "actions" not in action_data:
-                    logger.warning(f"Invalid action detection response format: {action_response}")
-                    return
-                
-                detected_actions = action_data["actions"]
+                action_plan = parse_llm_structured_output(action_response, FinalAnswerActionPlan, logger, "FinalAnswerActionPlan")
+                detected_actions = action_plan.actions
                 timestamp = int(time.time())
                 
                 for action in detected_actions:
-                    action_type = action.get("action_type", "").lower()
-                    description = action.get("description", "")
-                    metadata_dict = action.get("metadata", {})
+                    action_type = action.action_type.lower()
+                    description = action.description
+                    metadata_dict = action.metadata
                     
                     # Create action based on type
                     if action_type == FinalAnswerActionType.TWEET:

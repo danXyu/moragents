@@ -123,6 +123,15 @@ class FinalAnswerAction(BaseModel):
     description: Optional[str] = None
 
 
+class FinalAnswerActionItem(BaseModel):
+    action_type: str
+    description: str
+    metadata: Dict[str, Any]
+
+class FinalAnswerActionPlan(BaseModel):
+    actions: List[FinalAnswerActionItem] = []
+
+
 # List of supported final answer actions
 SUPPORTED_FINAL_ANSWER_ACTIONS = [
     {

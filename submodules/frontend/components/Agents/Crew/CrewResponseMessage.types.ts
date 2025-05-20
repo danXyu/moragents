@@ -48,17 +48,7 @@ export interface SubtaskOutput {
 /**
  * Import Final Answer Action types
  */
-import { 
-  FinalAnswerAction, 
-  FinalAnswerActionType, 
-  FinalAnswerActionMetadata 
-} from './FinalAnswerAction.types';
-
-export { 
-  FinalAnswerAction, 
-  FinalAnswerActionType, 
-  FinalAnswerActionMetadata 
-};
+export * from './FinalAnswerAction.types';
 
 /**
  * Metadata structure for crew responses as returned by BasicOrchestrator.
