@@ -10,6 +10,7 @@ import tweepy
 from config import LLM_AGENT
 from langchain.schema import HumanMessage
 from services.agents.tweet_sizzler.config import Config
+from services.tools.categories.social.tweet_sizzler.tool_types import TweetSizzlerToolType
 from services.tools.exceptions import ToolExecutionError
 from services.tools.interfaces import Tool
 from services.tools.utils import handle_tool_exceptions, log_tool_usage
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 class GenerateTweetTool(Tool):
     """Tool for generating tweets."""
     
-    name = "generate_tweet"
+    name = TweetSizzlerToolType.GENERATE_TWEET.value
     description = "Generate a tweet based on the provided content or topic"
     category = "social"
     parameters = {
@@ -100,7 +101,7 @@ class GenerateTweetTool(Tool):
 class PostTweetTool(Tool):
     """Tool for posting tweets."""
     
-    name = "post_tweet"
+    name = TweetSizzlerToolType.POST_TWEET.value
     description = "Post a tweet to Twitter/X platform"
     category = "social"
     parameters = {

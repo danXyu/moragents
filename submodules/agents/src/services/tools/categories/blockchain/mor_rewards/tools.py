@@ -6,6 +6,7 @@ import logging
 from typing import Any, Dict
 
 from services.agents.mor_rewards.config import Config
+from services.tools.categories.blockchain.mor_rewards.tool_types import MorRewardsToolType
 from services.tools.exceptions import ToolExecutionError
 from services.tools.interfaces import Tool
 from services.tools.utils import handle_tool_exceptions, log_tool_usage
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 class GetCurrentUserRewardTool(Tool):
     """Tool for fetching current MOR user rewards."""
     
-    name = "get_current_user_reward"
+    name = MorRewardsToolType.GET_CURRENT_USER_REWARD.value
     description = "Fetch the token amount of currently accrued MOR rewards for a user address from a specific pool."
     category = "blockchain"
     parameters = {
@@ -89,7 +90,7 @@ class GetCurrentUserRewardTool(Tool):
 class GetAllPoolRewardsTool(Tool):
     """Tool for fetching all pool rewards for a user."""
     
-    name = "get_all_pool_rewards"
+    name = MorRewardsToolType.GET_ALL_POOL_REWARDS.value
     description = "Fetch all MOR rewards across available pools for a user address."
     category = "blockchain"
     parameters = {

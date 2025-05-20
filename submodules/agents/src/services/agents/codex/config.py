@@ -1,5 +1,6 @@
 from langchain.schema import SystemMessage
 from models.service.agent_config import AgentConfig
+from services.tools.categories.external.codex.tool_types import CodexToolType
 
 
 class Config:
@@ -45,7 +46,7 @@ class Config:
 
     tools = [
         {
-            "name": "list_top_tokens",
+            "name": CodexToolType.LIST_TOP_TOKENS.value,
             "description": "Get a list of trending tokens across specified networks",
             "parameters": {
                 "type": "object",
@@ -70,7 +71,7 @@ class Config:
             },
         },
         {
-            "name": "get_top_holders_percent",
+            "name": CodexToolType.GET_TOP_HOLDERS_PERCENT.value,
             "description": "Get the top holders for a token. If no network is provided, then LEAVE IT AS NONE",
             "parameters": {
                 "type": "object",
@@ -89,7 +90,7 @@ class Config:
             },
         },
         {
-            "name": "search_nfts",
+            "name": CodexToolType.SEARCH_NFTS.value,
             "description": "Search for NFT collections by name or address",
             "parameters": {
                 "type": "object",

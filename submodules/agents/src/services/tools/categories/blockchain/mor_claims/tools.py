@@ -6,6 +6,7 @@ import logging
 from typing import Any, Dict
 
 from services.agents.mor_claims.config import Config
+from services.tools.categories.blockchain.mor_claims.tool_types import MorClaimsToolType
 from services.tools.exceptions import ToolExecutionError
 from services.tools.interfaces import Tool
 from services.tools.utils import handle_tool_exceptions, log_tool_usage
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 class GetCurrentUserRewardTool(Tool):
     """Tool for fetching current MOR user rewards."""
     
-    name = "get_current_user_reward"
+    name = MorClaimsToolType.GET_CURRENT_USER_REWARD.value
     description = "Fetch the token amount of currently accrued MOR rewards for a user address from a specific pool."
     category = "blockchain"
     parameters = {
@@ -89,7 +90,7 @@ class GetCurrentUserRewardTool(Tool):
 class PrepareClaimTransactionTool(Tool):
     """Tool for preparing claim transaction for MOR rewards."""
     
-    name = "prepare_claim_transaction"
+    name = MorClaimsToolType.PREPARE_CLAIM_TRANSACTION.value
     description = "Prepare a transaction to claim MOR rewards"
     category = "blockchain"
     parameters = {
@@ -164,7 +165,7 @@ class PrepareClaimTransactionTool(Tool):
 class GetClaimStatusTool(Tool):
     """Tool for checking claim transaction status."""
     
-    name = "get_claim_status"
+    name = MorClaimsToolType.GET_CLAIM_STATUS.value
     description = "Check the status of a claim transaction"
     category = "blockchain"
     parameters = {

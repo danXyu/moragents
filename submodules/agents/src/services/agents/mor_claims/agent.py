@@ -5,6 +5,7 @@ from langchain.schema import HumanMessage, SystemMessage
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.orchestrator.registry.tool_registry import ToolRegistry
+from services.tools.categories.blockchain.mor_claims.tool_types import MorClaimsToolType
 from stores.agent_manager import agent_manager_instance
 
 logger = logging.getLogger(__name__)
@@ -133,13 +134,13 @@ class MorClaimsAgent(AgentCore):
     async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate MOR claims tool based on function name."""
         try:
-            if func_name == "get_current_user_reward":
+            if func_name == MorClaimsToolType.GET_CURRENT_USER_REWARD.value:
                 result = await self.get_reward_tool.execute(**args)
                 return AgentResponse.success(content=result.get("message"), metadata=result)
-            elif func_name == "prepare_claim_transaction":
+            elif func_name == MorClaimsToolType.PREPARE_CLAIM_TRANSACTION.value:
                 result = await self.prepare_claim_tool.execute(**args)
                 return AgentResponse.success(content=result.get("message"), metadata=result)
-            elif func_name == "get_claim_status":
+            elif func_name == MorClaimsToolType.GET_CLAIM_STATUS.value:
                 result = await self.get_status_tool.execute(**args)
                 return AgentResponse.success(content=result.get("message"), metadata=result)
             else:

@@ -7,8 +7,9 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 from services.agents.codex.config import Config
-from services.agents.codex.models import NftSearchResponse, TokenFilterResult, TopHoldersResponse, TopTokensResponse
-from services.agents.codex.utils.networks import NETWORK_TO_ID_MAPPING
+from services.tools.categories.external.codex.models import NftSearchResponse, TokenFilterResult, TopHoldersResponse, TopTokensResponse
+from services.tools.categories.external.codex.networks import NETWORK_TO_ID_MAPPING
+from services.tools.categories.external.codex.tool_types import CodexToolType
 from services.secrets import get_secret
 from services.tools.exceptions import ToolExecutionError, ToolAuthenticationError
 from services.tools.interfaces import Tool
@@ -124,7 +125,7 @@ async def _filter_tokens(token_name: str, network: str) -> TokenFilterResult:
 class ListTopTokensTool(Tool):
     """Tool for retrieving trending tokens from Codex.io."""
     
-    name = "list_top_tokens"
+    name = CodexToolType.LIST_TOP_TOKENS.value
     description = "Get a list of trending tokens across specified networks"
     category = "external"
     parameters = {
@@ -251,7 +252,7 @@ class ListTopTokensTool(Tool):
 class GetTopHoldersPercentTool(Tool):
     """Tool for retrieving top holders percentage for a token from Codex.io."""
     
-    name = "get_top_holders_percent"
+    name = CodexToolType.GET_TOP_HOLDERS_PERCENT.value
     description = "Get the top holders for a token. If no network is provided, then LEAVE IT AS NONE"
     category = "external"
     parameters = {
@@ -352,7 +353,7 @@ class GetTopHoldersPercentTool(Tool):
 class SearchNftsTool(Tool):
     """Tool for searching NFT collections from Codex.io."""
     
-    name = "search_nfts"
+    name = CodexToolType.SEARCH_NFTS.value
     description = "Search for NFT collections by name or address"
     category = "external"
     parameters = {

@@ -5,8 +5,8 @@ from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.orchestrator.registry.tool_registry import ToolRegistry
 
+from services.tools.categories.external.rugcheck.tool_types import RugcheckToolType
 from .config import Config, TokenRegistry
-from .tool_types import RugcheckToolType
 
 logger = logging.getLogger(__name__)
 

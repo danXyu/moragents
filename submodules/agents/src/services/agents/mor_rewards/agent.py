@@ -3,6 +3,7 @@ import logging
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.orchestrator.registry.tool_registry import ToolRegistry
+from services.tools.categories.blockchain.mor_rewards.tool_types import MorRewardsToolType
 
 logger = logging.getLogger(__name__)
 
@@ -47,13 +48,13 @@ class MorRewardsAgent(AgentCore):
     async def _execute_tool(self, func_name: str, args: dict) -> AgentResponse:
         """Execute the appropriate MOR rewards tool based on function name."""
         try:
-            if func_name == "get_current_user_reward":
+            if func_name == MorRewardsToolType.GET_CURRENT_USER_REWARD.value:
                 result = await self.get_reward_tool.execute(**args)
                 return AgentResponse.success(
                     content=result.get("message"),
                     metadata=result,
                 )
-            elif func_name == "get_all_pool_rewards":
+            elif func_name == MorRewardsToolType.GET_ALL_POOL_REWARDS.value:
                 result = await self.get_all_rewards_tool.execute(**args)
                 return AgentResponse.success(
                     content=result.get("message"),

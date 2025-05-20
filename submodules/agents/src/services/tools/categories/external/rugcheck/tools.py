@@ -5,9 +5,9 @@ Tools for accessing Rugcheck API.
 import logging
 from typing import Any, Dict, Optional
 
-from services.agents.rugcheck.client import RugcheckClient
 from services.agents.rugcheck.config import Config, TokenRegistry
-from services.agents.rugcheck.models import (
+from services.tools.categories.external.rugcheck.client import RugcheckClient
+from services.tools.categories.external.rugcheck.models import (
     TokenReport,
     TokenReportResponse,
     TokenRisk,
@@ -16,6 +16,7 @@ from services.agents.rugcheck.models import (
     VotedToken,
     VotedTokensResponse,
 )
+from services.tools.categories.external.rugcheck.tool_types import RugcheckToolType
 from services.tools.exceptions import ToolExecutionError
 from services.tools.interfaces import Tool
 from services.tools.utils import handle_tool_exceptions, log_tool_usage
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 class FetchTokenReportTool(Tool):
     """Tool for fetching token risk report from Rugcheck API."""
     
-    name = "fetch_token_report"
+    name = RugcheckToolType.GET_TOKEN_REPORT.value
     description = "Fetch a token risk report from Rugcheck API to assess safety and reliability"
     category = "external"
     parameters = {
@@ -119,7 +120,7 @@ class FetchTokenReportTool(Tool):
 class FetchMostViewedTokensTool(Tool):
     """Tool for fetching most viewed tokens from Rugcheck API."""
     
-    name = "fetch_most_viewed_tokens"
+    name = RugcheckToolType.GET_MOST_VIEWED.value
     description = "Fetch the most viewed tokens from Rugcheck API in the last 24 hours"
     category = "external"
     parameters = {
@@ -168,7 +169,7 @@ class FetchMostViewedTokensTool(Tool):
 class FetchMostVotedTokensTool(Tool):
     """Tool for fetching most voted tokens from Rugcheck API."""
     
-    name = "fetch_most_voted_tokens"
+    name = RugcheckToolType.GET_MOST_VOTED.value
     description = "Fetch the most voted tokens from Rugcheck API in the last 24 hours"
     category = "external"
     parameters = {

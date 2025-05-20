@@ -4,6 +4,7 @@ from typing import Any, Dict
 from models.service.agent_core import AgentCore
 from models.service.chat_models import AgentResponse, ChatRequest
 from services.orchestrator.registry.tool_registry import ToolRegistry
+from services.tools.categories.social.tweet_sizzler.tool_types import TweetSizzlerToolType
 
 from .config import Config
 
@@ -37,7 +38,7 @@ class TweetSizzlerAgent(AgentCore):
     async def _execute_tool(self, func_name: str, args: Dict[str, Any]) -> AgentResponse:
         """Execute the appropriate tool based on function name."""
         try:
-            if func_name == "generate_tweet":
+            if func_name == TweetSizzlerToolType.GENERATE_TWEET.value:
                 content = args.get("content")
                 if not content:
                     return AgentResponse.error(error_message="Please provide content for tweet generation")
@@ -49,7 +50,7 @@ class TweetSizzlerAgent(AgentCore):
                     metadata=result
                 )
             
-            elif func_name == "post_tweet":
+            elif func_name == TweetSizzlerToolType.POST_TWEET.value:
                 # Use the new post tweet tool
                 result = await self.post_tweet_tool.execute(**args)
                 return AgentResponse.success(
