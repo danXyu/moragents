@@ -31,6 +31,7 @@ from .orchestration_state import (
     SubtaskPlan,
     Telemetry,
     TokenUsage,
+    AnalysisParameters,
 )
 from .progress_listener import (
     emit_final_answer_actions,
@@ -439,15 +440,23 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         
     async def _extract_final_answer_actions(self) -> None:
         """
-        Analyze the final answer and subtask outputs to identify potential actions
-        that can be performed based on the results.
+        Two-step process to analyze the final answer for potential actions:
+        1. Initial detection - identify if there are any actions to take
+        2. Action-specific extraction - get detailed metadata for each action
         """
         import time
         import uuid
+        import json
         from .orchestration_state import (
             FinalAnswerAction,
             FinalAnswerActionType,
-            FinalAnswerActionPlan,
+            ActionDetection,
+            ActionDetectionPlan,
+            TweetActionRequest,
+            SwapActionRequest,
+            TransferActionRequest,
+            ImageGenerationActionRequest,
+            AnalysisActionRequest,
             TweetActionMetadata,
             SwapActionMetadata,
             TransferActionMetadata,
@@ -458,145 +467,214 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         # Initialize empty actions list
         self.state.final_answer_actions = []
         
-        # Analyze the chat prompt and final answer for action potential
-        action_detection_prompt = (
-            "Analyze this user request and the final answer to identify if any specific actions should be taken. "
-            "For example, if the user asked to create a tweet, identify the tweet content. "
-            "Return actions identified, or an empty list if no actions are needed.\n\n"
+        # Step 1: Initial action detection
+        step1_prompt = (
+            "Analyze this user request and final answer to identify if any specific actions should be taken. "
+            "For example, if the user asked to create a tweet, identify that a tweet action is needed. "
+            "Don't extract detailed metadata yet - just identify which actions are needed.\n\n"
             f"User request: {self.state.chat_prompt}\n\n"
             f"Final answer: {self.state.final_answer}\n\n"
-            "Supported action types: tweet, swap, transfer, image_generation, analysis\n\n"
-            "For each action provide:\n"
-            "- action_type: The type of action (one of the supported types)\n"
-            "- description: A human readable description of the action\n"
-            "- metadata: Action-specific fields like content for tweets, token details for swaps, etc.\n"
+            "Return a list of action objects, each with:\n"
+            "- action_type: One of [tweet, swap, transfer, image_generation, analysis]\n"
+            "- description: A brief human-readable description of the action\n"
+            "- agent: The agent responsible for the action (tweet_sizzler, token_swap, imagen, codex)\n\n"
+            "Return an empty list if no actions are needed."
         )
         
         try:
-            # Use efficient model for action detection with structured output format
-            llm = LLM(model=self.efficient_model, response_format=FinalAnswerActionPlan, api_key=self.standard_model_api_key)
+            # Use efficient model for initial action detection
+            initial_detector = LLM(model=self.efficient_model, response_format=ActionDetectionPlan, api_key=self.standard_model_api_key)
             
             @retry_with_backoff(max_attempts=2, base_delay=1.0, exceptions=(Exception,))
             def detect_actions():
-                return llm.call(action_detection_prompt)
+                return initial_detector.call(step1_prompt)
             
-            action_response = detect_actions()
+            detection_response = detect_actions()
+            action_plan = parse_llm_structured_output(detection_response, ActionDetectionPlan, logger, "ActionDetectionPlan")
             
-            # Parse the structured response using the utility function
-            try:
-                action_plan = parse_llm_structured_output(action_response, FinalAnswerActionPlan, logger, "FinalAnswerActionPlan")
-                detected_actions = action_plan.actions
-                timestamp = int(time.time())
+            # If no actions detected, we're done
+            if not action_plan.actions:
+                logger.info("No final answer actions detected")
+                return
                 
-                for action in detected_actions:
-                    action_type = action.action_type.lower()
-                    description = action.description
-                    metadata_dict = action.metadata
+            # Process each detected action
+            timestamp = int(time.time())
+            
+            for detected_action in action_plan.actions:
+                action_type = detected_action.action_type
+                description = detected_action.description
+                agent_name = detected_action.agent
+                
+                # Step 2: Extract action-specific metadata with the appropriate model
+                if action_type == FinalAnswerActionType.TWEET:
+                    # Extract tweet metadata using TweetActionRequest model
+                    tweet_prompt = (
+                        f"Extract the tweet content from this final answer. The user wants to create a tweet.\n\n"
+                        f"User request: {self.state.chat_prompt}\n\n"
+                        f"Final answer: {self.state.final_answer}\n\n"
+                        f"Extract:\n"
+                        f"- content: The main text content of the tweet (required)\n"
+                        f"- hashtags: List of relevant hashtags without the # symbol (optional)\n"
+                        f"- image_url: URL of any image to include (optional)\n"
+                    )
                     
-                    # Create action based on type
-                    if action_type == FinalAnswerActionType.TWEET:
-                        # For tweet action
-                        metadata = TweetActionMetadata(
-                            agent="tweet_sizzler",
-                            action_id=str(uuid.uuid4()),
-                            timestamp=timestamp,
-                            content=metadata_dict.get("content", ""),
-                            hashtags=metadata_dict.get("hashtags", []),
-                            image_url=metadata_dict.get("image_url")
-                        )
-                        
-                        # Create the final answer action
-                        final_action = FinalAnswerAction(
-                            action_type=FinalAnswerActionType.TWEET,
-                            metadata=metadata,
-                            description=description
-                        )
-                        
-                        self.state.final_answer_actions.append(final_action)
-                        
-                    elif action_type == FinalAnswerActionType.SWAP:
-                        # For swap action
-                        metadata = SwapActionMetadata(
-                            agent="token_swap",
-                            action_id=str(uuid.uuid4()),
-                            timestamp=timestamp,
-                            from_token=metadata_dict.get("from_token", ""),
-                            to_token=metadata_dict.get("to_token", ""),
-                            amount=metadata_dict.get("amount", ""),
-                            slippage=metadata_dict.get("slippage")
-                        )
-                        
-                        final_action = FinalAnswerAction(
-                            action_type=FinalAnswerActionType.SWAP,
-                            metadata=metadata,
-                            description=description
-                        )
-                        
-                        self.state.final_answer_actions.append(final_action)
-                        
-                    elif action_type == FinalAnswerActionType.TRANSFER:
-                        # For transfer action
-                        metadata = TransferActionMetadata(
-                            agent="token_swap",
-                            action_id=str(uuid.uuid4()),
-                            timestamp=timestamp,
-                            token=metadata_dict.get("token", ""),
-                            to_address=metadata_dict.get("to_address", ""),
-                            amount=metadata_dict.get("amount", "")
-                        )
-                        
-                        final_action = FinalAnswerAction(
-                            action_type=FinalAnswerActionType.TRANSFER,
-                            metadata=metadata,
-                            description=description
-                        )
-                        
-                        self.state.final_answer_actions.append(final_action)
-                        
-                    elif action_type == FinalAnswerActionType.IMAGE_GENERATION:
-                        # For image generation action
-                        metadata = ImageGenerationActionMetadata(
-                            agent="imagen",
-                            action_id=str(uuid.uuid4()),
-                            timestamp=timestamp,
-                            prompt=metadata_dict.get("prompt", ""),
-                            negative_prompt=metadata_dict.get("negative_prompt"),
-                            style=metadata_dict.get("style")
-                        )
-                        
-                        final_action = FinalAnswerAction(
-                            action_type=FinalAnswerActionType.IMAGE_GENERATION,
-                            metadata=metadata,
-                            description=description
-                        )
-                        
-                        self.state.final_answer_actions.append(final_action)
-                        
-                    elif action_type == FinalAnswerActionType.ANALYSIS:
-                        # For analysis action
-                        metadata = AnalysisActionMetadata(
-                            agent="codex",
-                            action_id=str(uuid.uuid4()),
-                            timestamp=timestamp,
-                            type=metadata_dict.get("type", ""),
-                            subject=metadata_dict.get("subject", ""),
-                            parameters=metadata_dict.get("parameters", {})
-                        )
-                        
-                        final_action = FinalAnswerAction(
-                            action_type=FinalAnswerActionType.ANALYSIS,
-                            metadata=metadata,
-                            description=description
-                        )
-                        
-                        self.state.final_answer_actions.append(final_action)
+                    tweet_extractor = LLM(model=self.efficient_model, response_format=TweetActionRequest, api_key=self.standard_model_api_key)
+                    tweet_response = tweet_extractor.call(tweet_prompt)
+                    tweet_data = parse_llm_structured_output(tweet_response, TweetActionRequest, logger, "TweetActionRequest")
+                    
+                    # Create metadata and action
+                    metadata = TweetActionMetadata(
+                        agent="tweet_sizzler",
+                        action_id=str(uuid.uuid4()),
+                        timestamp=timestamp,
+                        content=tweet_data.content,
+                        hashtags=tweet_data.hashtags,
+                        image_url=tweet_data.image_url
+                    )
+                    
+                    final_action = FinalAnswerAction(
+                        action_type=FinalAnswerActionType.TWEET,
+                        metadata=metadata,
+                        description=description
+                    )
+                    
+                    self.state.final_answer_actions.append(final_action)
+                    
+                elif action_type == FinalAnswerActionType.SWAP:
+                    # Extract swap metadata
+                    swap_prompt = (
+                        f"Extract token swap details from this final answer. The user wants to swap tokens.\n\n"
+                        f"User request: {self.state.chat_prompt}\n\n"
+                        f"Final answer: {self.state.final_answer}\n\n"
+                        f"Extract:\n"
+                        f"- from_token: Token to swap from (required)\n"
+                        f"- to_token: Token to swap to (required)\n"
+                        f"- amount: Amount to swap (required)\n"
+                        f"- slippage: Slippage tolerance percentage (optional)\n"
+                    )
+                    
+                    swap_extractor = LLM(model=self.efficient_model, response_format=SwapActionRequest, api_key=self.standard_model_api_key)
+                    swap_response = swap_extractor.call(swap_prompt)
+                    swap_data = parse_llm_structured_output(swap_response, SwapActionRequest, logger, "SwapActionRequest")
+                    
+                    metadata = SwapActionMetadata(
+                        agent="token_swap",
+                        action_id=str(uuid.uuid4()),
+                        timestamp=timestamp,
+                        from_token=swap_data.from_token,
+                        to_token=swap_data.to_token,
+                        amount=swap_data.amount,
+                        slippage=swap_data.slippage
+                    )
+                    
+                    final_action = FinalAnswerAction(
+                        action_type=FinalAnswerActionType.SWAP,
+                        metadata=metadata,
+                        description=description
+                    )
+                    
+                    self.state.final_answer_actions.append(final_action)
+                    
+                elif action_type == FinalAnswerActionType.TRANSFER:
+                    # Extract transfer metadata
+                    transfer_prompt = (
+                        f"Extract token transfer details from this final answer. The user wants to transfer tokens.\n\n"
+                        f"User request: {self.state.chat_prompt}\n\n"
+                        f"Final answer: {self.state.final_answer}\n\n"
+                        f"Extract:\n"
+                        f"- token: Token to transfer (required)\n"
+                        f"- to_address: Recipient address (required)\n"
+                        f"- amount: Amount to transfer (required)\n"
+                    )
+                    
+                    transfer_extractor = LLM(model=self.efficient_model, response_format=TransferActionRequest, api_key=self.standard_model_api_key)
+                    transfer_response = transfer_extractor.call(transfer_prompt)
+                    transfer_data = parse_llm_structured_output(transfer_response, TransferActionRequest, logger, "TransferActionRequest")
+                    
+                    metadata = TransferActionMetadata(
+                        agent="token_swap",
+                        action_id=str(uuid.uuid4()),
+                        timestamp=timestamp,
+                        token=transfer_data.token,
+                        to_address=transfer_data.to_address,
+                        amount=transfer_data.amount
+                    )
+                    
+                    final_action = FinalAnswerAction(
+                        action_type=FinalAnswerActionType.TRANSFER,
+                        metadata=metadata,
+                        description=description
+                    )
+                    
+                    self.state.final_answer_actions.append(final_action)
+                    
+                elif action_type == FinalAnswerActionType.IMAGE_GENERATION:
+                    # Extract image generation metadata
+                    image_prompt = (
+                        f"Extract image generation details from this final answer. The user wants to generate an image.\n\n"
+                        f"User request: {self.state.chat_prompt}\n\n"
+                        f"Final answer: {self.state.final_answer}\n\n"
+                        f"Extract:\n"
+                        f"- prompt: The primary image generation prompt (required)\n"
+                        f"- negative_prompt: Things to avoid in the image (optional)\n"
+                        f"- style: Style of the image (optional)\n"
+                    )
+                    
+                    image_extractor = LLM(model=self.efficient_model, response_format=ImageGenerationActionRequest, api_key=self.standard_model_api_key)
+                    image_response = image_extractor.call(image_prompt)
+                    image_data = parse_llm_structured_output(image_response, ImageGenerationActionRequest, logger, "ImageGenerationActionRequest")
+                    
+                    metadata = ImageGenerationActionMetadata(
+                        agent="imagen",
+                        action_id=str(uuid.uuid4()),
+                        timestamp=timestamp,
+                        prompt=image_data.prompt,
+                        negative_prompt=image_data.negative_prompt,
+                        style=image_data.style
+                    )
+                    
+                    final_action = FinalAnswerAction(
+                        action_type=FinalAnswerActionType.IMAGE_GENERATION,
+                        metadata=metadata,
+                        description=description
+                    )
+                    
+                    self.state.final_answer_actions.append(final_action)
+                    
+                elif action_type == FinalAnswerActionType.ANALYSIS:
+                    # Extract analysis metadata
+                    analysis_prompt = (
+                        f"Extract analysis details from this final answer. The user wants to analyze data.\n\n"
+                        f"User request: {self.state.chat_prompt}\n\n"
+                        f"Final answer: {self.state.final_answer}\n\n"
+                        f"Extract:\n"
+                        f"- type: Type of analysis (token, wallet, etc.) (required)\n"
+                        f"- subject: Subject of analysis (required)\n"
+                        f"- parameters: Optional analysis parameters object which can include time_range, include_tokens, include_nfts, limit, sort_by, order, filter\n"
+                    )
+                    
+                    analysis_extractor = LLM(model=self.efficient_model, response_format=AnalysisActionRequest, api_key=self.standard_model_api_key)
+                    analysis_response = analysis_extractor.call(analysis_prompt)
+                    analysis_data = parse_llm_structured_output(analysis_response, AnalysisActionRequest, logger, "AnalysisActionRequest")
+                    
+                    metadata = AnalysisActionMetadata(
+                        agent="codex",
+                        action_id=str(uuid.uuid4()),
+                        timestamp=timestamp,
+                        type=analysis_data.type,
+                        subject=analysis_data.subject,
+                        parameters=analysis_data.parameters
+                    )
+                    
+                    final_action = FinalAnswerAction(
+                        action_type=FinalAnswerActionType.ANALYSIS,
+                        metadata=metadata,
+                        description=description
+                    )
+                    
+                    self.state.final_answer_actions.append(final_action)
                 
-                logger.info(f"Identified {len(self.state.final_answer_actions)} final answer actions")
-                
-            except json.JSONDecodeError:
-                logger.warning(f"Failed to parse action detection response: {action_response}")
-            except Exception as e:
-                logger.error(f"Error processing detected actions: {str(e)}")
+            logger.info(f"Identified and extracted {len(self.state.final_answer_actions)} final answer actions")
                 
         except Exception as e:
             logger.error(f"Failed to extract final answer actions: {str(e)}")

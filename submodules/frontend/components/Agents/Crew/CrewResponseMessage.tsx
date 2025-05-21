@@ -38,8 +38,8 @@ import {
   CrewResponseMetadata, 
   FinalAnswerAction,
 } from "@/components/Agents/Crew/CrewResponseMessage.types";
-import { useCallback } from "react";
 import FinalAnswerActions from "./FinalAnswerActions";
+import { Tweet } from "@/components/Agents/Tweet/CustomMessages/TweetMessage";
 import styles from "./CrewResponseMessage.module.css";
 
 interface CrewResponseMessageProps {
@@ -359,30 +359,6 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
       }
       return acc;
     }, []) || [];
-    
-  // Handle action execution
-  const toast = useToast();
-  const handleActionExecute = useCallback(async (action: FinalAnswerAction) => {
-    // In a real implementation, this would call the appropriate agent's API
-    toast({
-      title: "Action execution",
-      description: `Executing ${action.action_type} action`,
-      status: "info",
-      duration: 3000,
-      isClosable: true,
-    });
-    
-    // For demonstration purposes, just show success after 1 second
-    setTimeout(() => {
-      toast({
-        title: "Action complete",
-        description: `Successfully executed ${action.action_type}`,
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-      });
-    }, 1000);
-  }, [toast]);
 
   return (
     <Box className={styles.crewResponseContainer}>
@@ -403,16 +379,34 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
             borderWidth="1px" 
             borderColor="blue.700"
           >
-            <FinalAnswerActions 
-              actions={metadata.final_answer_actions} 
-              onActionExecute={handleActionExecute} 
-            />
+            {metadata.final_answer_actions.map((action, index) => {
+              // Determine which component to render based on action type and agent
+              if (action.action_type === "tweet" && action.metadata.agent === "tweet_sizzler") {
+                // For tweet actions, use the Tweet component directly
+                return (
+                  <Box key={index} mt={2}>
+                    <Text fontSize="sm" fontWeight="medium" mb={2}>
+                      Generated Tweet:
+                    </Text>
+                    <Tweet initialContent={action.metadata.content} />
+                  </Box>
+                );
+              }
+              
+              // For other action types, use the generic FinalAnswerActions component
+              return (
+                <FinalAnswerActions 
+                  key={index}
+                  actions={[action]} 
+                  onActionExecute={handleActionExecute} 
+                />
+              );
+            })}
           </Box>
         )}
       </Box>
 
-      {/* Final Answer Actions - moved inside main response */}
-
+      
       {/* Orchestration Flow */}
       {metadata.subtask_outputs && metadata.subtask_outputs.length > 0 && (
         <Box

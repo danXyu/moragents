@@ -123,13 +123,72 @@ class FinalAnswerAction(BaseModel):
     description: Optional[str] = None
 
 
-class FinalAnswerActionItem(BaseModel):
-    action_type: str
+"""
+Step 1: Action detection models
+These models are for the initial detection of potential actions
+"""
+class ActionDetection(BaseModel):
+    """Initial detection of a potential action"""
+    action_type: FinalAnswerActionType
     description: str
-    metadata: Dict[str, Any]
+    agent: str
 
-class FinalAnswerActionPlan(BaseModel):
-    actions: List[FinalAnswerActionItem] = []
+class ActionDetectionPlan(BaseModel):
+    """Structured output for initial action detection"""
+    actions: List[ActionDetection] = []
+
+
+"""
+Step 2: Action metadata models
+These models are specific to each action type
+"""
+# Tweet action metadata
+class TweetActionRequest(BaseModel):
+    """Metadata for a tweet action"""
+    content: str
+    hashtags: Optional[List[str]] = None
+    image_url: Optional[str] = None
+
+# Swap action metadata
+class SwapActionRequest(BaseModel):
+    """Metadata for a token swap action"""
+    from_token: str
+    to_token: str
+    amount: str
+    slippage: Optional[float] = None
+
+# Transfer action metadata
+class TransferActionRequest(BaseModel):
+    """Metadata for a token transfer action"""
+    token: str
+    to_address: str
+    amount: str
+
+# Image generation metadata
+class ImageGenerationActionRequest(BaseModel):
+    """Metadata for an image generation action"""
+    prompt: str
+    negative_prompt: Optional[str] = None
+    style: Optional[str] = None
+
+# Analysis parameters
+class AnalysisParameters(BaseModel):
+    """Parameters for an analysis action"""
+    time_range: Optional[str] = None
+    include_tokens: Optional[bool] = None
+    include_nfts: Optional[bool] = None
+    limit: Optional[int] = None
+    sort_by: Optional[str] = None
+    order: Optional[str] = None
+    filter: Optional[str] = None
+
+# Analysis action metadata
+class AnalysisActionRequest(BaseModel):
+    """Metadata for an analysis action"""
+    type: str
+    subject: str
+    parameters: Optional[AnalysisParameters] = None
+
 
 
 # List of supported final answer actions
