@@ -23,6 +23,7 @@ from .helpers.context_utils import create_focused_task_description, summarize_pr
 from .helpers.retry_utils import retry_with_backoff
 from .helpers.utils import parse_llm_structured_output
 from .orchestration_state import (
+    AnalysisParameters,
     Assignment,
     AssignmentPlan,
     OrchestrationState,
@@ -31,7 +32,6 @@ from .orchestration_state import (
     SubtaskPlan,
     Telemetry,
     TokenUsage,
-    AnalysisParameters,
 )
 from .progress_listener import (
     emit_final_answer_actions,
@@ -409,10 +409,10 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         try:
             resp = synthesize_final_answer()
             self.state.final_answer = resp.strip()
-            
+
             # Identify and extract potential final answer actions
             await self._extract_final_answer_actions()
-            
+
         except Exception as e:
             logger.error(f"Failed to synthesize final answer: {e}")
             # Fallback: concatenate subtask outputs
@@ -424,11 +424,11 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         # Emit synthesis complete, final answer actions, and final complete events if streaming
         if self.request_id:
             await emit_synthesis_complete(self.request_id, self.state.final_answer, self.state.final_answer_actions)
-            
+
             # Emit final answer actions if any were identified
             if self.state.final_answer_actions:
                 await emit_final_answer_actions(self.request_id, self.state.final_answer_actions)
-                
+
             await emit_flow_end(self.request_id)
             await emit_final_complete(self.request_id, self.state.final_answer_actions)
 
@@ -437,36 +437,37 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             "subtask_outputs": self.state.subtask_outputs,
             "final_answer_actions": self.state.final_answer_actions,
         }
-        
+
     async def _extract_final_answer_actions(self) -> None:
         """
         Two-step process to analyze the final answer for potential actions:
         1. Initial detection - identify if there are any actions to take
         2. Action-specific extraction - get detailed metadata for each action
         """
+        import json
         import time
         import uuid
-        import json
+
         from .orchestration_state import (
-            FinalAnswerAction,
-            FinalAnswerActionType,
             ActionDetection,
             ActionDetectionPlan,
-            TweetActionRequest,
-            SwapActionRequest,
-            TransferActionRequest,
-            ImageGenerationActionRequest,
-            AnalysisActionRequest,
-            TweetActionMetadata,
-            SwapActionMetadata,
-            TransferActionMetadata,
-            ImageGenerationActionMetadata,
             AnalysisActionMetadata,
+            AnalysisActionRequest,
+            FinalAnswerAction,
+            FinalAnswerActionType,
+            ImageGenerationActionMetadata,
+            ImageGenerationActionRequest,
+            SwapActionMetadata,
+            SwapActionRequest,
+            TransferActionMetadata,
+            TransferActionRequest,
+            TweetActionMetadata,
+            TweetActionRequest,
         )
-        
+
         # Initialize empty actions list
         self.state.final_answer_actions = []
-        
+
         # Step 1: Initial action detection
         step1_prompt = (
             "Analyze this user request and final answer to identify if any specific actions should be taken. "
@@ -480,31 +481,35 @@ class OrchestrationFlow(Flow[OrchestrationState]):
             "- agent: The agent responsible for the action (tweet_sizzler, token_swap, imagen, codex)\n\n"
             "Return an empty list if no actions are needed."
         )
-        
+
         try:
             # Use efficient model for initial action detection
-            initial_detector = LLM(model=self.efficient_model, response_format=ActionDetectionPlan, api_key=self.standard_model_api_key)
-            
+            initial_detector = LLM(
+                model=self.efficient_model, response_format=ActionDetectionPlan, api_key=self.standard_model_api_key
+            )
+
             @retry_with_backoff(max_attempts=2, base_delay=1.0, exceptions=(Exception,))
             def detect_actions():
                 return initial_detector.call(step1_prompt)
-            
+
             detection_response = detect_actions()
-            action_plan = parse_llm_structured_output(detection_response, ActionDetectionPlan, logger, "ActionDetectionPlan")
-            
+            action_plan = parse_llm_structured_output(
+                detection_response, ActionDetectionPlan, logger, "ActionDetectionPlan"
+            )
+
             # If no actions detected, we're done
             if not action_plan.actions:
                 logger.info("No final answer actions detected")
                 return
-                
+
             # Process each detected action
             timestamp = int(time.time())
-            
+
             for detected_action in action_plan.actions:
                 action_type = detected_action.action_type
                 description = detected_action.description
                 agent_name = detected_action.agent
-                
+
                 # Step 2: Extract action-specific metadata with the appropriate model
                 if action_type == FinalAnswerActionType.TWEET:
                     # Extract tweet metadata using TweetActionRequest model
@@ -517,11 +522,17 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                         f"- hashtags: List of relevant hashtags without the # symbol (optional)\n"
                         f"- image_url: URL of any image to include (optional)\n"
                     )
-                    
-                    tweet_extractor = LLM(model=self.efficient_model, response_format=TweetActionRequest, api_key=self.standard_model_api_key)
+
+                    tweet_extractor = LLM(
+                        model=self.efficient_model,
+                        response_format=TweetActionRequest,
+                        api_key=self.standard_model_api_key,
+                    )
                     tweet_response = tweet_extractor.call(tweet_prompt)
-                    tweet_data = parse_llm_structured_output(tweet_response, TweetActionRequest, logger, "TweetActionRequest")
-                    
+                    tweet_data = parse_llm_structured_output(
+                        tweet_response, TweetActionRequest, logger, "TweetActionRequest"
+                    )
+
                     # Create metadata and action
                     metadata = TweetActionMetadata(
                         agent="tweet_sizzler",
@@ -529,17 +540,15 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                         timestamp=timestamp,
                         content=tweet_data.content,
                         hashtags=tweet_data.hashtags,
-                        image_url=tweet_data.image_url
+                        image_url=tweet_data.image_url,
                     )
-                    
+
                     final_action = FinalAnswerAction(
-                        action_type=FinalAnswerActionType.TWEET,
-                        metadata=metadata,
-                        description=description
+                        action_type=FinalAnswerActionType.TWEET, metadata=metadata, description=description
                     )
-                    
+
                     self.state.final_answer_actions.append(final_action)
-                    
+
                 elif action_type == FinalAnswerActionType.SWAP:
                     # Extract swap metadata
                     swap_prompt = (
@@ -552,11 +561,17 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                         f"- amount: Amount to swap (required)\n"
                         f"- slippage: Slippage tolerance percentage (optional)\n"
                     )
-                    
-                    swap_extractor = LLM(model=self.efficient_model, response_format=SwapActionRequest, api_key=self.standard_model_api_key)
+
+                    swap_extractor = LLM(
+                        model=self.efficient_model,
+                        response_format=SwapActionRequest,
+                        api_key=self.standard_model_api_key,
+                    )
                     swap_response = swap_extractor.call(swap_prompt)
-                    swap_data = parse_llm_structured_output(swap_response, SwapActionRequest, logger, "SwapActionRequest")
-                    
+                    swap_data = parse_llm_structured_output(
+                        swap_response, SwapActionRequest, logger, "SwapActionRequest"
+                    )
+
                     metadata = SwapActionMetadata(
                         agent="token_swap",
                         action_id=str(uuid.uuid4()),
@@ -564,17 +579,15 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                         from_token=swap_data.from_token,
                         to_token=swap_data.to_token,
                         amount=swap_data.amount,
-                        slippage=swap_data.slippage
+                        slippage=swap_data.slippage,
                     )
-                    
+
                     final_action = FinalAnswerAction(
-                        action_type=FinalAnswerActionType.SWAP,
-                        metadata=metadata,
-                        description=description
+                        action_type=FinalAnswerActionType.SWAP, metadata=metadata, description=description
                     )
-                    
+
                     self.state.final_answer_actions.append(final_action)
-                    
+
                 elif action_type == FinalAnswerActionType.TRANSFER:
                     # Extract transfer metadata
                     transfer_prompt = (
@@ -586,28 +599,32 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                         f"- to_address: Recipient address (required)\n"
                         f"- amount: Amount to transfer (required)\n"
                     )
-                    
-                    transfer_extractor = LLM(model=self.efficient_model, response_format=TransferActionRequest, api_key=self.standard_model_api_key)
+
+                    transfer_extractor = LLM(
+                        model=self.efficient_model,
+                        response_format=TransferActionRequest,
+                        api_key=self.standard_model_api_key,
+                    )
                     transfer_response = transfer_extractor.call(transfer_prompt)
-                    transfer_data = parse_llm_structured_output(transfer_response, TransferActionRequest, logger, "TransferActionRequest")
-                    
+                    transfer_data = parse_llm_structured_output(
+                        transfer_response, TransferActionRequest, logger, "TransferActionRequest"
+                    )
+
                     metadata = TransferActionMetadata(
                         agent="token_swap",
                         action_id=str(uuid.uuid4()),
                         timestamp=timestamp,
                         token=transfer_data.token,
                         to_address=transfer_data.to_address,
-                        amount=transfer_data.amount
+                        amount=transfer_data.amount,
                     )
-                    
+
                     final_action = FinalAnswerAction(
-                        action_type=FinalAnswerActionType.TRANSFER,
-                        metadata=metadata,
-                        description=description
+                        action_type=FinalAnswerActionType.TRANSFER, metadata=metadata, description=description
                     )
-                    
+
                     self.state.final_answer_actions.append(final_action)
-                    
+
                 elif action_type == FinalAnswerActionType.IMAGE_GENERATION:
                     # Extract image generation metadata
                     image_prompt = (
@@ -619,28 +636,32 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                         f"- negative_prompt: Things to avoid in the image (optional)\n"
                         f"- style: Style of the image (optional)\n"
                     )
-                    
-                    image_extractor = LLM(model=self.efficient_model, response_format=ImageGenerationActionRequest, api_key=self.standard_model_api_key)
+
+                    image_extractor = LLM(
+                        model=self.efficient_model,
+                        response_format=ImageGenerationActionRequest,
+                        api_key=self.standard_model_api_key,
+                    )
                     image_response = image_extractor.call(image_prompt)
-                    image_data = parse_llm_structured_output(image_response, ImageGenerationActionRequest, logger, "ImageGenerationActionRequest")
-                    
+                    image_data = parse_llm_structured_output(
+                        image_response, ImageGenerationActionRequest, logger, "ImageGenerationActionRequest"
+                    )
+
                     metadata = ImageGenerationActionMetadata(
                         agent="imagen",
                         action_id=str(uuid.uuid4()),
                         timestamp=timestamp,
                         prompt=image_data.prompt,
                         negative_prompt=image_data.negative_prompt,
-                        style=image_data.style
+                        style=image_data.style,
                     )
-                    
+
                     final_action = FinalAnswerAction(
-                        action_type=FinalAnswerActionType.IMAGE_GENERATION,
-                        metadata=metadata,
-                        description=description
+                        action_type=FinalAnswerActionType.IMAGE_GENERATION, metadata=metadata, description=description
                     )
-                    
+
                     self.state.final_answer_actions.append(final_action)
-                    
+
                 elif action_type == FinalAnswerActionType.ANALYSIS:
                     # Extract analysis metadata
                     analysis_prompt = (
@@ -652,30 +673,34 @@ class OrchestrationFlow(Flow[OrchestrationState]):
                         f"- subject: Subject of analysis (required)\n"
                         f"- parameters: Optional analysis parameters object which can include time_range, include_tokens, include_nfts, limit, sort_by, order, filter\n"
                     )
-                    
-                    analysis_extractor = LLM(model=self.efficient_model, response_format=AnalysisActionRequest, api_key=self.standard_model_api_key)
+
+                    analysis_extractor = LLM(
+                        model=self.efficient_model,
+                        response_format=AnalysisActionRequest,
+                        api_key=self.standard_model_api_key,
+                    )
                     analysis_response = analysis_extractor.call(analysis_prompt)
-                    analysis_data = parse_llm_structured_output(analysis_response, AnalysisActionRequest, logger, "AnalysisActionRequest")
-                    
+                    analysis_data = parse_llm_structured_output(
+                        analysis_response, AnalysisActionRequest, logger, "AnalysisActionRequest"
+                    )
+
                     metadata = AnalysisActionMetadata(
                         agent="codex",
                         action_id=str(uuid.uuid4()),
                         timestamp=timestamp,
                         type=analysis_data.type,
                         subject=analysis_data.subject,
-                        parameters=analysis_data.parameters
+                        parameters=analysis_data.parameters,
                     )
-                    
+
                     final_action = FinalAnswerAction(
-                        action_type=FinalAnswerActionType.ANALYSIS,
-                        metadata=metadata,
-                        description=description
+                        action_type=FinalAnswerActionType.ANALYSIS, metadata=metadata, description=description
                     )
-                    
+
                     self.state.final_answer_actions.append(final_action)
-                
+
             logger.info(f"Identified and extracted {len(self.state.final_answer_actions)} final answer actions")
-                
+
         except Exception as e:
             logger.error(f"Failed to extract final answer actions: {str(e)}")
             self.state.final_answer_actions = []

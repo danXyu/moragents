@@ -116,17 +116,19 @@ async def emit_synthesis_start(request_id: str):
         )
 
 
-async def emit_synthesis_complete(request_id: str, final_answer: str, final_answer_actions: Optional[List[FinalAnswerAction]] = None):
+async def emit_synthesis_complete(
+    request_id: str, final_answer: str, final_answer_actions: Optional[List[FinalAnswerAction]] = None
+):
     """Emit event when synthesis completes"""
     if request_id:
         queue = get_or_create_queue(request_id)
         data = {"final_answer": final_answer, "message": "Final answer ready"}
-        
+
         # Include final_answer_actions if available
         if final_answer_actions:
             # Convert FinalAnswerAction objects to dict for serialization
             data["final_answer_actions"] = [action.dict() for action in final_answer_actions]
-            
+
         await queue.put(
             {
                 "type": "synthesis_complete",
@@ -141,15 +143,13 @@ async def emit_final_complete(request_id: str, final_answer_actions: Optional[Li
     if request_id:
         queue = get_or_create_queue(request_id)
         data = {"message": "Stream complete"}
-        
+
         # Include final_answer_actions if available
         if final_answer_actions:
             # Convert FinalAnswerAction objects to dict for serialization
             data["final_answer_actions"] = [action.dict() for action in final_answer_actions]
-            
-        await queue.put(
-            {"type": "stream_complete", "timestamp": datetime.now().isoformat(), "data": data}
-        )
+
+        await queue.put({"type": "stream_complete", "timestamp": datetime.now().isoformat(), "data": data})
 
 
 async def emit_final_answer_actions(request_id: str, final_answer_actions: List[FinalAnswerAction]):
@@ -164,7 +164,7 @@ async def emit_final_answer_actions(request_id: str, final_answer_actions: List[
                 "timestamp": datetime.now().isoformat(),
                 "data": {
                     "actions": actions_data,
-                    "message": f"Identified {len(final_answer_actions)} action(s) to perform"
+                    "message": f"Identified {len(final_answer_actions)} action(s) to perform",
                 },
             }
         )

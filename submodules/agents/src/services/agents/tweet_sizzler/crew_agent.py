@@ -12,15 +12,16 @@ logger = logging.getLogger(__name__)
 def generate_tweet_tool(content: str) -> str:
     """
     Generate an engaging tweet based on provided content.
-    
+
     Args:
         content (str): Content to base the tweet on
-        
+
     Returns:
         str: The generated tweet text (under 280 characters)
     """
     # Using asyncio.run() here as the original function is async
     import asyncio
+
     return asyncio.run(tools.generate_tweet(content))
 
 
