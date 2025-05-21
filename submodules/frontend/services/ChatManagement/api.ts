@@ -491,7 +491,7 @@ export const writeMessageStream = async (
                 break;
               case "stream_complete":
                 // Create final assistant message with metadata including telemetry
-                const metadata = {
+                const metadata: any = {
                   collaboration: "orchestrated",
                   contributing_agents: contributingAgents,
                   subtask_outputs: subtaskOutputs,
@@ -529,16 +529,16 @@ export const writeMessageStream = async (
                 // Track research completed event
                 trackEvent('research.completed', {
                   conversationId,
-                  agent_count: contributingAgents.length,
-                  subtask_count: subtaskOutputs.length,
-                  total_tokens: globalTelemetry.total_token_usage.total,
-                  duration_ms: Date.now() - startTime,
+                  agentCount: contributingAgents.length,
+                  subtaskCount: subtaskOutputs.length,
+                  totalTokens: globalTelemetry.total_token_usage.total,
+                  duration: Date.now() - startTime,
                 });
                 
                 // Track timing
                 trackTiming('research.completed', startTime, {
                   conversationId,
-                  agent_count: contributingAgents.length,
+                  agentCount: contributingAgents.length,
                 });
                 
                 onComplete(assistantMessage);

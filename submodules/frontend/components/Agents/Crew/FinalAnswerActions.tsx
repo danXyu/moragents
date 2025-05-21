@@ -61,7 +61,8 @@ const ActionConfirmationModal: React.FC<ActionConfirmationModalProps> = ({
   const getActionContent = () => {
     switch (action.action_type) {
       case FinalAnswerActionType.TWEET:
-        const tweetContent = action.metadata.content;
+        const tweetMetadata = action.metadata as import('./FinalAnswerAction.types').TweetActionMetadata;
+        const tweetContent = tweetMetadata.content;
         return (
           <Box p={4} borderRadius="md" bg="gray.100" color="black">
             {tweetContent}
@@ -69,7 +70,8 @@ const ActionConfirmationModal: React.FC<ActionConfirmationModalProps> = ({
         );
       
       case FinalAnswerActionType.SWAP:
-        const { from_token, to_token, amount } = action.metadata;
+        const swapMetadata = action.metadata as import('./FinalAnswerAction.types').SwapActionMetadata;
+        const { from_token, to_token, amount } = swapMetadata;
         return (
           <VStack align="stretch" spacing={2}>
             <HStack justify="space-between">
@@ -88,7 +90,8 @@ const ActionConfirmationModal: React.FC<ActionConfirmationModalProps> = ({
         );
       
       case FinalAnswerActionType.TRANSFER:
-        const { token, to_address, amount: transferAmount } = action.metadata;
+        const transferMetadata = action.metadata as import('./FinalAnswerAction.types').TransferActionMetadata;
+        const { token, to_address, amount: transferAmount } = transferMetadata;
         return (
           <VStack align="stretch" spacing={2}>
             <HStack justify="space-between">
@@ -107,7 +110,8 @@ const ActionConfirmationModal: React.FC<ActionConfirmationModalProps> = ({
         );
       
       case FinalAnswerActionType.IMAGE_GENERATION:
-        const { prompt } = action.metadata;
+        const imageMetadata = action.metadata as import('./FinalAnswerAction.types').ImageGenerationActionMetadata;
+        const { prompt } = imageMetadata;
         return (
           <VStack align="stretch" spacing={2}>
             <Text fontWeight="bold">Image Prompt:</Text>

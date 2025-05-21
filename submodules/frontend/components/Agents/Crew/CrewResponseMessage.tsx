@@ -36,8 +36,8 @@ import { AiOutlineDeploymentUnit } from "react-icons/ai";
 import { RiTeamLine, RiFlowChart } from "react-icons/ri";
 import {
   CrewResponseMetadata,
-  FinalAnswerAction,
 } from "@/components/Agents/Crew/CrewResponseMessage.types";
+import { FinalAnswerAction } from "@/components/Agents/Crew/FinalAnswerAction.types";
 import FinalAnswerActions from "./FinalAnswerActions";
 import { Tweet } from "@/components/Agents/Tweet/CustomMessages/TweetMessage";
 import styles from "./CrewResponseMessage.module.css";
@@ -469,9 +469,11 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
                   action.metadata.agent === "tweet_sizzler"
                 ) {
                   // For tweet actions, use the Tweet component directly
+                  // Need to type cast to TweetActionMetadata to access content
+                  const tweetMetadata = action.metadata as import('./FinalAnswerAction.types').TweetActionMetadata;
                   return (
                     <Box key={index}>
-                      <Tweet initialContent={action.metadata.content} />
+                      <Tweet initialContent={tweetMetadata.content} />
                     </Box>
                   );
                 }

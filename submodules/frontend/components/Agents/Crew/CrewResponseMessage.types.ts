@@ -82,7 +82,7 @@ export interface CrewResponseMetadata {
   /**
    * Action-based results that can be executed from the UI
    */
-  final_answer_actions?: FinalAnswerAction[];
+  final_answer_actions?: import('./FinalAnswerAction.types').FinalAnswerAction[];
 
   /**
    * Any additional metadata fields

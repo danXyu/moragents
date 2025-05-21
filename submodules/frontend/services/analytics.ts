@@ -126,7 +126,7 @@ export const trackEvent = (
       });
     }
     
-    const enrichedProperties = {
+    const enrichedProperties: Record<string, string | number | boolean | null> = {
       ...safeProperties,
       timestamp: new Date().toISOString()
     };
@@ -135,7 +135,7 @@ export const trackEvent = (
     if (typeof window !== 'undefined') {
       const sessionId = window.sessionStorage.getItem('sessionId');
       if (sessionId) {
-        enrichedProperties.sessionId = sessionId;
+        enrichedProperties['sessionId'] = sessionId;
       }
     }
     

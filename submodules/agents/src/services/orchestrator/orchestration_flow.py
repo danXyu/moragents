@@ -444,12 +444,10 @@ class OrchestrationFlow(Flow[OrchestrationState]):
         1. Initial detection - identify if there are any actions to take
         2. Action-specific extraction - get detailed metadata for each action
         """
-        import json
         import time
         import uuid
 
         from .orchestration_state import (
-            ActionDetection,
             ActionDetectionPlan,
             AnalysisActionMetadata,
             AnalysisActionRequest,
