@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .orchestration_state import FinalAnswerAction
+from .actions import FinalAnswerAction
 
 logger = logging.getLogger(__name__)
 
