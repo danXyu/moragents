@@ -529,16 +529,16 @@ export const writeMessageStream = async (
                 // Track research completed event
                 trackEvent('research.completed', {
                   conversationId,
-                  contributingAgents,
-                  subtaskCount: subtaskOutputs.length,
-                  totalTokens: globalTelemetry.total_token_usage.total,
-                  duration: Date.now() - startTime,
+                  agent_count: contributingAgents.length,
+                  subtask_count: subtaskOutputs.length,
+                  total_tokens: globalTelemetry.total_token_usage.total,
+                  duration_ms: Date.now() - startTime,
                 });
                 
                 // Track timing
                 trackTiming('research.completed', startTime, {
                   conversationId,
-                  contributingAgents,
+                  agent_count: contributingAgents.length,
                 });
                 
                 onComplete(assistantMessage);

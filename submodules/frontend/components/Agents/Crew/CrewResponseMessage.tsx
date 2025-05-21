@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Box,
   Text,
@@ -269,17 +269,47 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
     return content;
   };
 
-  // Typing animation effect
+  // Store a reference to the current animation interval
+  const animationIntervalRef = useRef<number | null>(null);
+  const contentRef = useRef<string>(content);
+
+  // Update contentRef when content changes
+  useEffect(() => {
+    contentRef.current = content;
+  }, [content]);
+
+  // Stop any running animation
+  const stopAnimation = useCallback(() => {
+    if (animationIntervalRef.current !== null) {
+      clearInterval(animationIntervalRef.current);
+      animationIntervalRef.current = null;
+    }
+  }, []);
+
+  // Track whether this component has already performed an animation
+  const hasAnimatedRef = useRef<boolean>(false);
+
+  // Typing animation effect - only runs ONCE per component instance
   useEffect(() => {
     if (!content) return;
-
+    
+    // If we've already animated this message, just show the full content
+    if (hasAnimatedRef.current) {
+      const filteredContent = getFilteredContent(content, metadata);
+      setDisplayedContent(filteredContent);
+      setIsTyping(false);
+      return;
+    }
+    
+    // First time animation - mark that we've animated
+    hasAnimatedRef.current = true;
+    
     // Reset displayed content when content changes
     setDisplayedContent("");
     setIsTyping(true);
 
     const filteredContent = getFilteredContent(content, metadata);
     const totalLength = filteredContent.length;
-    let currentLength = 0;
 
     // If there's no content to display after filtering, skip the animation
     if (!totalLength) {
@@ -288,27 +318,47 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
       return;
     }
 
+    // For very short content, just display it immediately
+    if (totalLength < 20) {
+      setDisplayedContent(filteredContent);
+      setIsTyping(false);
+      return;
+    }
+
     // Calculate typing speed to complete in ~0.8-1.2 seconds
-    const typingDuration = Math.min(1000, Math.max(800, totalLength * 3)); // Dynamic duration based on length
+    const typingDuration = Math.min(1000, Math.max(800, totalLength * 3)); 
     const charsPerInterval = Math.max(
       1,
       Math.ceil(totalLength / (typingDuration / 16))
-    ); // 60fps
-
-    const interval = setInterval(() => {
+    ); 
+    
+    let currentLength = 0;
+    
+    // Use window.setInterval for better browser compatibility
+    animationIntervalRef.current = window.setInterval(() => {
       currentLength += charsPerInterval;
 
       if (currentLength >= totalLength) {
         setDisplayedContent(filteredContent);
         setIsTyping(false);
-        clearInterval(interval);
+        stopAnimation();
       } else {
         setDisplayedContent(filteredContent.substring(0, currentLength));
       }
-    }, 16); // 60fps
+    }, 16);
 
-    return () => clearInterval(interval);
-  }, [content, metadata]);
+    // Cleanup: stop animation when component unmounts or content changes
+    return () => {
+      stopAnimation();
+    };
+  }, [content, metadata, stopAnimation]);
+
+  // Add cursor back in
+  useEffect(() => {
+    return () => {
+      hasAnimatedRef.current = false;
+    };
+  }, []);
 
   // Handle execution of final answer actions
   const handleActionExecute = async (action: FinalAnswerAction) => {

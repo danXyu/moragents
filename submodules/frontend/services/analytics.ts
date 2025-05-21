@@ -109,8 +109,25 @@ export const trackEvent = (
 ): void => {
   try {
     // Add timestamp and session info
-    const enrichedProperties: Record<string, any> = {
-      ...properties,
+    const safeProperties: Record<string, string | number | boolean | null> = {};
+    
+    // Sanitize properties: only accept primitive values
+    if (properties) {
+      Object.entries(properties).forEach(([key, value]) => {
+        if (value === null || ['string', 'number', 'boolean'].includes(typeof value)) {
+          safeProperties[key] = value;
+        } else if (Array.isArray(value)) {
+          // Convert arrays to string representation
+          safeProperties[key] = value.length.toString();
+        } else if (typeof value === 'object') {
+          // Convert objects to their count representation
+          safeProperties[key] = '1';
+        }
+      });
+    }
+    
+    const enrichedProperties = {
+      ...safeProperties,
       timestamp: new Date().toISOString()
     };
     
