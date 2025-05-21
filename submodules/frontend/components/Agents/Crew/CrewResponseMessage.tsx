@@ -34,8 +34,8 @@ import {
 } from "react-icons/fa";
 import { AiOutlineDeploymentUnit } from "react-icons/ai";
 import { RiTeamLine, RiFlowChart } from "react-icons/ri";
-import { 
-  CrewResponseMetadata, 
+import {
+  CrewResponseMetadata,
   FinalAnswerAction,
 } from "@/components/Agents/Crew/CrewResponseMessage.types";
 import FinalAnswerActions from "./FinalAnswerActions";
@@ -199,26 +199,26 @@ const CompactTaskOutput: React.FC<{
       </Collapse>
 
       <Collapse in={isExpanded} animateOpacity>
-        <Box 
-          p={3} 
-          bg="gray.825" 
-          borderRadius="md" 
+        <Box
+          p={3}
+          bg="gray.825"
+          borderRadius="md"
           mt={2}
           maxH="400px"
           overflowY="auto"
           sx={{
-            '&::-webkit-scrollbar': {
-              width: '8px',
+            "&::-webkit-scrollbar": {
+              width: "8px",
             },
-            '&::-webkit-scrollbar-track': {
-              background: 'transparent',
+            "&::-webkit-scrollbar-track": {
+              background: "transparent",
             },
-            '&::-webkit-scrollbar-thumb': {
-              background: 'rgba(96, 165, 250, 0.3)',
-              borderRadius: '4px',
+            "&::-webkit-scrollbar-thumb": {
+              background: "rgba(96, 165, 250, 0.3)",
+              borderRadius: "4px",
             },
-            '&::-webkit-scrollbar-thumb:hover': {
-              background: 'rgba(96, 165, 250, 0.5)',
+            "&::-webkit-scrollbar-thumb:hover": {
+              background: "rgba(96, 165, 250, 0.5)",
             },
           }}
         >
@@ -247,6 +247,28 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
   const [isTyping, setIsTyping] = useState(true);
   const toast = useToast();
 
+  // Function to determine what content should be displayed in the main markdown
+  const getFilteredContent = (
+    content: string,
+    metadata?: CrewResponseMetadata
+  ) => {
+    if (!metadata?.final_answer_actions?.length) {
+      return content;
+    }
+
+    // If there's only a tweet action, don't show any content in the main markdown
+    const onlyTweetAction =
+      metadata.final_answer_actions.length === 1 &&
+      metadata.final_answer_actions[0].action_type === "tweet" &&
+      metadata.final_answer_actions[0].metadata.agent === "tweet_sizzler";
+
+    if (onlyTweetAction) {
+      return "";
+    }
+
+    return content;
+  };
+
   // Typing animation effect
   useEffect(() => {
     if (!content) return;
@@ -255,8 +277,16 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
     setDisplayedContent("");
     setIsTyping(true);
 
-    const totalLength = content.length;
+    const filteredContent = getFilteredContent(content, metadata);
+    const totalLength = filteredContent.length;
     let currentLength = 0;
+
+    // If there's no content to display after filtering, skip the animation
+    if (!totalLength) {
+      setDisplayedContent("");
+      setIsTyping(false);
+      return;
+    }
 
     // Calculate typing speed to complete in ~0.8-1.2 seconds
     const typingDuration = Math.min(1000, Math.max(800, totalLength * 3)); // Dynamic duration based on length
@@ -269,16 +299,16 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
       currentLength += charsPerInterval;
 
       if (currentLength >= totalLength) {
-        setDisplayedContent(content);
+        setDisplayedContent(filteredContent);
         setIsTyping(false);
         clearInterval(interval);
       } else {
-        setDisplayedContent(content.substring(0, currentLength));
+        setDisplayedContent(filteredContent.substring(0, currentLength));
       }
     }, 16); // 60fps
 
     return () => clearInterval(interval);
-  }, [content]);
+  }, [content, metadata]);
 
   // Handle execution of final answer actions
   const handleActionExecute = async (action: FinalAnswerAction) => {
@@ -286,7 +316,7 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
       // Implement the API call to execute the action
       // This will depend on the action type
       console.log("Executing action:", action);
-      
+
       // For now, just show a toast notification
       toast({
         title: "Action executed",
@@ -295,10 +325,9 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
         duration: 5000,
         isClosable: true,
       });
-      
+
       // In a real implementation, you would call the appropriate API endpoint
       // based on the action type and metadata
-      
     } catch (error) {
       console.error("Error executing action:", error);
       toast({
@@ -331,19 +360,21 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
 
   const totalAgents =
     metadata.subtask_outputs?.reduce(
-      (acc, task) => acc + (task.agents?.length || 0),
+      (acc: number, task) => acc + (task.agents?.length || 0),
       0
     ) || 0;
 
   const totalTime =
     metadata.subtask_outputs?.reduce(
-      (acc, task) => acc + (task.telemetry?.processing_time?.duration || 0),
+      (acc: number, task) =>
+        acc + (task.telemetry?.processing_time?.duration || 0),
       0
     ) || 0;
 
   const totalTokens =
     metadata.subtask_outputs?.reduce(
-      (acc, task) => acc + (task.telemetry?.token_usage?.total_tokens || 0),
+      (acc: number, task) =>
+        acc + (task.telemetry?.token_usage?.total_tokens || 0),
       0
     ) || 0;
 
@@ -368,45 +399,46 @@ const CrewResponseMessage: React.FC<CrewResponseMessageProps> = ({
           {displayedContent}
         </ReactMarkdown>
         {isTyping && <span className={styles.typingCursor} />}
-        
+
         {/* Final Answer Actions - embedded within main response */}
-        {metadata.final_answer_actions && metadata.final_answer_actions.length > 0 && (
-          <Box 
-            mt={4}
-            bg="gray.850" 
-            borderRadius="md" 
-            p={3} 
-            borderWidth="1px" 
-            borderColor="blue.700"
-          >
-            {metadata.final_answer_actions.map((action, index) => {
-              // Determine which component to render based on action type and agent
-              if (action.action_type === "tweet" && action.metadata.agent === "tweet_sizzler") {
-                // For tweet actions, use the Tweet component directly
+        {metadata.final_answer_actions &&
+          metadata.final_answer_actions.length > 0 && (
+            <Box
+              mt={4}
+              bg="gray.850"
+              borderRadius="md"
+              pl={3}
+              pr={3}
+              borderWidth="1px"
+              borderColor="blue.700"
+            >
+              {metadata.final_answer_actions.map((action, index) => {
+                // Determine which component to render based on action type and agent
+                if (
+                  action.action_type === "tweet" &&
+                  action.metadata.agent === "tweet_sizzler"
+                ) {
+                  // For tweet actions, use the Tweet component directly
+                  return (
+                    <Box key={index}>
+                      <Tweet initialContent={action.metadata.content} />
+                    </Box>
+                  );
+                }
+
+                // For other action types, use the generic FinalAnswerActions component
                 return (
-                  <Box key={index} mt={2}>
-                    <Text fontSize="sm" fontWeight="medium" mb={2}>
-                      Generated Tweet:
-                    </Text>
-                    <Tweet initialContent={action.metadata.content} />
-                  </Box>
+                  <FinalAnswerActions
+                    key={index}
+                    actions={[action]}
+                    onActionExecute={handleActionExecute}
+                  />
                 );
-              }
-              
-              // For other action types, use the generic FinalAnswerActions component
-              return (
-                <FinalAnswerActions 
-                  key={index}
-                  actions={[action]} 
-                  onActionExecute={handleActionExecute} 
-                />
-              );
-            })}
-          </Box>
-        )}
+              })}
+            </Box>
+          )}
       </Box>
 
-      
       {/* Orchestration Flow */}
       {metadata.subtask_outputs && metadata.subtask_outputs.length > 0 && (
         <Box
